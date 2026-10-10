@@ -4,9 +4,11 @@
 const REPO = "kayJo81/mini-bb-public";
 const WORKFLOW = "briefing.yml";
 
-const REPORT_CRON = "30 20 * * *";   // 매일 05:30 KST: 수집 + 일일 PDF 메일
+// 일일 PDF 메일: 미국 장 마감 30분 뒤 — 서머타임(EDT) 20:30 UTC = 05:30 KST, 겨울(EST) 21:30 UTC = 06:30 KST
+// (종가 PDF가 들어가서 장 마감 뒤여야 함). 두 시각 중 맞지 않는 쪽은 평소 수집으로 실행
+const REPORT_CRON_EDT = "30 20 * * *";
+const REPORT_CRON_EST = "30 21 * * *";
 const LAB_CRON = "0 22 * * TUE-SAT";     // 화~토 07:00 KST(미국 장 마감 뒤): 미니 블벅 랩 갱신
-const CLOSE_CRON = "40 21 * * TUE-SAT";  // 화~토 06:40 KST(미국 장 마감 뒤): 종가 PDF 메일
 
 async function dispatch(env, report, workflow = WORKFLOW, inputs = null) {
   const r = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${workflow}/dispatches`, {
@@ -27,10 +29,10 @@ export default {
   async scheduled(event, env, ctx) {
     if (event.cron === LAB_CRON) {
       ctx.waitUntil(dispatch(env, false, "lab.yml", { days: "4" }));
-    } else if (event.cron === CLOSE_CRON) {
-      ctx.waitUntil(dispatch(env, false, "close.yml", { date: "" }));
     } else {
-      ctx.waitUntil(dispatch(env, event.cron === REPORT_CRON));
+      const edt = /EDT/.test(new Date().toLocaleString("en-US", { timeZone: "America/New_York", timeZoneName: "short" }));
+      const report = (event.cron === REPORT_CRON_EDT && edt) || (event.cron === REPORT_CRON_EST && !edt);
+      ctx.waitUntil(dispatch(env, report));
     }
   },
 };

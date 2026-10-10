@@ -143,6 +143,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="reports_close")
     ap.add_argument("--date", help="마감일(미국, YYYY-MM-DD). 없으면 가장 최근 마감일")
+    ap.add_argument("--pdf-only", action="store_true", help="PDF만 (일일 뉴스 메일에 함께 붙일 때 — 메일 제목·요약 파일은 건드리지 않음)")
     a = ap.parse_args()
     syms = [s for s, _ in INDICES] + sorted({s for _, g in GROUPS for s, _ in g})
     with ThreadPoolExecutor(8) as pool:
@@ -196,8 +197,9 @@ def main():
         pg.set_content(doc, wait_until="load")
         pg.pdf(path=path, format="A4", print_background=True, margin={"top": "14mm", "bottom": "14mm", "left": "12mm", "right": "12mm"})
         b.close()
-    open(os.path.join(a.out, "summary.txt"), "w", encoding="utf-8").write(f"미니 블벅터 · {title} · {sub}")
-    open(os.path.join(a.out, "subject.txt"), "w", encoding="utf-8").write(f"[미니 블벅터] {title} (미국 {day.month}/{day.day} 마감)")
+    if not a.pdf_only:
+        open(os.path.join(a.out, "summary.txt"), "w", encoding="utf-8").write(f"미니 블벅터 · {title} · {sub}")
+        open(os.path.join(a.out, "subject.txt"), "w", encoding="utf-8").write(f"[미니 블벅터] {title} (미국 {day.month}/{day.day} 마감)")
     print(f"[close] {path} · 마감일 {day} · 종목 {len(syms)}개" + (f" · 못 받음 {missing}" if missing else ""))
 
 

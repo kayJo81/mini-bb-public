@@ -2,7 +2,7 @@
 #  · 화면은 조회하는 순간 기준 12시간 이내 보도만 보여준다
 #  · 15분마다 실행 (공개 저장소라 Actions 사용 시간 제한 없음)
 #  · 실행 신호: Cloudflare Worker 크론 (scheduler/)
-#  · report=true 로 실행되면(매일 05:30 KST, scheduler/) 수집 후 PDF를 만들어 메일로 보낸다
+#  · report=true 로 실행되면(미국 장 마감 30분 뒤: 서머타임 05:30 / 겨울 06:30 KST, scheduler/) 수집 후 PDF를 만들어 메일로 보낸다
 # 필요한 저장소 Secrets: FINNHUB_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
 #   (일일 PDF 메일) GMAIL_USER, GMAIL_APP_PASSWORD, 선택 MAIL_TO
 name: briefing
@@ -147,6 +147,14 @@ jobs:
         if: ${{ inputs.report }}
         continue-on-error: true
         run: python scripts/webull_pdf.py --out reports --cache .cache/ko.json
+
+      # 미국 장 마감 종가 'M월 D일 시장 등락' (지수 + 분야별 종목) — 미국 휴장일이면 만들지 않음
+      - name: Build close PDF
+        if: ${{ inputs.report }}
+        continue-on-error: true
+        env:
+          CLOSE_REQUIRE_TODAY: "1"
+        run: python scripts/close_pdf.py --out reports --pdf-only
 
       - uses: actions/upload-artifact@v4
         if: ${{ inputs.report }}

@@ -4,8 +4,7 @@ compatibility_date = "2024-09-01"
 workers_dev = false
 
 # 15분 간격 (매시 07·22·37·52분 — 05:30 KST 메일 실행과 겹치지 않게)
-# + 20:30 UTC(05:30 KST): 일일 PDF 메일 (index.js REPORT_CRON 과 같아야 함)
+# + 20:30 UTC(05:30 KST, 서머타임) / 21:30 UTC(06:30 KST, 겨울): 일일 PDF 메일 — 미국 장 마감 30분 뒤 (index.js REPORT_CRON_* 과 같아야 함)
 # + 22:00 UTC 화~토(07:00 KST): 미니 블벅 랩 (index.js LAB_CRON 과 같아야 함)
-# + 21:40 UTC 화~토(06:40 KST): 미국 장 마감 종가 PDF 메일 (index.js CLOSE_CRON 과 같아야 함)
 [triggers]
-crons = ["7,22,37,52 * * * *", "30 20 * * *", "0 22 * * TUE-SAT", "40 21 * * TUE-SAT"]
+crons = ["7,22,37,52 * * * *", "30 20 * * *", "30 21 * * *", "0 22 * * TUE-SAT"]

@@ -1,5 +1,5 @@
 # 미국 장 마감 종가 PDF ('M월 D일 시장 등락': 주요 지수 + 분야별 종목, 등락률 순) → 메일
-#  · 화~토 06:40 KST(미국 장 마감 뒤 — 서머타임 05:00, 겨울 06:00 마감) scheduler/ 가 실행
+#  · 매일 자동으로는 briefing.yml 일일 PDF 메일에 함께 들어간다 — 이 워크플로는 수동(다시 만들기·지난 날짜)용
 #  · 미국 휴장일이면 PDF·메일 없이 끝남
 # 필요한 저장소 Secrets: GMAIL_USER, GMAIL_APP_PASSWORD, 선택 MAIL_TO
 name: close
