@@ -77,38 +77,6 @@ def aliases(sym, name):
         [re.compile(re.escape(c)) for c in CN.get(sym, []) if not c.isascii()]
 
 
-FV_HDR = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
-FV_ROW = re.compile(r'<td width="130" align="right">\s*([^<]+?)\s*</td>.*?class="tab-link-news" href="([^"]+)"[^>]*>\s*(.*?)\s*</a>'
-                    r'.*?<span>\(([^)]*)\)</span>', re.S)
-
-
-def fetch_finviz(sym):
-    """Finviz 종목 페이지 뉴스 표 (시각은 미국 동부)"""
-    try:
-        h = requests.get(f"https://finviz.com/quote.ashx?t={sym}&p=d", headers=FV_HDR, timeout=20).text
-    except Exception as ex:
-        print(f"[reasons] finviz {sym}: {ex}")
-        return []
-    out, day = [], None
-    for when, url, title, src in FV_ROW.findall(h[h.find('id="news-table"'):]):
-        parts = when.split()
-        try:
-            if len(parts) == 2:
-                day = datetime.strptime(parts[0], "%b-%d-%y").date()
-            if day is None:
-                continue
-            if parts[-1].lower() in ("today",):
-                continue
-            t = datetime.strptime(parts[-1], "%I:%M%p").time()
-            ts = int(datetime.combine(day, t, tzinfo=ET).timestamp())
-        except Exception:
-            continue
-        out.append({"headline": html.unescape(re.sub(r"<[^>]+>", "", title)).strip(), "source": src.strip() or "Finviz",
-                    "url": url, "published": ts, "via": "Finviz"})
-    time.sleep(0.5)
-    return out
-
-
 def shared_pool(start, end):
     """종목 구분 없는 피드 전부 (미니 블벅터 수집분 + 속보·언론사 피드) → [{headline, source, url, published}]"""
     import news_scanner as ns
@@ -191,7 +159,7 @@ def news(sym, start, end):
         items += ns.fetch_webull(sym)
     except Exception as ex:
         print(f"[reasons] webull {sym}: {ex}")
-    items += fetch_finviz(sym)
+    items += [x | {"via": "Finviz"} for x in ns.fetch_finviz(sym)]
     s, e = start.timestamp(), end.timestamp()
     seen, out = set(), []
     for x in items:

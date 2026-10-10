@@ -881,6 +881,33 @@ RSS_FEEDS = [
     ("Natural Gas Intelligence", "https://www.naturalgasintel.com/feed/", "naturalgasintel.com"),
     ("Hellenic Shipping News", "https://www.hellenicshippingnews.com/feed/", "hellenicshippingnews.com"),
     ("Mining.com", "https://www.mining.com/feed/", "mining.com"),
+    # 블룸버그 섹션 RSS (최신 기사)
+    ("Bloomberg", "https://feeds.bloomberg.com/markets/news.rss", "bloomberg.com"),
+    ("Bloomberg", "https://feeds.bloomberg.com/technology/news.rss", "bloomberg.com"),
+    ("Bloomberg", "https://feeds.bloomberg.com/economics/news.rss", "bloomberg.com"),
+    ("Bloomberg", "https://feeds.bloomberg.com/politics/news.rss", "bloomberg.com"),
+    ("Bloomberg", "https://feeds.bloomberg.com/industries/news.rss", "bloomberg.com"),
+    ("Bloomberg", "https://feeds.bloomberg.com/business/news.rss", "bloomberg.com"),
+    ("Bloomberg", "https://feeds.bloomberg.com/crypto/news.rss", "bloomberg.com"),
+    ("Bloomberg", "https://feeds.bloomberg.com/news.rss", "bloomberg.com"),
+    # FJ 뉴스 소스 (FinancialJuice 설정에서 고른 곳들)
+    ("CNBC", "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=15837362", "cnbc.com"),
+    ("CNBC", "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=15839135", "cnbc.com"),
+    ("CNBC", "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=19794221", "cnbc.com"),
+    ("CNBC", "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=19832390", "cnbc.com"),
+    ("Wall Street Journal", "https://feeds.content.dowjones.io/public/rss/RSSWorldNews", "wsj.com"),
+    ("Wall Street Journal", "https://feeds.content.dowjones.io/public/rss/WSJcomUSBusiness", "wsj.com"),
+    ("Wall Street Journal", "https://feeds.content.dowjones.io/public/rss/socialeconomyfeed", "wsj.com"),
+    ("Financial Times", "https://www.ft.com/news-feed?format=rss", "ft.com"),
+    ("Benzinga", "https://www.benzinga.com/feed", "benzinga.com"),
+    ("Yahoo Finance", "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC,%5EIXIC,%5EDJI&region=US&lang=en-US", "finance.yahoo.com"),
+    ("New York Times", "https://rss.nytimes.com/services/xml/rss/nyt/Dealbook.xml", "nytimes.com"),
+    ("South China Morning Post", "https://www.scmp.com/rss/91/feed/", "scmp.com"),
+    ("South China Morning Post", "https://www.scmp.com/rss/4/feed/", "scmp.com"),
+    ("South China Morning Post", "https://www.scmp.com/rss/5/feed/", "scmp.com"),
+    ("Economic Times", "https://economictimes.indiatimes.com/markets/commodities/rssfeeds/1808152121.cms", "economictimes.com"),
+    ("SpotGamma", "https://spotgamma.com/feed/", "spotgamma.com"),
+    ("Stock Titan", "https://www.stocktitan.net/rss", "stocktitan.net"),
     ("Endpoints News", "https://endpts.com/feed/", "endpts.com"),
     ("BioPharma Dive", "https://www.biopharmadive.com/feeds/news/", "biopharmadive.com"),
     ("STAT", "https://www.statnews.com/feed/", "statnews.com"),
@@ -889,6 +916,7 @@ RSS_FEEDS = [
     ("The Block", "https://www.theblock.co/rss.xml", "theblock.co"),
     # 공식 기관
     ("Federal Reserve", "https://www.federalreserve.gov/feeds/press_all.xml", "federalreserve.gov"),
+    ("Federal Reserve", "https://www.federalreserve.gov/feeds/speeches_and_testimony.xml", "federalreserve.gov"),
     ("BEA", "https://apps.bea.gov/rss/rss.xml", "bea.gov"),
     ("EIA", "https://www.eia.gov/rss/todayinenergy.xml", "eia.gov"),
     ("EIA", "https://www.eia.gov/rss/press_rss.xml", "eia.gov"),
@@ -932,6 +960,40 @@ def fetch_rss(name, url, domain):
     return out
 
 
+FV_ROW = re.compile(r'<td width="130" align="right">\s*([^<]+?)\s*</td>.*?class="tab-link-news" href="([^"]+)"[^>]*>\s*(.*?)\s*</a>'
+                    r'.*?<span>\(([^)]*)\)</span>', re.S)
+_fv_cache, _fv_lock = {}, threading.Lock()
+
+
+def fetch_finviz(sym):
+    """Finviz 종목 페이지 뉴스 표 (최근 100건, 시각은 미국 동부). 한 번 실행 안에서는 종목당 한 번만 요청."""
+    with _fv_lock:
+        if sym in _fv_cache:
+            return _fv_cache[sym]
+    out = []
+    try:
+        h = requests.get(f"https://finviz.com/quote.ashx?t={sym}&p=d", headers=BROWSER_HDR, timeout=20).text
+        et, day = ZoneInfo("America/New_York"), None
+        for when, url, title, src in FV_ROW.findall(h[h.find('id="news-table"'):]):
+            parts = when.split()
+            try:
+                if len(parts) == 2:
+                    day = datetime.strptime(parts[0], "%b-%d-%y").date() if parts[0] != "Today" else datetime.now(et).date()
+                if day is None:
+                    continue
+                ts = int(datetime.combine(day, datetime.strptime(parts[-1], "%I:%M%p").time(), tzinfo=et).timestamp())
+            except Exception:
+                continue
+            title = re.sub(r"<[^>]+>", "", title).replace("&amp;", "&").replace("&#39;", "'").replace("&quot;", '"').strip()
+            out.append({"headline": title, "summary": "", "source": src.strip() or "Finviz", "domain": _domain(url),
+                        "url": url, "published": ts, "via": f"Finviz ({sym})", "edition": "US"})
+    except Exception as ex:
+        print(f"[scanner/finviz] {sym}: {ex}")
+    with _fv_lock:
+        _fv_cache[sym] = out
+    return out
+
+
 EASTMONEY_URL = ("https://np-listapi.eastmoney.com/comm/web/getFastNewsList?client=web&biz=web_724&fastColumn=102"
                  "&pageSize=100&req_trace=1&sortEnd={}")
 
@@ -970,6 +1032,7 @@ def scan_topic(topic, start, end, finnhub_token, pool, feed_items=()):
     futs = [pool.submit(fetch_gnews, q, ed, start, end) for q, ed in topic["queries"]]
     futs += [pool.submit(fetch_finnhub_company, sym, start, end, finnhub_token) for sym in topic["tickers"]]
     futs += [pool.submit(fetch_webull, sym) for sym in topic["tickers"]]
+    futs += [pool.submit(fetch_finviz, sym) for sym in topic["tickers"]]
     raw = []
     for f in futs:
         raw += f.result()
