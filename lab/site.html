@@ -55,7 +55,7 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:10px 0 30px}
 <div class="wrap">
   <header>
     <div><h1>미니 블벅 <b>랩</b></h1><div class="hsub" id="sub">뉴스로 찾는 롱/숏 후보 · 불러오는 중…</div></div>
-    <a class="link" href="https://mini-bbterminal.pages.dev">📰 미니 블벅터 뉴스 보기 →</a>
+    <div style="display:flex;gap:6px;flex-wrap:wrap"><a class="link" id="navLab" href="./" style="background:#fff;color:#111827;border:.5px solid var(--bd)">← 랩 메인</a><a class="link" href="https://mini-bbterminal.pages.dev">📰 미니 블벅터 →</a></div>
   </header>
   <div id="app"></div>
   <footer>투자 판단 보조용 통계입니다 · 매매 추천이 아니며 과거 성과가 미래를 보장하지 않습니다</footer>
@@ -98,14 +98,19 @@ function paperCard(P){
   ${!P.open.length&&!P.closed.length&&!P.pending.length?'<div class="empty">첫 신호를 기다리는 중이에요.</div>':''}</div>`;
 }
 let P=null;
+const SIM=/\/sim(\.html)?$/.test(location.pathname);
 function render(d){
   const days=d.coverage.start?Math.round((Date.parse(d.coverage.end)-Date.parse(d.coverage.start))/864e5):0;
+  if(!SIM)document.getElementById('navLab').remove();
+  else{document.title='미니 블벅 랩 · 가상 매매';document.querySelector('h1').innerHTML='미니 블벅 <b>랩</b> · 가상 매매';}
   document.getElementById('sub').textContent=`뉴스로 찾는 롱/숏 후보 · 데이터 ${d.coverage.start||'–'} ~ ${d.coverage.end} (${days}일, 종목 ${d.coverage.tickers}개) · ${d.generated} 갱신`;
   const allThin=d.buckets.every(b=>b.verdict==='표본 부족');
   let h='';
   if(allThin||days<120)h+=`<div class="card warn"><b>📦 데이터를 쌓는 중이에요.</b> 과거 데이터가 충분히 모이기 전에는 아래 판정이 대부분 '표본 부족'으로 나와요. 신호가 검증되면 후보에 <b>롱/숏</b> 표시가 붙어요.</div>`;
 
-  if(P)h+=paperCard(P);
+  if(SIM){document.getElementById('app').innerHTML=P?paperCard(P):'<div class="card empty">가상 매매 데이터를 불러오지 못했어요.</div>';return;}
+  h+=`<a class="card" href="sim" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
+    <span><b>🧪 가상 매매 시뮬레이션</b><br><span class="hsub">${P?`${esc(P.status)} · 평가액 $${Math.round(P.equity).toLocaleString()} (${pct(P.ret)}) · QQQ ${pct(P.bench_ret)}`:'신호를 실제로 따라 했다면?'}</span></span><span class="link">보기 →</span></a>`;
 
   // 오늘의 후보
   h+=`<div class="card"><h2>🎯 최근 3거래일 신호</h2><p class="note">회사 언급 기사가 평소보다 크게 몰리고(평소 대비 z≥${d.rules.z}, ${d.rules.n}건 이상) 호재·악재가 한쪽으로 쏠린 종목. 방향은 과거 같은 유형 신호의 5거래일 뒤 ${d.rules.bench} 대비 초과수익으로 정해요.</p>`;

@@ -58,6 +58,7 @@ jobs:
           python lab/signals.py --out public_lab
           python lab/paper.py --signals public_lab/data.json --out public_lab
           cp lab/site.html public_lab/index.html
+          cp lab/site.html public_lab/sim.html
 
       - name: Save data
         if: always()
