@@ -4,9 +4,11 @@
   python lab/paper.py --signals public_lab/data.json --out public_lab
 
 규칙 (처음 실행 때 정해져 상태 파일에 저장 — 도중에 바뀌지 않음)
-  · 시작 자금 $100,000, 신호 1건당 $10,000 (현금이 모자라면 건너뜀)
+  · 매 거래일 '종목 후보'(signals.py picks: 뉴스 급증 z≥1.5·3건↑·논조 차이 2↑, 과거 표본 충분한 유형)에서
+    이미 보유한 종목을 빼고 순위대로 최대 4종목 — 통과 종목이 적으면 그만큼만, 없으면 쉼
+  · 시작 자금 $100,000, 종목당 $5,000 (하루 최대 $20,000, 현금이 모자라면 건너뜀)
   · 신호가 뜬 날의 '다음 거래일 시가'에 진입 (신호는 장 마감 뒤에 계산되므로 그날 종가로는 살 수 없음)
-  · 방향: 그 신호 유형의 과거 5일 평균 초과수익 부호(롱/숏) — '검증됨'이 아니어도 시험 삼아 모두 따라 함
+  · 방향: 그 신호 유형의 과거 5일 평균 초과수익 부호(롱/숏) — '검증됨'이 아니어도 시험 삼아 따라 함
   · 진입 후 5거래일째 종가에 청산, 매매마다 0.1% 비용(진입·청산 각각)
   · 새 신호는 처음 10거래일 동안만 받고, 남은 포지션이 모두 청산되면 끝
   · 비교: 같은 금액을 같은 날 QQQ 에 넣었다 같은 날 뺐을 때
@@ -20,7 +22,7 @@ from bisect import bisect_right
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import BENCH, DATA  # noqa: E402
 
-RULES = {"capital": 100000.0, "size": 10000.0, "hold": 5, "cost": 0.001, "entry_days": 10}
+RULES = {"version": 2, "capital": 100000.0, "size": 5000.0, "max_per_day": 4, "hold": 5, "cost": 0.001, "entry_days": 10}
 
 
 def nxt(cal, d):
@@ -39,25 +41,38 @@ def main():
     path = os.path.join(DATA, "paper.json")
     try:
         st = json.load(open(path, encoding="utf-8"))
+        if st.get("rules", {}).get("version") != RULES["version"]:
+            raise ValueError("규칙이 바뀌어 새로 시작")
     except Exception:
         last = sig["last_trading_day"]
         st = {"rules": RULES, "start": last, "signal_days": [], "seen": [], "pending": [], "open": [], "closed": [],
-              "cash": RULES["capital"], "curve": []}
+              "cash": RULES["capital"], "curve": [], "picks_log": []}
     R = st["rules"]
     px = lambda s, d, k: prices.get(s, {}).get(d, [None, None])[k]  # noqa: E731  k=0 시가, 1 종가
 
-    # 1) 새 신호 받기 (처음 10거래일 동안, 시작일 이후 신호만)
-    for c in sig["candidates"]:
-        key = f'{c["sym"]}|{c["date"]}'
-        if not c.get("direction") or c["date"] < st["start"] or key in st["seen"]:
-            continue
+    # 1) 새 종목 받기: 날짜별로 보유·대기 중이 아닌 종목을 순위대로 최대 4개 (처음 10거래일 동안, 시작일 이후)
+    held = {p["sym"] for p in st["open"] + st["pending"]}
+    by_day = {}
+    for c in sig.get("picks", []):
         if c["date"] not in st["signal_days"]:
-            if len(st["signal_days"]) >= R["entry_days"]:
+            by_day.setdefault(c["date"], []).append(c)
+    # 시작일부터 마지막 거래일까지 모든 거래일을 한 번씩 (후보가 없는 날도 '쉰 날'로 센다)
+    for day in [d for d in cal if st["start"] <= d <= sig["last_trading_day"] and d not in st["signal_days"]]:
+        if len(st["signal_days"]) >= R["entry_days"]:
+            break
+        st["signal_days"].append(day)
+        chosen = []
+        for c in by_day.get(day, []):
+            if len(chosen) >= R["max_per_day"]:
+                break
+            if c["sym"] in held:
                 continue
-            st["signal_days"].append(c["date"])
-        st["seen"].append(key)
-        st["pending"].append({"sym": c["sym"], "dir": c["direction"], "b": c["b"], "verdict": c["verdict"],
-                              "signal_date": c["date"], "head": (c.get("heads") or [[0, ""]])[0][1]})
+            held.add(c["sym"])
+            chosen.append(c)
+            st["pending"].append({"sym": c["sym"], "dir": c["direction"], "b": c["b"], "verdict": c["verdict"],
+                                  "signal_date": c["date"], "edge": c["edge"], "z": c["z"], "head": (c.get("heads") or [[0, ""]])[0][1]})
+        st.setdefault("picks_log", []).append({"date": day, "chosen": [c["sym"] for c in chosen],
+                                               "pool": len(by_day.get(day, []))})
 
     # 2) 진입: 신호 다음 거래일 시가가 나왔으면 체결
     still = []
@@ -117,7 +132,8 @@ def main():
         "avg_trade": round(sum(x["ret"] for x in done) / len(done), 2) if done else None,
         "avg_excess": round(sum(x["ret"] - x["bench_ret"] for x in done) / len(done), 2) if done else None,
         "open": st["open"], "pending": st["pending"], "closed": sorted(st["closed"], key=lambda x: x.get("exit_date", ""), reverse=True),
-        "curve": st["curve"],
+        "curve": st["curve"], "picks_log": st.get("picks_log", []), "pick_rules": sig.get("pick_rules"),
+        "today_pool": [c for c in sig.get("picks", []) if c["date"] == sig["last_trading_day"]],
     }
     os.makedirs(a.out, exist_ok=True)
     json.dump(summary, open(os.path.join(a.out, "paper.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))

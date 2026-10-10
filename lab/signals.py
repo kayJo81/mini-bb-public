@@ -25,6 +25,8 @@ KST = timezone(timedelta(hours=9))
 LOOKBACK = 60
 MIN_HIST = 40
 Z_MIN, N_MIN, NET_MIN = 2.0, 3, 2
+PICK_Z = 1.5          # 가상 매매 종목 선정: 검증용 이벤트(z≥2)보다 조금 넓게 후보를 본다
+PICK_MAX = 4
 HORIZONS = (1, 5, 10)
 DEDUP = 5
 BUCKETS = [
@@ -172,6 +174,28 @@ def main():
                            "spark": [x["n"] for x in rows[-30:]], "tone": [x["pos"] - x["neg"] for x in rows[-30:]]})
     movers.sort(key=lambda m: -m["z"])
 
+    # 가상 매매 종목 후보(최근 3거래일 각각): z≥1.5·3건↑·호재-악재 차이 2↑, 방향은 신호 유형의 과거 5일 성과,
+    # 과거 표본이 부족한 유형은 제외 → 판정 등급 › 과거 5일 초과수익 › z 순으로 정렬 (보유 종목 제외·상위 4개는 paper.py)
+    pool = []
+    for sym, rows in latest_rows.items():
+        for r in rows[-3:]:
+            if r.get("z") is None or r["z"] < PICK_Z or r["n"] < N_MIN or r["react"] is None:
+                continue
+            net = r["pos"] - r["neg"]
+            if abs(net) < NET_MIN:
+                continue
+            bid = ("pos_up" if r["react"] > 0 else "pos_dn") if net > 0 else ("neg_dn" if r["react"] < 0 else "neg_up")
+            b = bmap[bid]
+            if b["verdict"] == "표본 부족" or not b["direction"]:
+                continue
+            edge = b["h5"]["mean"] if b["direction"] == "롱" else -b["h5"]["mean"]
+            pool.append({"sym": sym, "date": r["date"], "b": bid, "direction": b["direction"], "verdict": b["verdict"],
+                         "edge": round(edge, 2), "hist_n": b["h5"]["n"], "hit": b["h5"]["hit"] if b["direction"] == "롱" else round(100 - b["h5"]["hit"], 1),
+                         "n": r["n"], "avg": r["avg"], "z": r["z"], "pos": r["pos"], "neg": r["neg"], "react": r["react"],
+                         "heads": r["heads"][:3]})
+    pool.sort(key=lambda c: (c["date"], {"검증됨": 0, "근거 약함": 1}[c["verdict"]], -c["edge"], -c["z"]))
+    pool.sort(key=lambda c: c["date"], reverse=True)   # 날짜 최신순, 같은 날 안에서는 위 순위 유지
+
     past = sorted([e for e in events if e["f5"] is not None], key=lambda e: e["date"], reverse=True)[:60]
     out = {
         "generated": datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"),
@@ -181,6 +205,8 @@ def main():
         "rules": {"z": Z_MIN, "n": N_MIN, "net": NET_MIN, "lookback": LOOKBACK, "dedup": DEDUP, "bench": BENCH},
         "buckets": buckets,
         "candidates": cands,
+        "picks": pool,
+        "pick_rules": {"z": PICK_Z, "n": N_MIN, "net": NET_MIN, "max": PICK_MAX},
         "movers": movers[:20],
         "past": [{k: e[k] for k in ("sym", "date", "b", "n", "z", "pos", "neg", "react")} |
                  {f"f{h}": round(e[f"f{h}"] * 100, 2) if e[f"f{h}"] is not None else None for h in HORIZONS} |
