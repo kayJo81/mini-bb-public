@@ -25,6 +25,7 @@ a{color:inherit}
 .why{margin-top:6px;font-size:13px;line-height:1.45;background:#fffbeb;border:.5px solid #fde68a;border-radius:8px;padding:5px 8px;overflow-wrap:anywhere}
 .why a{text-decoration:none;font-weight:600}.why a:hover{color:var(--acc)}
 .why .src{font-size:11.5px;color:var(--sub)}
+.why.alt{background:#f9fafb;border-color:var(--bd)}
 .sec{background:var(--card);border:1.5px solid var(--bd);border-radius:14px;padding:10px 14px;box-shadow:var(--sh);cursor:pointer;text-align:left;font:inherit;color:inherit;min-width:0}
 .sec.on{border-color:#111827;box-shadow:0 0 0 2px #111827 inset}
 .sec .t{font-weight:800;font-size:16px}.sec .s{font-size:13px;color:var(--sub);margin-top:2px}
@@ -161,35 +162,24 @@ function render(){
   loadReasons(list.slice(0,30));
 }
 
-// ── 강세(약세) 이유: 대장주(약세 테마는 가장 많이 내린 종목) 최신 뉴스 중 움직임을 설명하는 기사 ──
-const reasons=new Map();let reasonsAt=0;
-const movers=g=>(g.chg>=0?(g.leaders||[]):(g.laggards||[]).slice().reverse()).slice(0,2);
+// ── 강세(약세) 이유: 테마마다 /api/why (대장주 뉴스 → 구글 뉴스 → 관련 뉴스 → 테마 개요 순으로 찾음) ──
+const why=new Map();   // no → {at, d}
 async function loadReasons(list){
-  if(Date.now()-reasonsAt>180e3){reasons.clear();reasonsAt=Date.now();}
-  const want=[...new Set(list.flatMap(g=>movers(g).map(x=>x.code)))].filter(c=>!reasons.has(c));
-  applyReasons(list);
-  const jobs=[];
-  for(let i=0;i<want.length;i+=16)jobs.push(fetch('api/reasons?c='+want.slice(i,i+16).join(',')).then(r=>r.json())
-    .then(r=>{for(const [c,v] of Object.entries(r))reasons.set(c,v);applyReasons(list);}).catch(()=>{}));
-  await Promise.all(jobs);
+  list.forEach(paintWhy);
+  const todo=list.filter(g=>{const w=why.get(g.no);return !w||Date.now()-w.at>300e3;});
+  let i=0;
+  const worker=async()=>{while(i<todo.length){const g=todo[i++];
+    try{const d=await (await fetch(`api/why/${g.no}`)).json();if(!d.error){why.set(g.no,{at:Date.now(),d});paintWhy(g);}}catch(e){}}};
+  await Promise.all(Array.from({length:6},worker));
 }
-function applyReasons(list){
-  for(const g of list){
-    const el=document.querySelector(`[data-why="${g.no}"]`);if(!el)continue;
-    // 종목 이름이나 테마 이름의 단어가 제목에 들어간 기사만 (시장 전체 시황 기사는 제외)
-    const words=g.name.replace(/[()\/·,]/g,' ').split(/\s+/).filter(w=>w.length>=2&&!['관련주','관련','테마','수혜','등'].includes(w));
-    let best=null;
-    for(const m of movers(g))for(const n of reasons.get(m.code)||[]){
-      const hitName=n.title.includes(m.name),hitTheme=words.some(w=>n.title.includes(w));
-      if(!hitName&&!hitTheme)continue;
-      const sc=n.score+(hitName?3:0)+(hitTheme?2:0);
-      if(!best||sc>best.sc)best={n,m,sc};
-    }
-    if(!best){el.hidden=true;continue;}
-    const t=best.n.t;
-    el.innerHTML=`💡 <a href="${esc(best.n.url)}" target="_blank" rel="noopener">${esc(best.n.title)}</a> <span class="src">· ${esc(best.m.name)} 관련 · ${esc(best.n.office)} ${t?`${t.slice(4,6)}/${t.slice(6,8)} ${t.slice(8,10)}:${t.slice(10,12)}`:''}</span>`;
-    el.hidden=false;
-  }
+function paintWhy(g){
+  const el=document.querySelector(`[data-why="${g.no}"]`),w=why.get(g.no);if(!el||!w)return;
+  const d=w.d,tm=d.ts?new Date(d.ts).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}):'';
+  const up=g.chg>=0;
+  if(d.kind==='reason')el.innerHTML=`💡 <b>${up?'강세':'약세'} 이유</b> <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a> <span class="src">· ${d.stock?esc(d.stock)+' 관련 · ':''}${esc(d.office||'')} ${tm}</span>`;
+  else if(d.kind==='related')el.innerHTML=`📰 <b>관련 뉴스</b> <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a> <span class="src">· ${esc(d.stock||'')} · ${esc(d.office||'')} ${tm}</span>`;
+  else el.innerHTML=`📌 <b>테마 개요</b> ${esc(d.desc||'')}${d.info?`<br><span class="src">${esc(d.stock)}: ${esc(d.info)}…</span>`:''}`;
+  el.classList.toggle('alt',d.kind!=='reason');el.hidden=!(d.title||d.desc||d.info);
 }
 function card(g,rank){
   const mv=st.rh?st.rh.move(g.no):null;
