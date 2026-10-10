@@ -12,3 +12,5 @@ data/
 
 labdata/
 public_lab/
+.wrangler/
+node_modules/
