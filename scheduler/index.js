@@ -1,5 +1,5 @@
 // 미니 블벅터 스케줄러 (Cloudflare Worker Cron)
-// GitHub 예약 실행이 불안정해서, Cloudflare 가 45분마다 briefing 워크플로를 직접 실행시킨다.
+// GitHub 예약 실행이 불안정해서, Cloudflare 가 15분마다 briefing 워크플로를 직접 실행시킨다.
 // 필요한 Worker 비밀값: GH_TOKEN (Actions: Read and write 권한의 GitHub 토큰)
 const REPO = "kayJo81/mini-bb-public";
 const WORKFLOW = "briefing.yml";

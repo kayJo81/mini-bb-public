@@ -1,7 +1,7 @@
 """
 FinancialJuice 스타일 속보 모음 — 직전 18시간 헤드라인을 PDF로 (일일 메일 첨부용, 번역판 + 원문판)
 
-  python scripts/fj_pdf.py --accumulate --store .cache/fj.json        # 45분 수집마다: FJ 공개 피드 누적
+  python scripts/fj_pdf.py --accumulate --store .cache/fj.json        # 15분 수집마다: FJ 공개 피드 누적
   python scripts/fj_pdf.py --out reports --store .cache/fj.json --cache .cache/ko.json   # 05:30: PDF 생성
 
   · FinancialJuice 공개 피드는 최근 100건만 주므로 수집 때마다 모아 두고(최대 30시간), PDF 때 합친다

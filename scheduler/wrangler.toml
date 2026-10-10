@@ -3,8 +3,8 @@ main = "index.js"
 compatibility_date = "2024-09-01"
 workers_dev = false
 
-# 45분 간격 (UTC): 00:07 → 00:52 → 01:37 → 02:22 → 03:07 …
+# 15분 간격 (매시 07·22·37·52분 — 05:30 KST 메일 실행과 겹치지 않게)
 # + 20:30 UTC(05:30 KST): 일일 PDF 메일 (index.js REPORT_CRON 과 같아야 함)
 # + 22:00 UTC 화~토(07:00 KST): 미니 블벅 랩 (index.js LAB_CRON 과 같아야 함)
 [triggers]
-crons = ["7,52 0-23/3 * * *", "37 1-23/3 * * *", "22 2-23/3 * * *", "30 20 * * *", "0 22 * * TUE-SAT"]
+crons = ["7,22,37,52 * * * *", "30 20 * * *", "0 22 * * TUE-SAT"]

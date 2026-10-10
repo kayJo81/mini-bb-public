@@ -1,6 +1,6 @@
 # 미니 블벅터 — 직전 14시간 뉴스를 수집해 Cloudflare Pages 에 배포
 #  · 화면은 조회하는 순간 기준 12시간 이내 보도만 보여준다
-#  · 45분마다 실행 (공개 저장소라 Actions 사용 시간 제한 없음)
+#  · 15분마다 실행 (공개 저장소라 Actions 사용 시간 제한 없음)
 #  · 실행 신호: Cloudflare Worker 크론 (scheduler/)
 #  · report=true 로 실행되면(매일 05:30 KST, scheduler/) 수집 후 PDF를 만들어 메일로 보낸다
 # 필요한 저장소 Secrets: FINNHUB_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
@@ -8,7 +8,7 @@
 name: briefing
 
 on:
-  # 실행 시점은 Cloudflare Worker(scheduler/)가 45분마다 workflow_dispatch 로 호출한다.
+  # 실행 시점은 Cloudflare Worker(scheduler/)가 15분마다 workflow_dispatch 로 호출한다.
   # GitHub 자체 schedule 은 이 저장소에서 동작하지 않아 쓰지 않음 (중복 실행·한도 초과 방지).
   workflow_dispatch:
     inputs:
@@ -50,7 +50,7 @@ jobs:
       - name: Build briefing
         env:
           FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
-          FINNHUB_MIN_INTERVAL: "0.25"   # 45분에 한 번 몰아 호출 (59회 < 분당 60회 한도)
+          FINNHUB_MIN_INTERVAL: "0.25"   # 15분에 한 번 몰아 호출 (59회 < 분당 60회 한도)
           FJ_DUMP: .cache/fj_latest.json
         run: python scripts/build_static.py --out public
 
