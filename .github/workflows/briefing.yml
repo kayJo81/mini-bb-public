@@ -8,12 +8,8 @@
 name: briefing
 
 on:
-  # 기본: Cloudflare Worker(scheduler/)가 15분마다 workflow_dispatch 로 호출.
-  # 예비: Worker 토큰이 이 저장소를 실행하지 못하는 동안 GitHub 자체 예약으로도 실행 (공개 저장소라 무제한)
-  #  — Worker 가 다시 동작하면 아래 schedule 은 지운다 (중복 실행·중복 메일 방지)
-  schedule:
-    - cron: "2,17,32,47 * * * *"
-    - cron: "30 20 * * *"        # 05:30 KST 일일 PDF 메일
+  # 실행 시점은 Cloudflare Worker(scheduler/)가 15분마다 workflow_dispatch 로 호출한다.
+  # GitHub 자체 schedule 은 이 저장소에서 동작하지 않아 쓰지 않음 (중복 실행·한도 초과 방지).
   workflow_dispatch:
     inputs:
       report:
@@ -118,49 +114,49 @@ jobs:
 
       # ── 일일 PDF (report=true 일 때만) ──
       - name: Install PDF tools
-        if: ${{ inputs.report || github.event.schedule == '30 20 * * *' }}
+        if: ${{ inputs.report }}
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk >/dev/null
           pip install -q playwright
           python -m playwright install --with-deps chromium >/dev/null
 
       - name: Build PDFs
-        if: ${{ inputs.report || github.event.schedule == '30 20 * * *' }}
+        if: ${{ inputs.report }}
         run: python scripts/daily_pdf.py public/briefings/live.json --out reports
 
       # 월스트리트견문 실시간 속보 직전 18시간 전체 (한국어 번역) — 실패해도 나머지 PDF 메일은 보냄
       - name: Build WallstreetCN PDF
-        if: ${{ inputs.report || github.event.schedule == '30 20 * * *' }}
+        if: ${{ inputs.report }}
         continue-on-error: true
         run: python scripts/wscn_pdf.py --out reports --cache .cache/ko.json
 
       # FinancialJuice + 뉴스 소스(WSJ·CNBC·블룸버그·로이터·연준 …) 직전 18시간 헤드라인
       - name: Build FinancialJuice PDF
-        if: ${{ inputs.report || github.event.schedule == '30 20 * * *' }}
+        if: ${{ inputs.report }}
         continue-on-error: true
         run: python scripts/fj_pdf.py --out reports --store .cache/fj.json --cache .cache/ko.json
 
       # 블룸버그 최신 기사(bloomberg.com/latest) 직전 18시간
       - name: Build Bloomberg PDF
-        if: ${{ inputs.report || github.event.schedule == '30 20 * * *' }}
+        if: ${{ inputs.report }}
         continue-on-error: true
         run: python scripts/bbg_pdf.py --out reports --cache .cache/ko.json
 
       # 위불(Webull) 추적 종목 59개 뉴스 직전 18시간
       - name: Build Webull PDF
-        if: ${{ inputs.report || github.event.schedule == '30 20 * * *' }}
+        if: ${{ inputs.report }}
         continue-on-error: true
         run: python scripts/webull_pdf.py --out reports --cache .cache/ko.json
 
       - uses: actions/upload-artifact@v4
-        if: ${{ inputs.report || github.event.schedule == '30 20 * * *' }}
+        if: ${{ inputs.report }}
         with:
           name: daily-pdf
           path: reports/*.pdf
           retention-days: 7
 
       - name: Send mail
-        if: ${{ inputs.report || github.event.schedule == '30 20 * * *' }}
+        if: ${{ inputs.report }}
         env:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
