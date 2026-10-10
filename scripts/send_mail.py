@@ -22,7 +22,9 @@ def main(folder):
     files = sorted(glob.glob(os.path.join(folder, "*.pdf")))
     sub = open(os.path.join(folder, "summary.txt"), encoding="utf-8").read().strip()
     msg = EmailMessage()
-    msg["Subject"] = f"[미니 블벅터] {sub.split('·')[1].strip()} 뉴스 PDF"
+    subj = os.path.join(folder, "subject.txt")   # 있으면 그 제목 (예: 장 마감 종가 PDF)
+    msg["Subject"] = open(subj, encoding="utf-8").read().strip() if os.path.exists(subj) \
+        else f"[미니 블벅터] {sub.split('·')[1].strip()} 뉴스 PDF"
     msg["From"], msg["To"] = user, ", ".join(to)
     msg.set_content(f"{sub}\n\n첨부 {len(files)}개:\n" + "\n".join("· " + os.path.basename(f) for f in files)
                     + "\n\n사이트: https://mini-bbterminal.pages.dev")

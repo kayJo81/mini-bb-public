@@ -1,0 +1,52 @@
+# 미국 장 마감 종가 PDF ('M월 D일 시장 등락': 주요 지수 + 분야별 종목, 등락률 순) → 메일
+#  · 화~토 06:40 KST(미국 장 마감 뒤 — 서머타임 05:00, 겨울 06:00 마감) scheduler/ 가 실행
+#  · 미국 휴장일이면 PDF·메일 없이 끝남
+# 필요한 저장소 Secrets: GMAIL_USER, GMAIL_APP_PASSWORD, 선택 MAIL_TO
+name: close
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "마감일(미국, YYYY-MM-DD). 비우면 오늘 마감(휴장이면 건너뜀)"
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: close
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk >/dev/null
+          pip install -q requests playwright
+          python -m playwright install --with-deps chromium >/dev/null
+      - name: Build close PDF
+        id: pdf
+        env:
+          CLOSE_REQUIRE_TODAY: ${{ inputs.date == '' && '1' || '' }}
+        run: python scripts/close_pdf.py --out reports_close ${{ inputs.date != '' && format('--date {0}', inputs.date) || '' }}
+      - uses: actions/upload-artifact@v4
+        if: ${{ steps.pdf.outputs.skip != 'true' }}
+        with:
+          name: close-pdf
+          path: reports_close/*.pdf
+          retention-days: 7
+      - name: Send mail
+        if: ${{ steps.pdf.outputs.skip != 'true' }}
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+        run: python scripts/send_mail.py reports_close

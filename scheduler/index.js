@@ -6,6 +6,7 @@ const WORKFLOW = "briefing.yml";
 
 const REPORT_CRON = "30 20 * * *";   // 매일 05:30 KST: 수집 + 일일 PDF 메일
 const LAB_CRON = "0 22 * * TUE-SAT";     // 화~토 07:00 KST(미국 장 마감 뒤): 미니 블벅 랩 갱신
+const CLOSE_CRON = "40 21 * * TUE-SAT";  // 화~토 06:40 KST(미국 장 마감 뒤): 종가 PDF 메일
 
 async function dispatch(env, report, workflow = WORKFLOW, inputs = null) {
   const r = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${workflow}/dispatches`, {
@@ -26,6 +27,8 @@ export default {
   async scheduled(event, env, ctx) {
     if (event.cron === LAB_CRON) {
       ctx.waitUntil(dispatch(env, false, "lab.yml", { days: "4" }));
+    } else if (event.cron === CLOSE_CRON) {
+      ctx.waitUntil(dispatch(env, false, "close.yml", { date: "" }));
     } else {
       ctx.waitUntil(dispatch(env, event.cron === REPORT_CRON));
     }
