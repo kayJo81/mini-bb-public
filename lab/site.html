@@ -117,6 +117,8 @@ function render(d){
   if(SIM){document.getElementById('app').innerHTML=P?paperCard(P):'<div class="card empty">가상 매매 데이터를 불러오지 못했어요.</div>';return;}
   h+=`<a class="card" href="sim" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
     <span><b>🧪 가상 매매 시뮬레이션</b><br><span class="hsub">${P?`${esc(P.status)} · 평가액 $${Math.round(P.equity).toLocaleString()} (${pct(P.ret)}) · QQQ ${pct(P.bench_ret)}`:'신호를 실제로 따라 했다면?'}</span></span><span class="link">보기 →</span></a>`;
+  h+=`<a class="card" href="env" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
+    <span><b>🌡️ 시장 환경 기록</b><br><span class="hsub" id="envSub">옵션 수급·VIX 구조·금리·공매도·예측시장 — 국면별 전략 검증용으로 매일 저장</span></span><span class="link">보기 →</span></a>`;
 
   // 오늘의 후보
   h+=`<div class="card"><h2>🎯 최근 3거래일 신호</h2><p class="note">회사 언급 기사가 평소보다 크게 몰리고(평소 대비 z≥${d.rules.z}, ${d.rules.n}건 이상) 호재·악재가 한쪽으로 쏠린 종목. 방향은 과거 같은 유형 신호의 5거래일 뒤 ${d.rules.bench} 대비 초과수익으로 정해요.</p>`;
@@ -161,6 +163,8 @@ function render(d){
     <li><b>수익:</b> 이벤트 날 종가 → N거래일 뒤 종가, ${d.rules.bench} 수익률을 뺀 초과수익. 거래비용·공매도 비용은 빠져 있어요.</li>
     <li><b>한계:</b> 신호 유형 4가지를 미리 정해 두고 검증하지만, 표본이 적거나 시장 국면이 바뀌면 결과가 달라질 수 있어요.</li></ul></details></div>`;
   document.getElementById('app').innerHTML=h;
+  fetch('env.json',{cache:'no-store'}).then(r=>r.json()).then(e=>{const x=(e.summary||[]).slice(-1)[0];const el=document.getElementById('envSub');
+    if(x&&el)el.textContent=`${x.date} · VIX ${x.vix?.toFixed(1)} · VIX/VIX3M ${x.vix_term?.toFixed(2)} · 풋/콜(주식) ${x.pc_equity} · 기록 ${(e.summary||[]).length}일`;}).catch(()=>{});
 }
 Promise.all([fetch('data.json?'+Date.now()).then(r=>r.json()),fetch('paper.json?'+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)])
   .then(([d,p])=>{P=p;render(d);}).catch(()=>{document.getElementById('app').innerHTML='<div class="card empty">데이터를 불러오지 못했어요.</div>';});

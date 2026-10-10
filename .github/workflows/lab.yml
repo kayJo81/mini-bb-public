@@ -53,12 +53,20 @@ jobs:
           FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
         run: python lab/update_news.py --days "${{ inputs.days || '4' }}"
 
+      # 시장 환경 스냅샷 (옵션 수급·VIX 구조·금리·공매도·예측시장) — 과거치를 나중에 못 받는 것들을 매일 저장
+      - name: Market environment snapshot
+        continue-on-error: true
+        env:
+          LAB_OUT: public_lab
+        run: python lab/env_snapshot.py
+
       - name: Signals
         run: |
           python lab/signals.py --out public_lab
           python lab/paper.py --signals public_lab/data.json --out public_lab
           cp lab/site.html public_lab/index.html
           cp lab/site.html public_lab/sim.html
+          cp lab/env.html public_lab/env.html
 
       - name: Save data
         if: always()
