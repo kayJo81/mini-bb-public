@@ -142,11 +142,17 @@ def fetch_feed(label, url, fallback):
 
 
 def fetch_fj():
-    try:
-        r = requests.get(FJ_URL, headers=HDR, timeout=20)
-        items = _parse(r.content, "FinancialJuice")
-    except Exception as ex:
-        print(f"[fj] FinancialJuice: {ex}")
+    items = None
+    for i in range(3):   # 가끔 빈 응답(차단·지연)이 와서 잠시 뒤 다시 시도
+        try:
+            r = requests.get(FJ_URL, headers=HDR, timeout=20)
+            items = _parse(r.content, "FinancialJuice")
+            if items:
+                break
+        except Exception as ex:
+            print(f"[fj] FinancialJuice ({i + 1}/3): {ex}")
+        time.sleep(5 * (i + 1))
+    if not items:
         return []
     for x in items:
         x["headline"] = re.sub(r"^FinancialJuice:\s*", "", x["headline"])
