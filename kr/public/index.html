@@ -22,6 +22,26 @@ a{color:inherit}
 .wrap{max-width:980px;margin:0 auto;padding:12px 16px 40px}
 .secs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
 @media(max-width:640px){.secs{grid-template-columns:1fr 1fr}}
+.secs{grid-template-columns:repeat(5,1fr)}
+@media(max-width:640px){.secs{grid-template-columns:1fr 1fr}.sec.map{grid-column:1/-1}}
+/* 맵 (핀비즈 맵처럼: 크기 = 시가총액, 색 = 등락률 — 한국식 빨강 상승·파랑 하락) */
+.mbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.mtab{padding:7px 14px;border-radius:999px;border:1px solid var(--bd);background:#fff;font-weight:800;font-size:14px;cursor:pointer}
+.mtab.on{background:#111827;color:#fff;border-color:#111827}
+.midx{font-size:14px;font-weight:700}.midx b{font-family:var(--mono);font-size:16px}
+.tmap{position:relative;width:100%;height:620px;background:#1f2330;border-radius:12px;overflow:hidden;user-select:none}
+@media(max-width:640px){.tmap{height:560px}}
+.tmap .sg{position:absolute;box-sizing:border-box;border:1px solid #1f2330}
+.tmap .sg>i{position:absolute;left:0;right:0;top:0;height:15px;font:700 10.5px/15px var(--mono),sans-serif;font-style:normal;color:#e5e7eb;
+  padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#1f2330}
+.tmap .tl{position:absolute;box-sizing:border-box;border:1px solid #1f2330;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;overflow:hidden;cursor:pointer;line-height:1.1}
+.tmap .tl b{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:96%}
+.tmap .tl span{font-family:var(--mono);font-size:11px;opacity:.95}
+.tmap .tl.sel{outline:2px solid #fde047;outline-offset:-2px;z-index:2}
+.mlegend{display:flex;gap:2px;align-items:center;margin-top:8px;font:600 11px var(--mono),sans-serif;color:var(--sub);flex-wrap:wrap}
+.mlegend span{padding:2px 6px;border-radius:4px;color:#fff}
+.minfo{margin-top:8px;font-size:14px;min-height:20px}.minfo a{font-weight:700;text-decoration:none}
 .iss{background:linear-gradient(135deg,#fff7ed,#fff);border:1px solid #fed7aa;border-radius:var(--r);box-shadow:var(--sh);padding:10px 12px;margin-bottom:8px;min-width:0}
 .iss-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .iss-n{font-weight:800;font-size:16px;overflow-wrap:anywhere}
@@ -116,6 +136,14 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
     <button class="sec" data-sec="산업"><div class="t">🏭 산업</div><div class="s" data-cnt="산업">뉴스</div></button>
     <button class="sec" data-sec="매크로"><div class="t">🌐 매크로</div><div class="s" data-cnt="매크로">뉴스</div></button>
     <button class="sec" data-sec="정치·정책"><div class="t">🏛️ 정치·정책</div><div class="s" data-cnt="정치·정책">뉴스</div></button>
+    <button class="sec map" data-sec="map"><div class="t">🗺️ 맵</div><div class="s" id="secMap">코스피·코스닥 한눈에</div></button>
+  </div>
+  <div id="mapView" hidden>
+    <div class="mbar"><button class="mtab" data-m="KOSPI">코스피</button><button class="mtab" data-m="KOSDAQ">코스닥</button>
+      <span class="midx" id="midx"></span></div>
+    <div class="tmap" id="tmap"><div class="empty" style="color:#e5e7eb">불러오는 중…</div></div>
+    <div class="mlegend" id="mleg"></div>
+    <div class="minfo hsub" id="minfo">시가총액 상위 200종목 · 업종별 · 타일 크기 = 시가총액, 색 = 등락률 · 타일을 누르면 자세히</div>
   </div>
   <div id="newsView" hidden><div class="ncats" id="ncats"></div><div id="nlist"><div class="empty">불러오는 중…</div></div></div>
   <div id="themeView">
@@ -279,12 +307,14 @@ document.getElementById('q').oninput=e=>{const v=e.target.value.trim();st.q=ALIA
 const VL={VERIFIED:'검증됨',SINGLE:'단독보도',UNVERIFIED:'미확인'};
 const ns={cat:'ALL',data:null,at:0};
 let sec='theme';try{sec=localStorage.getItem('kr_sec')||'theme';}catch(e){}
-if(!['theme','산업','매크로','정치·정책'].includes(sec))sec='theme';
+if(!['theme','산업','매크로','정치·정책','map'].includes(sec))sec='theme';
 function setSec(v){
   sec=v;try{localStorage.setItem('kr_sec',v);}catch(e){}
   document.querySelectorAll('.sec').forEach(b=>b.classList.toggle('on',b.dataset.sec===v));
-  document.getElementById('themeView').hidden=v!=='theme';document.getElementById('newsView').hidden=v==='theme';
+  document.getElementById('themeView').hidden=v!=='theme';document.getElementById('newsView').hidden=v==='theme'||v==='map';
+  document.getElementById('mapView').hidden=v!=='map';
   ns.cat='ALL';
+  if(v==='map'){loadMap();return;}
   if(v!=='theme'){if(Date.now()-ns.at>60e3)loadNews();else renderNews();}
 }
 async function loadNews(){
@@ -322,9 +352,88 @@ function renderNews(){
 }
 document.getElementById('ncats').addEventListener('click',e=>{const c=e.target.closest('[data-c]');if(c){ns.cat=c.dataset.c;renderNews();}});
 document.querySelectorAll('.sec').forEach(b=>b.onclick=()=>setSec(b.dataset.sec));
-setInterval(()=>{if(sec!=='theme')loadNews();},5*60e3);
-document.getElementById('rbtn').onclick=()=>{load();if(sec!=='theme')loadNews();};
+// ── 맵: 업종별 시가총액 타일 (squarified treemap) ──
+const mp={m:'KOSPI',data:{},sel:null,timer:null};
+try{mp.m=localStorage.getItem('kr_map')||'KOSPI';}catch(e){}
+const MSTEPS=[[-3,'#1d4ed8'],[-2,'#2f5fbf'],[-1,'#3d5a8f'],[0,'#454b5c'],[1,'#8f3d45'],[2,'#c2333b'],[3,'#e11d2a']];
+function mcolor(c){
+  if(c<=MSTEPS[0][0])return MSTEPS[0][1];if(c>=MSTEPS[6][0])return MSTEPS[6][1];
+  for(let i=0;i<6;i++){const[a,ca]=MSTEPS[i],[b,cb]=MSTEPS[i+1];if(c<=b){const t=(c-a)/(b-a),h=x=>parseInt(x,16);
+    const mix=k=>Math.round(h(ca.substr(k,2))*(1-t)+h(cb.substr(k,2))*t).toString(16).padStart(2,'0');return '#'+mix(1)+mix(3)+mix(5);}}
+}
+function squarify(items,x,y,w,h){   // items: {v} 큰 순 → {x,y,w,h} 를 붙여 돌려준다
+  const tot=items.reduce((a,i)=>a+i.v,0);if(!tot||w<=0||h<=0)return items;
+  const k=w*h/tot,q=items.map(i=>({i,a:i.v*k}));
+  const worst=(row,side)=>{const s=row.reduce((a,r)=>a+r.a,0),mx=Math.max(...row.map(r=>r.a)),mn=Math.min(...row.map(r=>r.a));
+    return Math.max(side*side*mx/(s*s),s*s/(side*side*mn));};
+  let row=[];
+  const place=()=>{const s=row.reduce((a,r)=>a+r.a,0);
+    if(w>=h){const cw=s/h;let yy=y;for(const r of row){const rh=r.a/cw;Object.assign(r.i,{x,y:yy,w:cw,h:rh});yy+=rh;}x+=cw;w-=cw;}
+    else{const rh=s/w;let xx=x;for(const r of row){const rw=r.a/rh;Object.assign(r.i,{x:xx,y,w:rw,h:rh});xx+=rw;}y+=rh;h-=rh;}
+    row=[];};
+  while(q.length){const side=Math.min(w,h),it=q[0];
+    if(!row.length||worst(row.concat(it),side)<=worst(row,side)){row.push(it);q.shift();}else place();}
+  if(row.length)place();
+  return items;
+}
+const fmtCap=v=>v>=10000?(v/10000).toFixed(v>=100000?0:1)+'조':Math.round(v).toLocaleString()+'억';
+async function loadMap(){
+  clearTimeout(mp.timer);
+  document.querySelectorAll('.mtab').forEach(b=>b.classList.toggle('on',b.dataset.m===mp.m));
+  try{
+    const r=await fetch('api/map?m='+mp.m);const d=await r.json();if(d.error)throw new Error(d.error);
+    mp.data[mp.m]=d;renderMap();
+    const o=mp.m==='KOSPI'?'KOSDAQ':'KOSPI';   // 맵 카드 요약(코스피·코스닥 등락률)용
+    if(!mp.data[o])fetch('api/map?m='+o).then(r=>r.json()).then(x=>{if(!x.error){mp.data[o]=x;if(sec==='map')renderMap();else mapSummary();}}).catch(()=>{});
+  }catch(e){document.getElementById('tmap').innerHTML=`<div class="empty" style="color:#e5e7eb">맵을 불러오지 못했어요 (${esc(e.message)})</div>`;}
+  const open=(mp.data[mp.m]||{}).status==='OPEN';
+  if(sec==='map')mp.timer=setTimeout(loadMap,open?30e3:300e3);
+}
+function renderMap(){
+  const d=mp.data[mp.m];if(!d)return;
+  const el=document.getElementById('tmap'),W=el.clientWidth,H=el.clientHeight,ix=d.index||{};
+  const sgn=v=>v>0?'+':'';const cls=v=>v>0?'up':v<0?'dn':'';
+  document.getElementById('midx').innerHTML=`${esc(ix.name)} <b class="${cls(ix.chg)}">${esc(ix.price)}</b> <span class="${cls(ix.chg)}">${sgn(ix.chg)}${ix.chg}%</span>`;
+  const secs=d.sectors.map(s=>({...s,v:s.cap}));
+  squarify(secs,0,0,W,H);
+  let html='';
+  for(const s of secs){
+    const head=s.w>40&&s.h>34?15:0;
+    html+=`<div class="sg" style="left:${s.x}px;top:${s.y}px;width:${s.w}px;height:${s.h}px">${head?`<i>${esc(s.name)} ${sgn(s.chg)}${s.chg.toFixed(2)}%</i>`:''}</div>`;
+    const st=s.stocks.map(x=>({...x,v:x.cap}));
+    squarify(st,s.x+1,s.y+head+1,s.w-2,s.h-head-2);
+    for(const t of st){
+      const big=t.w>=30&&t.h>=26,huge=t.w>=90&&t.h>=56,small=t.w<46;
+      html+=`<div class="tl ${mp.sel===t.c?'sel':''}" data-c="${t.c}" style="left:${t.x}px;top:${t.y}px;width:${t.w}px;height:${t.h}px;background:${mcolor(t.chg)}${huge?';font-size:15px':''}">`+
+        (big?`<b style="font-size:${huge?15:small?10:12}px">${esc(t.n)}</b><span style="font-size:${small?9:11}px">${sgn(t.chg)}${t.chg.toFixed(small?1:2)}%</span>`:'')+`</div>`;
+    }
+  }
+  el.innerHTML=html;
+  document.getElementById('mleg').innerHTML=MSTEPS.map(([v,c])=>`<span style="background:${c}">${v>0?'+':''}${v}%</span>`).join('');
+  mapSummary();
+  if(mp.sel)showTile(mp.sel);
+}
+function mapSummary(){
+  const cls=v=>v>0?'up':v<0?'dn':'',f=x=>x&&x.index?`${x.index.name} <b class="${cls(x.index.chg)}">${x.index.chg>0?'+':''}${x.index.chg}%</b>`:'';
+  const t=[f(mp.data.KOSPI),f(mp.data.KOSDAQ)].filter(Boolean).join(' · ');if(t)document.getElementById('secMap').innerHTML=t;
+}
+function showTile(code){
+  const d=mp.data[mp.m];if(!d)return;
+  for(const s of d.sectors)for(const t of s.stocks)if(t.c===code){
+    const c=t.chg>0?'up':t.chg<0?'dn':'';
+    document.getElementById('minfo').innerHTML=`<a href="https://m.stock.naver.com/domestic/stock/${t.c}/total" target="_blank" rel="noopener">${esc(t.n)}</a> · ${esc(s.name)} · `+
+      `<b>${t.p!=null?t.p.toLocaleString():''}원</b> <b class="${c}">${t.chg>0?'+':''}${t.chg.toFixed(2)}%</b> · 시총 ${fmtCap(t.cap)}`;
+    return;}
+}
+document.getElementById('tmap').addEventListener('click',e=>{const t=e.target.closest('.tl');if(!t)return;mp.sel=t.dataset.c;
+  document.querySelectorAll('.tl.sel').forEach(x=>x.classList.remove('sel'));t.classList.add('sel');showTile(mp.sel);});
+document.querySelectorAll('.mtab').forEach(b=>b.onclick=()=>{mp.m=b.dataset.m;mp.sel=null;try{localStorage.setItem('kr_map',mp.m);}catch(e){}
+  if(mp.data[mp.m])renderMap();loadMap();});
+let rzT;addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(()=>{if(sec==='map')renderMap();},200);});
+setInterval(()=>{if(sec!=='theme'&&sec!=='map')loadNews();},5*60e3);
+document.getElementById('rbtn').onclick=()=>{load();if(sec==='map')loadMap();else if(sec!=='theme')loadNews();};
 setSec(sec);
+if(sec!=='map')['KOSPI','KOSDAQ'].forEach(m=>fetch('api/map?m='+m).then(r=>r.json()).then(x=>{if(!x.error){mp.data[m]=x;mapSummary();}}).catch(()=>{}));
 loadNews();
 load();
 </script>
