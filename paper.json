@@ -1,0 +1,37 @@
+{
+ "rules": {
+  "capital": 100000.0,
+  "size": 10000.0,
+  "hold": 5,
+  "cost": 0.001,
+  "entry_days": 10
+ },
+ "start": "2026-10-09",
+ "signal_days": [
+  "2026-10-09"
+ ],
+ "seen": [
+  "LITE|2026-10-09"
+ ],
+ "pending": [
+  {
+   "sym": "LITE",
+   "dir": "롱",
+   "b": "pos_up",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-09",
+   "head": "Optics Stocks Rally on Sold-Out Optical Capacity Through Early 2029: Applied Optoelectronics and Lumentum Surge 7%, Coherent Climbs 5%"
+  }
+ ],
+ "open": [],
+ "closed": [],
+ "cash": 100000.0,
+ "curve": [
+  [
+   "2026-10-09",
+   100000.0,
+   100000.0
+  ]
+ ],
+ "status": "진행 중"
+}
