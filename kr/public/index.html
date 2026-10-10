@@ -20,6 +20,23 @@ a{color:inherit}
 .hsub{font-size:12px;color:var(--sub)}
 .btn{padding:8px 14px;border-radius:10px;border:.5px solid var(--bd);background:#fff;cursor:pointer;font-size:14px;font-weight:700;color:#374151;text-decoration:none;white-space:nowrap}
 .wrap{max-width:980px;margin:0 auto;padding:12px 16px 40px}
+.secs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.sec{background:var(--card);border:1.5px solid var(--bd);border-radius:14px;padding:10px 14px;box-shadow:var(--sh);cursor:pointer;text-align:left;font:inherit;color:inherit;min-width:0}
+.sec.on{border-color:#111827;box-shadow:0 0 0 2px #111827 inset}
+.sec .t{font-weight:800;font-size:16px}.sec .s{font-size:13px;color:var(--sub);margin-top:2px}
+.sec .s b{font-family:var(--mono);font-size:16px}
+.ncats{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.nc{padding:6px 12px;border-radius:999px;border:.5px solid var(--bd);background:#fff;font-weight:700;font-size:13.5px;cursor:pointer}
+.nc.on{background:#111827;color:#fff;border-color:#111827}.nc small{font-family:var(--mono);opacity:.7;margin-left:3px}
+.nw{background:var(--card);border:.5px solid var(--bd);border-radius:12px;box-shadow:var(--sh);padding:10px 12px;margin-bottom:8px;min-width:0}
+.nr1{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
+.tb{font-family:var(--mono);font-size:12px;font-weight:700;background:#111827;color:#fff;border-radius:6px;padding:1px 7px}
+.vb{font-size:11px;font-weight:700;border-radius:5px;padding:1px 6px}
+.v-VERIFIED{background:#dcfce7;color:#166534}.v-SINGLE{background:#fef3c7;color:#92400e}.v-UNVERIFIED{background:#f3f4f6;color:#4b5563}
+.tg{font-size:11px;font-weight:600;border-radius:5px;padding:1px 6px;background:#eef2ff;color:#3730a3}
+.nh{font-weight:600;font-size:15px;text-decoration:none;line-height:1.45;overflow-wrap:anywhere}.nh:hover{color:var(--acc)}
+.nw details{font-size:12.5px;color:var(--sub);margin-top:4px}.nw summary{cursor:pointer}
+.nw details div{padding:2px 0;overflow-wrap:anywhere}
 .summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .sm{flex:1 1 140px;background:var(--card);border:.5px solid var(--bd);border-radius:12px;padding:8px 12px;box-shadow:var(--sh);min-width:0}
 .sm b{font-family:var(--mono);font-size:17px;display:block}
@@ -68,6 +85,12 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
   <a class="btn" href="https://mini-bbterminal.pages.dev">🇺🇸 미국 증시</a>
 </div>
 <div class="wrap">
+  <div class="secs" id="secs">
+    <button class="sec" data-sec="theme"><div class="t">📈 장중 테마</div><div class="s" id="secTheme">불러오는 중…</div></button>
+    <button class="sec" data-sec="news"><div class="t">📰 한국 증시 뉴스</div><div class="s" id="secNews">15분마다 수집</div></button>
+  </div>
+  <div id="newsView" hidden><div class="ncats" id="ncats"></div><div id="nlist"><div class="empty">불러오는 중…</div></div></div>
+  <div id="themeView">
   <div class="summary" id="sum"></div>
   <div class="tabs">
     <span class="tab on" data-v="up">🔥 강한 테마</span>
@@ -76,7 +99,8 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
     <input id="q" placeholder="테마 검색 (예: 반도체, 원전)">
   </div>
   <div id="list"><div class="empty">불러오는 중…</div></div>
-  <footer>네이버 증권 테마 분류·시세 기준 (최대 1분 지연) · 장중 30초마다 자동 갱신 · 투자 권유 아님</footer>
+  </div>
+  <footer>테마: 네이버 증권 테마 분류·시세 (최대 1분 지연, 장중 30초마다 갱신) · 뉴스: 구글 뉴스 한국판 직전 24시간, 15분마다 수집 · 투자 권유 아님</footer>
 </div>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -118,9 +142,9 @@ function render(){
   ms.textContent=open?'● 장중':'장 마감';ms.className='pill'+(open?' open':'');
   const G=d.groups,up=G.filter(g=>g.chg>0).length,dn=G.filter(g=>g.chg<0).length;
   const top=G[0],bot=G[G.length-1];
+  document.getElementById('secTheme').innerHTML=`오른 <b class="up">${up}</b> / 내린 <b class="dn">${dn}</b>`;
   document.getElementById('sum').innerHTML=
-    `<div class="sm"><span class="hsub">오른 테마 / 내린 테마</span><b><span class="up">${up}</span> / <span class="dn">${dn}</span></b></div>
-     <div class="sm"><span class="hsub">가장 강한 테마</span><b class="up" style="font-size:14px">${esc(top.name)} ${pct(top.chg)}</b></div>
+    `<div class="sm"><span class="hsub">가장 강한 테마</span><b class="up" style="font-size:14px">${esc(top.name)} ${pct(top.chg)}</b></div>
      <div class="sm"><span class="hsub">가장 약한 테마</span><b class="dn" style="font-size:14px">${esc(bot.name)} ${pct(bot.chg)}</b></div>`;
   let list=st.view==='dn'?[...G].reverse():G;
   if(st.q)list=list.filter(g=>g.name.toLowerCase().includes(st.q.toLowerCase()));
@@ -170,7 +194,44 @@ document.getElementById('list').addEventListener('click',e=>{
 });
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{st.view=t.dataset.v;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));render();});
 document.getElementById('q').oninput=e=>{st.q=e.target.value.trim();render();};
-document.getElementById('rbtn').onclick=load;
+// ── 섹션: 장중 테마 / 한국 증시 뉴스 ──
+const VL={VERIFIED:'검증됨',SINGLE:'단독보도',UNVERIFIED:'미확인'};
+const ns={cat:'ALL',data:null,at:0};
+let sec='theme';try{sec=localStorage.getItem('kr_sec')||'theme';}catch(e){}
+function setSec(v){
+  sec=v;try{localStorage.setItem('kr_sec',v);}catch(e){}
+  document.querySelectorAll('.sec').forEach(b=>b.classList.toggle('on',b.dataset.sec===v));
+  document.getElementById('themeView').hidden=v!=='theme';document.getElementById('newsView').hidden=v!=='news';
+  if(v==='news'&&Date.now()-ns.at>60e3)loadNews();
+}
+async function loadNews(){
+  try{const d=await (await fetch('api/krnews',{cache:'no-store'})).json();if(d.error)throw new Error(d.error);ns.data=d;ns.at=Date.now();renderNews();}
+  catch(e){document.getElementById('nlist').innerHTML=`<div class="empty">뉴스를 불러오지 못했어요 (${esc(e.message)})</div>`;}
+}
+function renderNews(){
+  const d=ns.data;if(!d)return;
+  const at=new Date(d.generated_at);
+  document.getElementById('secNews').innerHTML=`<b>${d.total}</b>건 · ${at.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} 수집`;
+  const T=d.topics;
+  document.getElementById('ncats').innerHTML=[`<span class="nc ${ns.cat==='ALL'?'on':''}" data-c="ALL">전체<small>${d.total}</small></span>`,
+    ...T.map(t=>`<span class="nc ${ns.cat===t.id?'on':''}" data-c="${t.id}">${esc(t.name)}<small>${t.count}</small></span>`)].join('');
+  const seen=new Set(),items=[];
+  for(const t of T){if(ns.cat!=='ALL'&&ns.cat!==t.id)continue;
+    for(const x of t.stories){if(x.is_opinion||seen.has(x.headline))continue;seen.add(x.headline);items.push([x,t.name]);}}
+  items.sort((a,b)=>b[0].first_seen-a[0].first_seen);
+  document.getElementById('nlist').innerHTML=items.length?items.map(([x,cat])=>{
+    const tm=x.first_seen_kst.replace('-','/');
+    return `<div class="nw"><div class="nr1"><span class="tb">${esc(tm)}</span><span class="vb v-${x.verdict}">${VL[x.verdict]}</span><span class="tg">${esc(cat)}</span><span class="hsub">출처 ${x.n_sources}</span></div>
+      <a class="nh" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.headline)}</a>
+      ${x.sources.length>1?`<details><summary>보도 ${x.sources.length}건 보기</summary>${x.sources.map(s=>`<div><span class="tm">${esc(s.time_kst.slice(6))}</span><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.headline)}</a> · ${esc(s.name)}</div>`).join('')}</details>`:`<div class="hsub" style="margin-top:3px">${esc(x.sources[0].name)}</div>`}</div>`;}).join('')
+    :'<div class="empty">해당 카테고리 뉴스가 없어요.</div>';
+}
+document.getElementById('ncats').addEventListener('click',e=>{const c=e.target.closest('.nc');if(c){ns.cat=c.dataset.c;renderNews();}});
+document.querySelectorAll('.sec').forEach(b=>b.onclick=()=>setSec(b.dataset.sec));
+setInterval(()=>{if(sec==='news')loadNews();},5*60e3);
+document.getElementById('rbtn').onclick=()=>{load();if(sec==='news')loadNews();};
+setSec(sec);
+loadNews();
 load();
 </script>
 </body>

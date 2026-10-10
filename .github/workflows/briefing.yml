@@ -61,6 +61,11 @@ jobs:
           key: ko-${{ github.run_id }}
           restore-keys: ko-
 
+      # 미니 블벅터 KR(한국 증시) 뉴스 — 결과 파일은 이 사이트에 같이 올리고 KR 화면이 가져다 씀
+      - name: Build KR news
+        continue-on-error: true
+        run: python kr_news.py --out public/briefings/kr_news.json
+
       # FinancialJuice 공개 피드는 최근 100건만 주므로 실행마다 모아 둔다 (일일 PDF용, 최대 30시간)
       - uses: actions/cache@v4
         with:

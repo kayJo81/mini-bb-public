@@ -42,6 +42,7 @@ GNEWS_URL = "https://news.google.com/rss/search?q={q}&hl={hl}&gl={gl}&ceid={ceid
 EDITIONS = {
     "US": {"hl": "en-US", "gl": "US", "ceid": "US:en"},
     "EU": {"hl": "en-GB", "gl": "GB", "ceid": "GB:en"},   # 유럽 영문 뉴스
+    "KR": {"hl": "ko", "gl": "KR", "ceid": "KR:ko"},       # 한국 증시용(kr_news.py)
 }
 HTTP_HDR = {"User-Agent": "Mozilla/5.0 (compatible; MiniBBTerminal/1.0)"}
 
@@ -640,7 +641,7 @@ def _stem(t):
     return t
 
 
-_CJK = re.compile(r"[\u4e00-\u9fff]+")
+_CJK = re.compile(r"[\u4e00-\u9fff]+|[\uac00-\ud7a3]+")   # 중문·한글은 두 글자씩 끊어 비교
 
 
 def _tokens(text):
@@ -754,8 +755,10 @@ def fact_check(members):
     }
 
 
-BULL = re.compile(r"surge|soar|jump|beat|record|rall(y|ies)|gain|upgrade|raise|strong|win|approv|deal|partnership|expand", re.I)
-BEAR = re.compile(r"miss|cut|decline|drop|fall|plunge|slump|warn|downgrade|loss|crash|probe|lawsuit|recall|delay|ban|halt|tariff|layoff", re.I)
+BULL = re.compile(r"surge|soar|jump|beat|record|rall(y|ies)|gain|upgrade|raise|strong|win|approv|deal|partnership|expand|"
+                  r"급등|상승|강세|호실적|어닝 서프라이즈|수주|최대|신고가|돌파|상향|흑자|승인|계약", re.I)
+BEAR = re.compile(r"miss|cut|decline|drop|fall|plunge|slump|warn|downgrade|loss|crash|probe|lawsuit|recall|delay|ban|halt|tariff|layoff|"
+                  r"급락|하락|약세|부진|적자|하향|어닝 쇼크|소송|리콜|우려|압수수색|제재|감소", re.I)
 
 
 def _sentiment(text):
