@@ -1,16 +1,17 @@
-// 오늘의 이슈 테마: 급등 종목을 '같은 뉴스로 움직인 종목'끼리 자동으로 묶는다 (5분 캐시)
-//  1) 코스피·코스닥 상승률 상위에서 +5% 이상 보통주 최대 40개 (스팩·우선주 제외)
-//  2) 종목마다 네이버 종목 뉴스(3일 이내) 중 움직임 표현이 든 기사 후보 3개
-//  3) 같은 기사 제목을 공유하거나, 제목이 충분히 비슷한(한글 두 글자 단위 겹침) 종목끼리 연결 → 2종목 이상 묶음
+// 오늘의 이슈 테마: 급등(?dir=down 이면 급락) 종목을 '같은 뉴스로 움직인 종목'끼리 자동으로 묶는다 (5분 캐시)
+//  1) 코스피·코스닥 상승률(하락률) 상위에서 ±5% 이상 보통주 최대 40개 (스팩·우선주 제외)
+//  2) 종목마다 네이버 종목 뉴스(3일 이내, 시장 시황 기사 제외) 최근 6개
+//  3) 같은 기사를 공유하거나, 움직임 표현이 든 비슷한 제목(한글 두 글자 단위 겹침)끼리 연결 → 2종목 이상 묶음
 //     (코스피·증시 시황처럼 시장 전체를 다룬 기사는 연결 근거에서 제외)
 //  4) 묶음 이름: 기사 제목의 따옴표 속 핵심어 › 묶음 기사들에 가장 많이 나온 단어
 import { cached, naver, num } from "../../lib/naver.js";
 
-const MOVE = /특징주|급등|상한가|강세|수혜|기대감|껑충|폭등|신고가|들썩|↑|뛴다|뛰어|날개|주목|부각|랠리|훨훨|줄줄이|동반|무더기/;
+const MOVE_UP = /특징주|급등|상한가|강세|수혜|기대감|껑충|폭등|신고가|들썩|↑|뛴다|뛰어|날개|주목|부각|랠리|훨훨|줄줄이|동반|무더기/;
+const MOVE_DN = /특징주|급락|하한가|약세|우려|폭락|뚝|추락|곤두박질|↓|하락|쇼크|악재|부진|적자|유상증자|급감|철회|중단|실패|논란|매도|투매|줄줄이|동반|무더기/;
 const WRAP = /코스피|코스닥|증시|지수|시황|테마주는|테마주들|주요 종목|오늘의 특징|장 마감 후|투자자별/;   // 시장 전체 기사는 묶는 근거로 쓰지 않음
 const MIN_CHG = 5, MAX_STOCKS = 40;
 const COMMON = new Set(["특징주", "상한가", "급등", "강세", "주가", "종목", "마감", "주식", "코스닥", "코스피", "증시", "오늘", "관련주",
-  "상승", "기대감", "수혜", "들썩", "무더기", "동반", "줄줄이", "이틀째", "사흘째", "나흘째", "연속", "장중", "개장", "속보", "단독",
+  "상승", "하락", "급락", "하한가", "약세", "급락세", "기대감", "수혜", "들썩", "무더기", "동반", "줄줄이", "이틀째", "사흘째", "나흘째", "연속", "장중", "개장", "속보", "단독",
   "다시", "연일", "일제히", "불붙은", "불붙", "오름", "급등세", "급등세", "상승세", "오름세", "계열사", "그룹", "관련", "이유", "왜"]);
 const JOSA = /(에서|으로|에게|에|의|를|을|이|가|은|는|로|도|와|과|만)$/;
 const word = (w) => (w.length > 2 ? w.replace(JOSA, "") : w);
@@ -57,14 +58,16 @@ function issueName(titles, members) {
 }
 
 export async function onRequestGet({ request }) {
+  const down = new URL(request.url).searchParams.get("dir") === "down";   // ?dir=down → 급락주 묶음
+  const MOVE = down ? MOVE_DN : MOVE_UP;
   return cached(request, 300, async () => {
-    const lists = await Promise.all(["KOSPI", "KOSDAQ"].map((m) => naver(`/api/stocks/up/${m}?page=1&pageSize=100`)));
+    const lists = await Promise.all(["KOSPI", "KOSDAQ"].map((m) => naver(`/api/stocks/${down ? "down" : "up"}/${m}?page=1&pageSize=100`)));
     const all = lists.flatMap((l, i) => (l.stocks || []).map((s) => ({
       code: s.itemCode, name: s.stockName, market: i ? "코스닥" : "코스피",
       chg: num(s.fluctuationsRatio), value: num(s.accumulatedTradingValue), type: s.stockEndType,
     })));
-    const picks = all.filter((s) => s.type === "stock" && s.chg >= MIN_CHG && !/스팩|우$|우B$|\dB?$/.test(s.name))
-      .sort((a, b) => b.chg - a.chg || b.value - a.value).slice(0, MAX_STOCKS);
+    const picks = all.filter((s) => s.type === "stock" && (down ? s.chg <= -MIN_CHG : s.chg >= MIN_CHG) && !/스팩|우$|우B$|\dB?$/.test(s.name))
+      .sort((a, b) => (down ? a.chg - b.chg : b.chg - a.chg) || b.value - a.value).slice(0, MAX_STOCKS);
     const now = Date.now();
     await Promise.all(picks.map(async (s) => {
       try {
@@ -72,9 +75,9 @@ export async function onRequestGet({ request }) {
         s.heads = (Array.isArray(d) ? d : []).flatMap((x) => x.items || []).map((n) => ({
           title: dec(n.title), office: n.officeName, ts: kst(n.datetime || ""),
           url: `https://n.news.naver.com/mnews/article/${n.officeId}/${n.articleId}`,
-        })).filter((n) => (now - n.ts) / 3600e3 < 72 && MOVE.test(n.title) && !WRAP.test(n.title)).slice(0, 3);
+        })).filter((n) => (now - n.ts) / 3600e3 < 72 && !WRAP.test(n.title)).slice(0, 6);
       } catch (ex) { s.heads = []; }
-      for (const h of s.heads) h.g = grams(h.title);
+      for (const h of s.heads) { h.g = grams(h.title); h.move = MOVE.test(h.title); }
     }));
     // 연결: 같은 기사이거나 제목 비슷(≥0.5) → 묶음(유니온 파인드)
     const parent = picks.map((_, i) => i);
@@ -84,7 +87,9 @@ export async function onRequestGet({ request }) {
       for (let j = i + 1; j < picks.length; j++) {
         let hit = null;
         for (const a of picks[i].heads) for (const b of picks[j].heads) {
-          if (a.title === b.title || sim(a.g, b.g) >= 0.5) { hit = a.title === b.title ? a : (a.ts >= b.ts ? a : b); break; }
+          // 같은 기사면 바로 연결, 비슷한 제목은 둘 다 움직임 표현이 있을 때만
+          if (a.title === b.title) { hit = a; break; }
+          if (a.move && b.move && sim(a.g, b.g) >= 0.5) { hit = a.ts >= b.ts ? a : b; break; }
         }
         if (hit) {
           parent[find(i)] = find(j);
@@ -97,12 +102,13 @@ export async function onRequestGet({ request }) {
     const issues = [];
     for (const idx of groups.values()) {
       if (idx.length < 2) continue;
-      const members = idx.map((i) => picks[i]).sort((a, b) => b.chg - a.chg);
+      const members = idx.map((i) => picks[i]).sort((a, b) => (down ? a.chg - b.chg : b.chg - a.chg));
       const arts = new Map();
       for (const i of idx) for (const [t, a] of why[i]) arts.set(t, a);
+      // 대표 기사: 움직임 표현 있음 › 묶음 종목을 여러 개 언급 › 최신
       const sorted = [...arts.values()].sort((a, b) => {
         const ca = members.filter((m) => a.title.includes(m.name)).length, cb = members.filter((m) => b.title.includes(m.name)).length;
-        return cb - ca || b.ts - a.ts;
+        return (b.move - a.move) || cb - ca || b.ts - a.ts;
       });
       issues.push({
         name: issueName(sorted.map((a) => a.title), members),
@@ -111,7 +117,9 @@ export async function onRequestGet({ request }) {
         articles: sorted.slice(0, 3).map(({ title, office, ts, url }) => ({ title, office, ts, url })),
       });
     }
-    issues.sort((a, b) => b.stocks.length - a.stocks.length || b.avg - a.avg);
-    return { status: lists[0].marketStatus, scanned: picks.length, issues };
+    // 순위: 평균 등락률 크기 × √종목 수 (여러 종목이 함께 크게 움직인 재료일수록 위)
+    for (const i of issues) i.score = Math.round(Math.abs(i.avg) * Math.sqrt(i.stocks.length) * 100) / 100;
+    issues.sort((a, b) => b.score - a.score);
+    return { status: lists[0].marketStatus, dir: down ? "down" : "up", scanned: picks.length, issues };
   });
 }

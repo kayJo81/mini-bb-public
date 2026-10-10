@@ -107,7 +107,6 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
   <div id="themeView">
   <div id="sum"></div>
   <div id="list"><div class="empty">불러오는 중…</div></div>
-  <div id="issues"></div>
   <div class="tabs" style="margin-top:14px"><input id="q" placeholder="🔎 다른 테마 찾기 (예: 반도체, 원자력)"></div>
   <div id="qlist"></div>
   </div>
@@ -155,10 +154,18 @@ function render(){
   const top=G[0],bot=G[G.length-1];
   document.getElementById('secTheme').innerHTML=`오른 <b class="up">${up}</b> / 내린 <b class="dn">${dn}</b>`;
   const rankOf=new Map(G.map((g,i)=>[g.no,i+1]));
-  const ups=G.filter(g=>g.chg>0).slice(0,5),dns=[...G].reverse().filter(g=>g.chg<0).slice(0,5);
+  // 상승·하락 상위 5: 뉴스로 묶은 이슈 테마 + 이슈 테마로 설명되지 않는 네이버 테마를 등락률 크기순으로
+  const covered=g=>[...(g.leaders||[]),...(g.laggards||[])].some(x=>iss.byCode.has(x.code));
+  const pickTop=(issues,themes,up)=>[
+      ...issues.map(i=>({kind:'issue',i,chg:i.avg})),
+      ...themes.filter(g=>(up?g.chg>0:g.chg<0)&&!covered(g)).slice(0,10).map(g=>({kind:'theme',g,chg:g.chg}))]
+    .sort((a,b)=>Math.abs(b.chg)-Math.abs(a.chg)).slice(0,5);
+  const topUp=pickTop(iss.up,G,true),topDn=pickTop(iss.dn,[...G].reverse(),false);
+  const row=(x,r)=>x.kind==='issue'?issueCard(x.i,r):card(x.g,r);
   document.getElementById('list').innerHTML=
-    `<div class="ihd">🔥 상승 상위 5 <span class="hsub">평균 등락률 기준 · 전체 ${G.length}개 테마 중</span></div>`+(ups.map(g=>card(g,rankOf.get(g.no))).join('')||'<div class="empty">오른 테마가 없어요.</div>')+
-    `<div class="ihd" style="margin-top:14px">🧊 하락 상위 5</div>`+(dns.map(g=>card(g,rankOf.get(g.no))).join('')||'<div class="empty">내린 테마가 없어요.</div>');
+    `<div class="ihd">🔥 상승 상위 5 <span class="hsub">🧩 뉴스로 묶은 이슈 테마 + 📂 네이버 테마</span></div>`+(topUp.map((x,i)=>row(x,i+1)).join('')||'<div class="empty">오른 테마가 없어요.</div>')+
+    `<div class="ihd" style="margin-top:14px">🧊 하락 상위 5</div>`+(topDn.map((x,i)=>row(x,i+1)).join('')||'<div class="empty">내린 테마가 없어요.</div>');
+  const ups=topUp.filter(x=>x.kind==='theme').map(x=>x.g),dns=topDn.filter(x=>x.kind==='theme').map(x=>x.g);
   const shown=new Set([...ups,...dns].map(g=>g.no));
   const found=st.q?G.filter(g=>!shown.has(g.no)&&g.name.toLowerCase().includes(st.q.toLowerCase())).slice(0,30):[];
   document.getElementById('qlist').innerHTML=st.q?(found.map(g=>card(g,rankOf.get(g.no))).join('')||'<div class="empty">해당하는 테마가 없어요.</div>'):'';
@@ -194,7 +201,7 @@ function card(g,rank){
   const chips=(g.leaders||[]).map(s=>`<span class="chip">${esc(s.name)} <b class="${cls(s.chg)}">${pct(s.chg)}</b></span>`).join('');
   return `<div class="th" id="t${g.no}"><div class="th-h" data-no="${g.no}">
     <span class="rk">${rank}</span>
-    <div style="min-width:0"><div class="nm">${esc(g.name)} ${hot}</div>
+    <div style="min-width:0"><div class="nm">📂 ${esc(g.name)} ${hot}</div>
       ${issueTag(g)}
       <div class="meta"><span class="breadth" title="오른 종목 비율"><i style="width:${ratio}%"></i></span><span>▲${g.rise} ▼${g.fall} / ${g.total}종목</span>
       ${g.value?`<span>거래대금 ${eok(g.value)}</span>`:''}${mvs?`<span>${st.rh.mins}분 전 대비 ${mvs}</span>`:''}</div>
@@ -202,23 +209,24 @@ function card(g,rank){
     <span class="chg ${cls(g.chg)}">${pct(g.chg)}</span></div><div class="det" hidden></div></div>`;
 }
 // ── 오늘의 이슈 테마: 같은 뉴스로 함께 급등한 종목 묶음 (/api/issues, 5분) ──
-const iss={list:[],byCode:new Map(),at:0};
+const iss={up:[],dn:[],byCode:new Map(),at:0};
 async function loadIssues(){
   if(Date.now()-iss.at<240e3)return;
-  try{const d=await (await fetch('api/issues')).json();if(d.error)throw 0;
-    iss.list=d.issues||[];iss.at=Date.now();iss.byCode=new Map();
-    for(const i of iss.list)for(const s of i.stocks)iss.byCode.set(s.code,i.name);
-    renderIssues();render();}catch(e){}
+  try{
+    const [u,d]=await Promise.all(['up','down'].map(x=>fetch('api/issues?dir='+x).then(r=>r.json())));
+    iss.up=u.issues||[];iss.dn=d.issues||[];iss.at=Date.now();iss.byCode=new Map();
+    for(const i of [...iss.up,...iss.dn])for(const s of i.stocks)iss.byCode.set(s.code,i.name);
+    render();
+  }catch(e){}
 }
-function renderIssues(){
-  const box=document.getElementById('issues');if(!box)return;
-  if(!iss.list.length){box.innerHTML='';return;}
-  box.innerHTML=`<div class="ihd">🧩 오늘의 이슈 테마 <span class="hsub">급등주(+5%↑)를 같은 뉴스로 움직인 종목끼리 자동으로 묶음</span></div>`+
-    iss.list.slice(0,6).map(i=>{const a=i.articles[0];
-      const tm=a&&a.ts?new Date(a.ts).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}):'';
-      return `<div class="iss"><div class="iss-h"><span class="iss-n">${esc(i.name)} <span class="hsub">${i.stocks.length}종목</span></span><span class="chg up">${pct(i.avg)}</span></div>
-      <div class="chips">${i.stocks.slice(0,10).map(s=>`<span class="chip">${esc(s.name)} <b class="${cls(s.chg)}">${pct(s.chg)}</b></span>`).join('')}${i.stocks.length>10?`<span class="chip">외 ${i.stocks.length-10}</span>`:''}</div>
-      ${a?`<div class="iss-a">📰 <a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.title)}</a> <span class="hsub">· ${esc(a.office||'')} ${tm}</span></div>`:''}</div>`;}).join('');
+function issueCard(i,rank){
+  const a=i.articles[0],up=i.avg>=0;
+  const tm=a&&a.ts?new Date(a.ts).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}):'';
+  return `<div class="th iss"><div class="th-h" style="cursor:default"><span class="rk">${rank}</span>
+    <div style="min-width:0"><div class="nm">🧩 ${esc(i.name)} <span class="hsub">이슈 테마 · ${i.stocks.length}종목</span></div>
+    <div class="chips">${i.stocks.slice(0,8).map(s=>`<span class="chip">${esc(s.name)} <b class="${cls(s.chg)}">${pct(s.chg)}</b></span>`).join('')}${i.stocks.length>8?`<span class="chip">외 ${i.stocks.length-8}</span>`:''}</div>
+    ${a?`<div class="why">💡 <b>${up?'강세':'약세'} 이유</b> <a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.title)}</a> <span class="src">· ${esc(a.office||'')} ${tm}</span></div>`:''}</div>
+    <span class="chg ${cls(i.avg)}">${pct(i.avg)}</span></div></div>`;
 }
 function issueTag(g){
   const names=[...new Set([...(g.leaders||[]),...(g.laggards||[])].map(x=>iss.byCode.get(x.code)).filter(Boolean))];
