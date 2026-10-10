@@ -1,11 +1,10 @@
 # 미니 블벅터 스케줄러(Cloudflare Worker) 배포 — scheduler/ 가 바뀌거나 수동 실행할 때만
-# 필요한 저장소 Secrets: CLOUDFLARE_API_TOKEN(Workers 스크립트 편집 권한), CLOUDFLARE_ACCOUNT_ID, GH_DISPATCH_TOKEN
+# 필요한 저장소 Secrets: CLOUDFLARE_API_TOKEN(Workers 스크립트 편집 권한), CLOUDFLARE_ACCOUNT_ID
+# 선택: GH_DISPATCH_TOKEN — 넣으면 Worker 의 GH_TOKEN 을 바꾸고, 없으면 Worker 에 이미 저장된 토큰을 그대로 쓴다
 name: scheduler
 
 on:
-  push:
-    branches: [main]
-    paths: ["scheduler/**", ".github/workflows/scheduler.yml"]
+  # 실행 저장소를 바꾸는 배포라 자동 실행하지 않고 수동으로만
   workflow_dispatch:
 
 permissions:
@@ -31,5 +30,5 @@ jobs:
         env:
           GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
         run: |
-          [ -n "$GH_DISPATCH_TOKEN" ] || { echo "::error::GH_DISPATCH_TOKEN 비밀값이 없습니다"; exit 1; }
+          [ -n "$GH_DISPATCH_TOKEN" ] || { echo "GH_DISPATCH_TOKEN 없음 — Worker 에 저장된 기존 토큰 유지"; exit 0; }
           printf '%s' "$GH_DISPATCH_TOKEN" | npx --yes wrangler@3 secret put GH_TOKEN
