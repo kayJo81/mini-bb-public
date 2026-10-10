@@ -53,6 +53,12 @@ jobs:
           FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
         run: python lab/update_news.py --days "${{ inputs.days || '4' }}"
 
+      - name: Signals
+        run: |
+          python lab/signals.py --out public_lab
+          python lab/paper.py --signals public_lab/data.json --out public_lab
+          cp lab/site.html public_lab/index.html
+
       - name: Save data
         if: always()
         working-directory: labdata
@@ -60,11 +66,6 @@ jobs:
           git add -A
           git -c user.name="mini-bblab" -c user.email="actions@users.noreply.github.com" commit -qm "data $(date -u +%F' '%H:%M)" || exit 0
           git push -q origin lab-data
-
-      - name: Signals
-        run: |
-          python lab/signals.py --out public_lab
-          cp lab/site.html public_lab/index.html
 
       - name: Deploy to Cloudflare Pages
         env:

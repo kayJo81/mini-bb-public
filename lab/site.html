@@ -71,12 +71,41 @@ function spark(arr,color){
     return `<rect x="${(i*bw).toFixed(1)}" y="${(h-bh).toFixed(1)}" width="${Math.max(1,bw-1).toFixed(1)}" height="${bh.toFixed(1)}" fill="${typeof color==='function'?color(v):color}" rx="1"/>`}).join('')}</svg>`;
 }
 function hitFor(st,dir){if(!st)return'–';return (dir==='숏'?(100-st.hit):st.hit).toFixed(0)+'%';}
+function line(curve){
+  if(!curve||curve.length<2)return'';const w=320,h=70,xs=curve.map((_,i)=>i),all=curve.flatMap(c=>[c[1],c[2]]);
+  const lo=Math.min(...all),hi=Math.max(...all),sp=Math.max(hi-lo,1);
+  const pt=(i,v)=>`${(i/(curve.length-1)*(w-4)+2).toFixed(1)},${(h-4-(v-lo)/sp*(h-8)).toFixed(1)}`;
+  return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="max-width:420px">
+    <polyline fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 3" points="${curve.map((c,i)=>pt(i,c[2])).join(' ')}"/>
+    <polyline fill="none" stroke="#2563eb" stroke-width="2" points="${curve.map((c,i)=>pt(i,c[1])).join(' ')}"/></svg>`;
+}
+function paperCard(P){
+  const R=P.rules,money=v=>'$'+Math.round(v).toLocaleString();
+  const rows=(arr,open)=>arr.map(x=>`<tr><td><span class="sym">${esc(x.sym)}</span> <span class="dir ${x.verdict==='검증됨'?x.dir:'weak'}">${x.dir}</span><br><span class="hsub">${esc(x.head||'')}</span></td>
+    <td class="mono">${esc(x.signal_date)}</td><td class="mono">${esc(x.entry_date||'–')}</td><td class="mono">${open?esc(x.asof||'–'):esc(x.exit_date||'–')}</td>
+    <td class="mono ${cls(x.ret)}">${x.ret==null?(x.skipped?esc(x.skipped):'–'):pct(x.ret)}</td><td class="mono ${cls(x.bench_ret)}">${pct(x.bench_ret)}</td>
+    <td class="mono ${cls(x.ret-x.bench_ret)}">${x.ret==null?'–':pct(x.ret-x.bench_ret)}</td></tr>`).join('');
+  const head='<tr><th>종목 · 방향</th><th>신호일</th><th>진입</th><th>기준일</th><th>수익</th><th>QQQ</th><th>차이</th></tr>';
+  return `<div class="card"><h2>🧪 가상 매매 (${R.entry_days}거래일 시험) <span class="tag ${P.status==='종료'?'':'ok'}">${esc(P.status)}</span></h2>
+  <p class="note">${esc(P.start)} 신호부터 · 신호 1건당 ${money(R.size)} · 다음 거래일 시가 진입 → ${R.hold}거래일째 종가 청산 · 비용 ${(R.cost*100).toFixed(1)}%×2 · 시작 ${money(R.capital)} · 신호 받은 날 ${P.signal_days}/${R.entry_days}</p>
+  <div class="kv" style="font-size:13px"><span>평가액 <b>${money(P.equity)}</b> (<b class="${cls(P.ret)}">${pct(P.ret)}</b>)</span>
+    <span>같은 날 QQQ였다면 <b>${money(P.bench_equity)}</b> (<b class="${cls(P.bench_ret)}">${pct(P.bench_ret)}</b>)</span>
+    <span>청산 <b>${P.trades}</b>건 · 승률 <b>${P.win_rate??'–'}${P.win_rate!=null?'%':''}</b> · 건당 평균 <b class="${cls(P.avg_trade)}">${pct(P.avg_trade)}</b> · QQQ 대비 <b class="${cls(P.avg_excess)}">${pct(P.avg_excess)}</b></span></div>
+  ${line(P.curve)}<div class="hsub">파란선: 가상 매매 평가액 · 회색 점선: 같은 돈을 QQQ에</div>
+  ${P.pending.length?`<p class="note" style="margin-top:8px">⏳ 다음 거래일 시가 진입 대기: ${P.pending.map(x=>`<b>${esc(x.sym)}</b> ${x.dir}`).join(', ')}</p>`:''}
+  ${P.open.length?`<h2 style="margin-top:10px;font-size:13px">보유 중</h2><div class="tw"><table>${head}${rows(P.open,true)}</table></div>`:''}
+  ${P.closed.length?`<h2 style="margin-top:10px;font-size:13px">청산 완료</h2><div class="tw"><table>${head}${rows(P.closed,false)}</table></div>`:''}
+  ${!P.open.length&&!P.closed.length&&!P.pending.length?'<div class="empty">첫 신호를 기다리는 중이에요.</div>':''}</div>`;
+}
+let P=null;
 function render(d){
   const days=d.coverage.start?Math.round((Date.parse(d.coverage.end)-Date.parse(d.coverage.start))/864e5):0;
   document.getElementById('sub').textContent=`뉴스로 찾는 롱/숏 후보 · 데이터 ${d.coverage.start||'–'} ~ ${d.coverage.end} (${days}일, 종목 ${d.coverage.tickers}개) · ${d.generated} 갱신`;
   const allThin=d.buckets.every(b=>b.verdict==='표본 부족');
   let h='';
   if(allThin||days<120)h+=`<div class="card warn"><b>📦 데이터를 쌓는 중이에요.</b> 과거 데이터가 충분히 모이기 전에는 아래 판정이 대부분 '표본 부족'으로 나와요. 신호가 검증되면 후보에 <b>롱/숏</b> 표시가 붙어요.</div>`;
+
+  if(P)h+=paperCard(P);
 
   // 오늘의 후보
   h+=`<div class="card"><h2>🎯 최근 3거래일 신호</h2><p class="note">회사 언급 기사가 평소보다 크게 몰리고(평소 대비 z≥${d.rules.z}, ${d.rules.n}건 이상) 호재·악재가 한쪽으로 쏠린 종목. 방향은 과거 같은 유형 신호의 5거래일 뒤 ${d.rules.bench} 대비 초과수익으로 정해요.</p>`;
@@ -122,7 +151,8 @@ function render(d){
     <li><b>한계:</b> 신호 유형 4가지를 미리 정해 두고 검증하지만, 표본이 적거나 시장 국면이 바뀌면 결과가 달라질 수 있어요.</li></ul></details></div>`;
   document.getElementById('app').innerHTML=h;
 }
-fetch('data.json?'+Date.now()).then(r=>r.json()).then(render).catch(()=>{document.getElementById('app').innerHTML='<div class="card empty">데이터를 불러오지 못했어요.</div>';});
+Promise.all([fetch('data.json?'+Date.now()).then(r=>r.json()),fetch('paper.json?'+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)])
+  .then(([d,p])=>{P=p;render(d);}).catch(()=>{document.getElementById('app').innerHTML='<div class="card empty">데이터를 불러오지 못했어요.</div>';});
 </script>
 </body>
 </html>
