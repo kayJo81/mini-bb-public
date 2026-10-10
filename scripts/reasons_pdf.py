@@ -3,14 +3,19 @@
 
   python scripts/reasons_pdf.py --out reports [--date 2026-10-09] [--cache .cache/ko.json] [--pdf-only]
 
-  · 기사: Finnhub 종목 뉴스(FINNHUB_KEY 있을 때) + 위불(Webull) 종목 뉴스
-    기간 = 직전 거래일 장 마감(16:00 ET) ~ 그날 장 마감 30분 뒤
+  · 기사(기간 = 직전 거래일 장 마감 16:00 ET ~ 그날 장 마감 30분 뒤):
+    종목별 — Finviz 종목 뉴스, Finnhub 종목 뉴스(FINNHUB_KEY), 위불(Webull) 종목 뉴스,
+             (위에서 사유를 못 찾은 종목만) 구글 뉴스 종목 검색
+    전체 피드 — 미니 블벅터 수집분(live.json: 구글 뉴스·FinancialJuice·월스트리트견문·동방재부·언론사 RSS 40곳),
+             FinancialJuice 누적분·FJ 뉴스 소스(WSJ·CNBC·벤징가·PR뉴스와이어·야후·시킹알파·SCMP …), 블룸버그 최신,
+             언론사·기관 RSS, 월스트리트견문·동방재부 7x24 — 제목에 종목 이름(영문·중문)이 있는 것만
   · 고르는 기준(점수): 종목 이름·티커가 제목에 있음 › 'shares jump/fall', 'why … stock', 실적·목표가·등급 같은 움직임 설명
     › 등락 방향과 맞는 표현 › 최신 / 여러 종목을 묶은 시황·'살 만한 종목' 류는 감점
   · 설명 기사가 없으면 '관련 기사 없음' (억지로 채우지 않음) — 업종 ETF 는 업종 전체 흐름이라 대개 없음
   · 제목은 한국어 기계번역 + 원문, 출처·시각(KST)
 """
 import argparse
+import requests
 import html
 import json
 import os
@@ -48,6 +53,16 @@ PAST = re.compile(r"last (?:month|week|year|quarter)|in (?:\d+|five|ten) (?:days
                   r"years? ago|worth buying|buy (?:the|this) (?:dip|stock)|you should buy", re.I)
 OPINION_SRC = re.compile(r"motley fool|fool\.com|simply wall|zacks|investorplace|24/7|gurufocus|insider monkey|marketbeat|"
                          r"tikr|ainvest|seeking alpha", re.I)
+# 중문 속보(월스트리트견문·동방재부)용 종목 이름
+CN = {"NVDA": ["英伟达"], "AAPL": ["苹果"], "MSFT": ["微软"], "AMZN": ["亚马逊"], "GOOGL": ["谷歌", "字母表"], "META": ["Meta", "脸书"],
+      "TSLA": ["特斯拉"], "MU": ["美光"], "TSM": ["台积电"], "INTC": ["英特尔"], "AVGO": ["博通"], "QCOM": ["高通"],
+      "ASML": ["阿斯麦"], "ORCL": ["甲骨文"], "SMCI": ["超微电脑"], "SNDK": ["闪迪"], "SKHY": ["海力士"], "AMD": ["AMD", "超威"],
+      "ARM": ["安谋", "Arm"], "WDC": ["西部数据"], "STX": ["希捷"], "CSCO": ["思科"], "DELL": ["戴尔"], "PLTR": ["Palantir"],
+      "COIN": ["Coinbase"], "MSTR": ["Strategy", "微策略"], "CRWV": ["CoreWeave"], "LITE": ["Lumentum"], "COHR": ["Coherent"],
+      "SPCX": ["SpaceX", "太空探索"], "CRCL": ["Circle"], "HOOD": ["Robinhood"], "IBM": ["IBM"], "CRM": ["Salesforce"],
+      "ADBE": ["Adobe", "奥多比"], "NOW": ["ServiceNow"], "GEV": ["GE Vernova"], "CEG": ["Constellation"], "OKLO": ["Oklo"]}
+CN_UP = re.compile(r"涨|飙升|走高|拉升|上扬|新高|大涨|涨超|涨逾")
+CN_DN = re.compile(r"跌|下挫|走低|跳水|重挫|大跌|跌超|跌逾|下滑")
 GENERIC = {"global", "applied", "analog", "texas", "advanced", "intuitive", "power", "planet", "bloom", "general", "iShares",
            "ishares", "procure", "international", "the", "palo", "super", "rocket", "nano"}
 
@@ -58,7 +73,111 @@ def aliases(sym, name):
     al = {n} | ({words[0]} if words else set())
     if sym not in ("ON", "NOW", "BE", "PL", "APP", "ARM", "UFO", "ITA", "LEU", "SMR"):   # 흔한 영어 단어 티커는 이름만
         al.add(sym.lower())
-    return [re.compile(rf"(?<![a-z0-9]){re.escape(a)}(?![a-z0-9])", re.I) for a in al]
+    return [re.compile(rf"(?<![a-z0-9]){re.escape(a)}(?![a-z0-9])", re.I) for a in al] + \
+        [re.compile(re.escape(c)) for c in CN.get(sym, []) if not c.isascii()]
+
+
+FV_HDR = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
+FV_ROW = re.compile(r'<td width="130" align="right">\s*([^<]+?)\s*</td>.*?class="tab-link-news" href="([^"]+)"[^>]*>\s*(.*?)\s*</a>'
+                    r'.*?<span>\(([^)]*)\)</span>', re.S)
+
+
+def fetch_finviz(sym):
+    """Finviz 종목 페이지 뉴스 표 (시각은 미국 동부)"""
+    try:
+        h = requests.get(f"https://finviz.com/quote.ashx?t={sym}&p=d", headers=FV_HDR, timeout=20).text
+    except Exception as ex:
+        print(f"[reasons] finviz {sym}: {ex}")
+        return []
+    out, day = [], None
+    for when, url, title, src in FV_ROW.findall(h[h.find('id="news-table"'):]):
+        parts = when.split()
+        try:
+            if len(parts) == 2:
+                day = datetime.strptime(parts[0], "%b-%d-%y").date()
+            if day is None:
+                continue
+            if parts[-1].lower() in ("today",):
+                continue
+            t = datetime.strptime(parts[-1], "%I:%M%p").time()
+            ts = int(datetime.combine(day, t, tzinfo=ET).timestamp())
+        except Exception:
+            continue
+        out.append({"headline": html.unescape(re.sub(r"<[^>]+>", "", title)).strip(), "source": src.strip() or "Finviz",
+                    "url": url, "published": ts, "via": "Finviz"})
+    time.sleep(0.5)
+    return out
+
+
+def shared_pool(start, end):
+    """종목 구분 없는 피드 전부 (미니 블벅터 수집분 + 속보·언론사 피드) → [{headline, source, url, published}]"""
+    import news_scanner as ns
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    pool = []
+    # 미니 블벅터 수집분 (구글 뉴스·FJ·월스트리트견문·동방재부·RSS·Finnhub·위불 — 토픽에 들어간 기사)
+    for path in ("public/briefings/live.json",):
+        try:
+            for t in json.load(open(path, encoding="utf-8"))["topics"]:
+                for st in t["stories"]:
+                    for x in st["sources"]:
+                        pool.append({"headline": x["headline"], "source": x["name"], "url": x["url"], "published": x["published"]})
+        except Exception as ex:
+            print(f"[reasons] live.json: {ex}")
+    jobs = []
+    with ThreadPoolExecutor(8) as ex:
+        # FinancialJuice 누적분 + FJ 뉴스 소스 피드
+        try:
+            from fj_pdf import FEEDS, fetch_feed, fetch_fj
+            jobs += [ex.submit(fetch_feed, *f) for f in FEEDS] + [ex.submit(fetch_fj)]
+            try:
+                pool += [{"headline": x["headline"], "source": x["source"], "url": x["url"], "published": x["ts"]}
+                         for x in json.load(open(".cache/fj.json", encoding="utf-8"))]
+            except Exception:
+                pass
+        except Exception as e:
+            print(f"[reasons] fj: {e}")
+        try:
+            from bbg_pdf import fetch as fetch_bbg
+            jobs.append(ex.submit(fetch_bbg))
+        except Exception as e:
+            print(f"[reasons] bbg: {e}")
+        rss = [ex.submit(ns.fetch_rss, *f) for f in ns.RSS_FEEDS]
+        cn = [ex.submit(ns.fetch_wallstreetcn, start.astimezone(KST)), ex.submit(ns.fetch_eastmoney, start.astimezone(KST))]
+        for f in jobs:
+            try:
+                pool += [{"headline": x["headline"], "source": ("블룸버그 " + x["source"]) if "bloomberg" in x["url"] else x["source"],
+                          "url": x["url"], "published": x["ts"]} for x in f.result()]
+            except Exception as e:
+                print(f"[reasons] feed: {e}")
+        for f in rss + cn:
+            try:
+                pool += [{"headline": x["headline"], "source": x["source"], "url": x["url"], "published": x["published"]}
+                         for x in f.result()]
+            except Exception as e:
+                print(f"[reasons] feed: {e}")
+    s, e = start.timestamp(), end.timestamp()
+    seen, out = set(), []
+    for x in pool:
+        k = re.sub(r"\W+", " ", (x["headline"] or "").lower()).strip()
+        if k and k not in seen and s <= (x["published"] or 0) <= e:
+            seen.add(k)
+            out.append(x)
+    srcs = {}
+    for x in out:
+        srcs[x["source"]] = srcs.get(x["source"], 0) + 1
+    print(f"[reasons] 전체 피드 {len(out)}건 · 출처 {len(srcs)}곳")
+    return out
+
+
+def gnews(sym, name, start, end):
+    import news_scanner as ns
+    q = f'"{name}" stock' if len(name) > 3 else f'"{name}" {sym} stock'
+    try:
+        return [{"headline": x["headline"], "source": x["source"], "url": x["url"], "published": x["published"]}
+                for x in ns.fetch_gnews(q, "US", start, end) if start.timestamp() <= x["published"] <= end.timestamp()]
+    except Exception as ex:
+        print(f"[reasons] gnews {sym}: {ex}")
+        return []
 
 
 def news(sym, start, end):
@@ -72,6 +191,7 @@ def news(sym, start, end):
         items += ns.fetch_webull(sym)
     except Exception as ex:
         print(f"[reasons] webull {sym}: {ex}")
+    items += fetch_finviz(sym)
     s, e = start.timestamp(), end.timestamp()
     seen, out = set(), []
     for x in items:
@@ -81,6 +201,9 @@ def news(sym, start, end):
         seen.add(k)
         out.append(x)
     return out
+
+
+DAY_OPEN = {}   # pick() 이 쓰는 '그날 새벽 4시(ET)' — 그 전 기사는 전날 장 정리일 가능성이 커 감점
 
 
 def pick(sym, name, pct, items, n=1):
@@ -93,7 +216,7 @@ def pick(sym, name, pct, items, n=1):
         if not rel:
             continue
         sc = 3
-        up, dn = bool(UP.search(h)), bool(DN.search(h))
+        up, dn = bool(UP.search(h) or CN_UP.search(h)), bool(DN.search(h) or CN_DN.search(h))
         if WHY.search(h):
             sc += 2
         if up or dn:
@@ -104,6 +227,8 @@ def pick(sym, name, pct, items, n=1):
                 sc -= 3   # 반대 방향 기사(전날 움직임 등)
         if ROUNDUP.search(h) and not WHY_TODAY.search(h):
             sc -= 5
+        if DAY_OPEN.get("ts") and x["published"] < DAY_OPEN["ts"]:
+            sc -= 2   # 전날 장 마감 직후 기사(전날 움직임 정리일 때가 많음)
         if PAST.search(h):
             sc -= 6   # 지난 기간 움직임·매수 추천 (당일 사유 아님)
         if OPINION_SRC.search(x.get("source") or "") and not WHY_TODAY.search(h):
@@ -157,9 +282,23 @@ def main():
     end = datetime(day.year, day.month, day.day, 16, 30, tzinfo=ET)
 
     moves = {s: row(s, data[s], day) for s in stocks}
+    DAY_OPEN["ts"] = datetime(day.year, day.month, day.day, 4, 0, tzinfo=ET).timestamp()
     # 뉴스: 위불은 병렬, Finnhub 은 news_scanner 가 호출 간격(분당 60회)을 지켜 준다
     with ThreadPoolExecutor(4) as pool:
         got = dict(zip(stocks, pool.map(lambda s: news(s, start, end), stocks)))
+    common = shared_pool(start, end)
+    for s in stocks:
+        al = aliases(s, names[s])
+        have = {re.sub(r"\W+", " ", x["headline"].lower()).strip() for x in got[s]}
+        got[s] += [x for x in common if any(p.search(x["headline"]) for p in al)
+                   and re.sub(r"\W+", " ", x["headline"].lower()).strip() not in have]
+    # 그래도 사유가 없는 종목은 구글 뉴스 종목 검색으로 한 번 더 (등락 ±1% 이상만)
+    need = [s for s in stocks if moves[s] and abs(float(moves[s]["pct"])) >= 1
+            and not pick(s, names[s], float(moves[s]["pct"]), got[s])]
+    for s in need:
+        got[s] += gnews(s, names[s], start, end)
+        time.sleep(1)
+    print(f"[reasons] 구글 뉴스 추가 검색 {len(need)}종목")
     picks = {}
     for s in stocks:
         d = moves[s]
