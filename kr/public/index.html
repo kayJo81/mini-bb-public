@@ -20,7 +20,11 @@ a{color:inherit}
 .hsub{font-size:12px;color:var(--sub)}
 .btn{padding:8px 14px;border-radius:10px;border:.5px solid var(--bd);background:#fff;cursor:pointer;font-size:14px;font-weight:700;color:#374151;text-decoration:none;white-space:nowrap}
 .wrap{max-width:980px;margin:0 auto;padding:12px 16px 40px}
-.secs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.secs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+@media(max-width:640px){.secs{grid-template-columns:1fr 1fr}}
+.why{margin-top:6px;font-size:13px;line-height:1.45;background:#fffbeb;border:.5px solid #fde68a;border-radius:8px;padding:5px 8px;overflow-wrap:anywhere}
+.why a{text-decoration:none;font-weight:600}.why a:hover{color:var(--acc)}
+.why .src{font-size:11.5px;color:var(--sub)}
 .sec{background:var(--card);border:1.5px solid var(--bd);border-radius:14px;padding:10px 14px;box-shadow:var(--sh);cursor:pointer;text-align:left;font:inherit;color:inherit;min-width:0}
 .sec.on{border-color:#111827;box-shadow:0 0 0 2px #111827 inset}
 .sec .t{font-weight:800;font-size:16px}.sec .s{font-size:13px;color:var(--sub);margin-top:2px}
@@ -86,8 +90,10 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
 </div>
 <div class="wrap">
   <div class="secs" id="secs">
-    <button class="sec" data-sec="theme"><div class="t">📈 장중 테마</div><div class="s" id="secTheme">불러오는 중…</div></button>
-    <button class="sec" data-sec="news"><div class="t">📰 한국 증시 뉴스</div><div class="s" id="secNews">15분마다 수집</div></button>
+    <button class="sec" data-sec="theme"><div class="t">📈 테마</div><div class="s" id="secTheme">불러오는 중…</div></button>
+    <button class="sec" data-sec="산업"><div class="t">🏭 산업</div><div class="s" data-cnt="산업">뉴스</div></button>
+    <button class="sec" data-sec="매크로"><div class="t">🌐 매크로</div><div class="s" data-cnt="매크로">뉴스</div></button>
+    <button class="sec" data-sec="정치·정책"><div class="t">🏛️ 정치·정책</div><div class="s" data-cnt="정치·정책">뉴스</div></button>
   </div>
   <div id="newsView" hidden><div class="ncats" id="ncats"></div><div id="nlist"><div class="empty">불러오는 중…</div></div></div>
   <div id="themeView">
@@ -152,6 +158,38 @@ function render(){
   const rankOf=new Map(G.map((g,i)=>[g.no,i+1]));
   document.getElementById('list').innerHTML=list.length?list.map(g=>card(g,rankOf.get(g.no))).join(''):'<div class="empty">해당하는 테마가 없어요.</div>';
   for(const no of st.open)openDetail(no,false);
+  loadReasons(list.slice(0,30));
+}
+
+// ── 강세(약세) 이유: 대장주(약세 테마는 가장 많이 내린 종목) 최신 뉴스 중 움직임을 설명하는 기사 ──
+const reasons=new Map();let reasonsAt=0;
+const movers=g=>(g.chg>=0?(g.leaders||[]):(g.laggards||[]).slice().reverse()).slice(0,2);
+async function loadReasons(list){
+  if(Date.now()-reasonsAt>180e3){reasons.clear();reasonsAt=Date.now();}
+  const want=[...new Set(list.flatMap(g=>movers(g).map(x=>x.code)))].filter(c=>!reasons.has(c));
+  applyReasons(list);
+  const jobs=[];
+  for(let i=0;i<want.length;i+=16)jobs.push(fetch('api/reasons?c='+want.slice(i,i+16).join(',')).then(r=>r.json())
+    .then(r=>{for(const [c,v] of Object.entries(r))reasons.set(c,v);applyReasons(list);}).catch(()=>{}));
+  await Promise.all(jobs);
+}
+function applyReasons(list){
+  for(const g of list){
+    const el=document.querySelector(`[data-why="${g.no}"]`);if(!el)continue;
+    // 종목 이름이나 테마 이름의 단어가 제목에 들어간 기사만 (시장 전체 시황 기사는 제외)
+    const words=g.name.replace(/[()\/·,]/g,' ').split(/\s+/).filter(w=>w.length>=2&&!['관련주','관련','테마','수혜','등'].includes(w));
+    let best=null;
+    for(const m of movers(g))for(const n of reasons.get(m.code)||[]){
+      const hitName=n.title.includes(m.name),hitTheme=words.some(w=>n.title.includes(w));
+      if(!hitName&&!hitTheme)continue;
+      const sc=n.score+(hitName?3:0)+(hitTheme?2:0);
+      if(!best||sc>best.sc)best={n,m,sc};
+    }
+    if(!best){el.hidden=true;continue;}
+    const t=best.n.t;
+    el.innerHTML=`💡 <a href="${esc(best.n.url)}" target="_blank" rel="noopener">${esc(best.n.title)}</a> <span class="src">· ${esc(best.m.name)} 관련 · ${esc(best.n.office)} ${t?`${t.slice(4,6)}/${t.slice(6,8)} ${t.slice(8,10)}:${t.slice(10,12)}`:''}</span>`;
+    el.hidden=false;
+  }
 }
 function card(g,rank){
   const mv=st.rh?st.rh.move(g.no):null;
@@ -164,7 +202,7 @@ function card(g,rank){
     <div style="min-width:0"><div class="nm">${esc(g.name)} ${hot}</div>
       <div class="meta"><span class="breadth" title="오른 종목 비율"><i style="width:${ratio}%"></i></span><span>▲${g.rise} ▼${g.fall} / ${g.total}종목</span>
       ${g.value?`<span>거래대금 ${eok(g.value)}</span>`:''}${mvs?`<span>${st.rh.mins}분 전 대비 ${mvs}</span>`:''}</div>
-      ${chips?`<div class="chips">${chips}</div>`:''}</div>
+      ${chips?`<div class="chips">${chips}</div>`:''}<div class="why" data-why="${g.no}" hidden></div></div>
     <span class="chg ${cls(g.chg)}">${pct(g.chg)}</span></div><div class="det" hidden></div></div>`;
 }
 async function openDetail(no,toggle=true){
@@ -198,11 +236,13 @@ document.getElementById('q').oninput=e=>{st.q=e.target.value.trim();render();};
 const VL={VERIFIED:'검증됨',SINGLE:'단독보도',UNVERIFIED:'미확인'};
 const ns={cat:'ALL',data:null,at:0};
 let sec='theme';try{sec=localStorage.getItem('kr_sec')||'theme';}catch(e){}
+if(!['theme','산업','매크로','정치·정책'].includes(sec))sec='theme';
 function setSec(v){
   sec=v;try{localStorage.setItem('kr_sec',v);}catch(e){}
   document.querySelectorAll('.sec').forEach(b=>b.classList.toggle('on',b.dataset.sec===v));
-  document.getElementById('themeView').hidden=v!=='theme';document.getElementById('newsView').hidden=v!=='news';
-  if(v==='news'&&Date.now()-ns.at>60e3)loadNews();
+  document.getElementById('themeView').hidden=v!=='theme';document.getElementById('newsView').hidden=v==='theme';
+  ns.cat='ALL';
+  if(v!=='theme'){if(Date.now()-ns.at>60e3)loadNews();else renderNews();}
 }
 async function loadNews(){
   try{const d=await (await fetch('api/krnews',{cache:'no-store'})).json();if(d.error)throw new Error(d.error);ns.data=d;ns.at=Date.now();renderNews();}
@@ -211,9 +251,12 @@ async function loadNews(){
 function renderNews(){
   const d=ns.data;if(!d)return;
   const at=new Date(d.generated_at);
-  document.getElementById('secNews').innerHTML=`<b>${d.total}</b>건 · ${at.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} 수집`;
-  const T=d.topics;
-  document.getElementById('ncats').innerHTML=[`<span class="nc ${ns.cat==='ALL'?'on':''}" data-c="ALL">전체<small>${d.total}</small></span>`,
+  const hm=at.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  document.querySelectorAll('[data-cnt]').forEach(el=>{const n=d.topics.filter(t=>t.section===el.dataset.cnt).reduce((a,t)=>a+t.count,0);
+    el.innerHTML=`<b>${n}</b>건 · ${hm}`;});
+  if(sec==='theme')return;
+  const T=d.topics.filter(t=>t.section===sec),tot=T.reduce((a,t)=>a+t.count,0);
+  document.getElementById('ncats').innerHTML=[`<span class="nc ${ns.cat==='ALL'?'on':''}" data-c="ALL">전체<small>${tot}</small></span>`,
     ...T.map(t=>`<span class="nc ${ns.cat===t.id?'on':''}" data-c="${t.id}">${esc(t.name)}<small>${t.count}</small></span>`)].join('');
   const seen=new Set(),items=[];
   for(const t of T){if(ns.cat!=='ALL'&&ns.cat!==t.id)continue;
@@ -228,8 +271,8 @@ function renderNews(){
 }
 document.getElementById('ncats').addEventListener('click',e=>{const c=e.target.closest('.nc');if(c){ns.cat=c.dataset.c;renderNews();}});
 document.querySelectorAll('.sec').forEach(b=>b.onclick=()=>setSec(b.dataset.sec));
-setInterval(()=>{if(sec==='news')loadNews();},5*60e3);
-document.getElementById('rbtn').onclick=()=>{load();if(sec==='news')loadNews();};
+setInterval(()=>{if(sec!=='theme')loadNews();},5*60e3);
+document.getElementById('rbtn').onclick=()=>{load();if(sec!=='theme')loadNews();};
 setSec(sec);
 loadNews();
 load();

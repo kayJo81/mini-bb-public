@@ -62,10 +62,13 @@ KR_TOPICS = [
 ]
 
 
+SECTION = {"market": "매크로", "macro": "매크로", "policy": "정치·정책"}   # 나머지는 '산업'
+
+
 def topics():
     out = []
     for tid, name, queries, kw in KR_TOPICS:
-        out.append({"id": tid, "section": "뉴스", "group": "한국", "name": name, "queries": [(q, "KR") for q in queries],
+        out.append({"id": tid, "section": SECTION.get(tid, "산업"), "group": "한국", "name": name, "queries": [(q, "KR") for q in queries],
                     "tickers": [], "_kw": re.compile(kw, re.I), "_feed": None, "_must": None, "_exclude": None})
     return out
 
