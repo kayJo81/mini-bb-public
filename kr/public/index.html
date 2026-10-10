@@ -22,6 +22,13 @@ a{color:inherit}
 .wrap{max-width:980px;margin:0 auto;padding:12px 16px 40px}
 .secs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
 @media(max-width:640px){.secs{grid-template-columns:1fr 1fr}}
+.iss{background:linear-gradient(135deg,#fff7ed,#fff);border:1px solid #fed7aa;border-radius:var(--r);box-shadow:var(--sh);padding:10px 12px;margin-bottom:8px;min-width:0}
+.iss-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.iss-n{font-weight:800;font-size:16px;overflow-wrap:anywhere}
+.iss a{text-decoration:none}.iss a:hover{color:var(--acc)}
+.iss-a{font-size:13px;margin-top:5px;line-height:1.45;overflow-wrap:anywhere}
+.ihd{font-weight:800;font-size:15px;margin:2px 2px 8px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.itag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:6px;padding:1px 7px;background:#ffedd5;color:#9a3412;margin-top:4px}
 .why{margin-top:6px;font-size:13px;line-height:1.45;background:#fffbeb;border:.5px solid #fde68a;border-radius:8px;padding:5px 8px;overflow-wrap:anywhere}
 .why a{text-decoration:none;font-weight:600}.why a:hover{color:var(--acc)}
 .why .src{font-size:11.5px;color:var(--sub)}
@@ -99,6 +106,7 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
   <div id="newsView" hidden><div class="ncats" id="ncats"></div><div id="nlist"><div class="empty">불러오는 중…</div></div></div>
   <div id="themeView">
   <div class="summary" id="sum"></div>
+  <div id="issues"></div>
   <div class="tabs">
     <span class="tab on" data-v="up">🔥 강한 테마</span>
     <span class="tab" data-v="dn">🧊 약한 테마</span>
@@ -132,7 +140,7 @@ async function load(){
   try{
     const r=await fetch('api/themes',{cache:'no-store'});const d=await r.json();
     if(d.error)throw new Error(d.error);
-    st.data=d;st.rh=rankHistory(d.groups);render();
+    st.data=d;st.rh=rankHistory(d.groups);render();loadIssues();
   }catch(e){document.getElementById('list').innerHTML=`<div class="empty">데이터를 불러오지 못했어요 (${esc(e.message)}). 잠시 뒤 다시 시도해요.</div>`;}
   schedule();
 }
@@ -190,10 +198,34 @@ function card(g,rank){
   return `<div class="th" id="t${g.no}"><div class="th-h" data-no="${g.no}">
     <span class="rk">${rank}</span>
     <div style="min-width:0"><div class="nm">${esc(g.name)} ${hot}</div>
+      ${issueTag(g)}
       <div class="meta"><span class="breadth" title="오른 종목 비율"><i style="width:${ratio}%"></i></span><span>▲${g.rise} ▼${g.fall} / ${g.total}종목</span>
       ${g.value?`<span>거래대금 ${eok(g.value)}</span>`:''}${mvs?`<span>${st.rh.mins}분 전 대비 ${mvs}</span>`:''}</div>
       ${chips?`<div class="chips">${chips}</div>`:''}<div class="why" data-why="${g.no}" hidden></div></div>
     <span class="chg ${cls(g.chg)}">${pct(g.chg)}</span></div><div class="det" hidden></div></div>`;
+}
+// ── 오늘의 이슈 테마: 같은 뉴스로 함께 급등한 종목 묶음 (/api/issues, 5분) ──
+const iss={list:[],byCode:new Map(),at:0};
+async function loadIssues(){
+  if(Date.now()-iss.at<240e3)return;
+  try{const d=await (await fetch('api/issues')).json();if(d.error)throw 0;
+    iss.list=d.issues||[];iss.at=Date.now();iss.byCode=new Map();
+    for(const i of iss.list)for(const s of i.stocks)iss.byCode.set(s.code,i.name);
+    renderIssues();render();}catch(e){}
+}
+function renderIssues(){
+  const box=document.getElementById('issues');if(!box)return;
+  if(!iss.list.length){box.innerHTML='';return;}
+  box.innerHTML=`<div class="ihd">🧩 오늘의 이슈 테마 <span class="hsub">급등주(+5%↑)를 같은 뉴스로 움직인 종목끼리 자동으로 묶음</span></div>`+
+    iss.list.slice(0,6).map(i=>{const a=i.articles[0];
+      const tm=a&&a.ts?new Date(a.ts).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}):'';
+      return `<div class="iss"><div class="iss-h"><span class="iss-n">${esc(i.name)} <span class="hsub">${i.stocks.length}종목</span></span><span class="chg up">${pct(i.avg)}</span></div>
+      <div class="chips">${i.stocks.slice(0,10).map(s=>`<span class="chip">${esc(s.name)} <b class="${cls(s.chg)}">${pct(s.chg)}</b></span>`).join('')}${i.stocks.length>10?`<span class="chip">외 ${i.stocks.length-10}</span>`:''}</div>
+      ${a?`<div class="iss-a">📰 <a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.title)}</a> <span class="hsub">· ${esc(a.office||'')} ${tm}</span></div>`:''}</div>`;}).join('');
+}
+function issueTag(g){
+  const names=[...new Set([...(g.leaders||[]),...(g.laggards||[])].map(x=>iss.byCode.get(x.code)).filter(Boolean))];
+  return names.length?`<div><span class="itag">🧩 실제 재료: ${esc(names[0])}</span></div>`:'';
 }
 async function openDetail(no,toggle=true){
   const box=document.querySelector(`#t${no} .det`);if(!box)return;
