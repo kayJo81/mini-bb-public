@@ -30,4 +30,4 @@ jobs:
       - name: Deploy to Cloudflare Pages
         run: |
           npx --yes wrangler@3 pages project create "$CF_PROJECT" --production-branch=main 2>/dev/null || true
-          npx --yes wrangler@3 pages deploy public --project-name="$CF_PROJECT" --branch=main --commit-dirty=true --compatibility-date=2024-09-01
+          npx --yes wrangler@3 pages deploy public --project-name="$CF_PROJECT" --branch=main --commit-dirty=true
