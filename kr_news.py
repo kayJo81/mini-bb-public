@@ -30,10 +30,13 @@ ns.SOURCE_TIERS["tier2"] += ["파이낸셜뉴스", "fnnews", "헤럴드경제", 
                              "인베스트조선", "한경비즈니스", "매경이코노미", "연합인포맥스", "the elec", "디일렉",
                              "서울신문", "노컷뉴스", "오마이뉴스", "프레시안", "뉴데일리", "아주경제", "ajunews", "이코노미스트",
                              "조세일보", "택스워치", "약업신문", "메디파나", "히트뉴스", "더바이오", "팜이데일리", "에너지경제",
-                             "ekn.kr", "전기신문", "투데이에너지", "에너지신문", "국방일보", "디펜스", "코리아헤럴드"]
+                             "ekn.kr", "전기신문", "투데이에너지", "에너지신문", "국방일보", "디펜스", "코리아헤럴드",
+                             "한국해운신문", "ksg.co.kr", "메디팜스투데이", "pharmstoday", "바이오스펙테이터", "biospectator",
+                             "스틸앤메탈뉴스", "snmnews", "이코노미21", "economy21"]
 ns.SOURCE_TIERS["opinion"] += ["팍스넷", "증권플러스", "인포스탁", "매일경제tv", "한국경제tv", "wowtv", "sbs biz 칼럼"]
 ns.OFFICIAL_DOMAINS |= {"go.kr", "bok.or.kr", "krx.co.kr", "fss.or.kr", "fsc.go.kr", "moef.go.kr", "motie.go.kr",
-                        "kiwoom.com", "kind.krx.co.kr", "dart.fss.or.kr", "korea.kr"}
+                        "kiwoom.com", "kind.krx.co.kr", "dart.fss.or.kr", "korea.kr", "kcmi.re.kr", "kif.re.kr", "keei.re.kr",
+                        "kdb.co.kr", "ksia.or.kr"}
 
 # (id, 그룹, 카테고리, 검색어들, 제목/요약에 있어야 할 단어) — 그룹이 없으면("") 섹션 바로 아래
 KR_TOPICS = [

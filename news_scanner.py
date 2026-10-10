@@ -298,12 +298,12 @@ FEED_KEYWORDS = {
     "space": [r"spacex", r"starship", r"starlink", r"rocket lab", r"blue origin", r"\bnasa\b", r"satellite launch",
               r"ast spacemobile", "太空探索", "星舰", "星链", "火箭", "卫星发射", "航天"],
     "battery": [r"batter(?:y|ies)", r"lithium", r"gigafactory", r"energy storage", r"\bcatl\b", r"solid-state",
-                "电池", "锂", "储能", "宁德时代", "固态电池"],
+                "(?<!太阳能)电池", "锂", "储能", "宁德时代", "固态电池"],
     # 이란 우라늄 농축 등 안보 뉴스가 섞이지 않도록 '원자력 발전' 맥락의 표현만
     "smr": [r"nuclear (?:power|plant|energy|reactor|fuel)", r"small modular", r"\bsmr\b", r"nuscale", r"oklo", r"\bnrc\b",
             r"westinghouse", r"constellation energy", r"cameco", "核电", "核电站", "核能发电", "小型模块化", "模块化反应堆"],
     "nvda": [r"nvidia", r"jensen huang", r"\bnvda\b", r"blackwell", "英伟达", "黄仁勋"],
-    "aapl": [r"\bapple\b", r"iphone", r"tim cook", r"\baapl\b", "苹果公司", "苹果", "库克"],
+    "aapl": [r"\bapple\b", r"iphone", r"tim cook", r"\baapl\b", "苹果公司", "苹果", "蒂姆·库克", "苹果CEO库克"],
     "googl": [r"alphabet", r"google", r"gemini", r"waymo", r"youtube", r"deepmind", "谷歌", "字母表"],
     "msft": [r"microsoft", r"azure", r"copilot", r"nadella", "微软"],
     "amzn": [r"amazon", r"\baws\b", r"jassy", "亚马逊"],
@@ -408,6 +408,10 @@ OFFICIAL_DOMAINS = {
     "nuscalepower.com", "oklo.com", "broadcom.com", "qualcomm.com", "asml.com", "arm.com", "ibm.com",
     "oracle.com", "dell.com", "supermicro.com", "vertiv.com", "gm.com", "ford.com", "stellantis.com",
     "volkswagen-group.com", "bmwgroup.com", "mercedes-benz.com", "rolls-royce.com", "edf.fr",
+    # 정부·중앙은행·통계·국제기구 (사장님 사이트 목록)
+    "bea.gov", "bls.gov", "dol.gov", "eia.gov", "fda.gov", "whitehouse.gov", "treasury.gov", "census.gov", "cftc.gov",
+    "usda.gov", "nhtsa.gov", "senate.gov", "house.gov", "newyorkfed.org", "frbatlanta.org", "dallasfed.org",
+    "stlouisfed.org", "opec.org", "iea.org", "gov.cn", "bok.or.kr", "semiconductors.org", "wsts.org", "gold.org",
 }
 SOURCE_TIERS = {
     "tier1": ["reuters", "bloomberg", "wall street journal", "wsj", "financial times", "ft.com", "associated press",
@@ -429,13 +433,19 @@ SOURCE_TIERS = {
               "mashable", "qz.com", "quartz", "gizmodo", "techrepublic", "pymnts", "compound semiconductor",
               "the scotsman", "sedaily", "seoul economic", "heraldcorp", "herald", "aol", "autoblog", "motor1",
               "electrive", "teslarati", "nasaspaceflight", "spaceflight now", "payload", "ans.org", "nucnet",
-              "hpcwire", "datacenterfrontier", "data center frontier", "the elec", "businesskorea", "kedglobal", "morningstar", "android central"],
+              "hpcwire", "datacenterfrontier", "data center frontier", "the elec", "businesskorea", "kedglobal", "morningstar", "android central",
+              # 산업 전문지·속보 (사장님 사이트 목록)
+              "cnevpost", "oilprice", "rigzone", "natural gas intelligence", "naturalgasintel", "hellenic shipping",
+              "mining.com", "endpoints news", "endpts", "biopharma dive", "biopharmadive", "statnews", "stat news",
+              "coindesk", "cointelegraph", "the block", "theblock.co", "briefing.com", "thefly", "the fly", "tradewinds",
+              "barchart", "eastmoney", "东方财富", "동방재부", "新浪财经", "sina", "xinhua", "新华", "people.cn", "caixin", "财新"],
     "opinion": ["motley fool", "fool.com", "seeking alpha", "seekingalpha", "zacks", "investorplace", "24/7 wall st",
                 "247wallst", "simply wall st", "gurufocus", "insider monkey", "marketbeat", "nasdaq.com",
                 "finbold", "coinpedia", "ainvest", "benzinga", "tipranks", "thestreet", "tradingview", "stocktwits",
                 "moomoo", "tikr", "trefis", "kalkine", "pluang", "bybit", "futunn", "stock titan", "stocktitan",
                 "ad-hoc-news", "ad hoc news", "biggo", "indexbox", "tradingkey", "fxleaders", "investinglive",
-                "fxstreet"],
+                "fxstreet", "zerohedge", "mishtalk", "calculated risk", "calculatedrisk", "ritholtz", "advisor perspectives",
+                "yardeni", "valuewalk"],
     "social": ["facebook", "x.com", "twitter", "reddit", "youtube", "instagram", "tiktok", "linkedin",
                "threads.net", "substack", "medium.com"],
 }
@@ -775,7 +785,7 @@ def _fmt_kst(ts):
 
 # 여러 소식을 묶은 요약·정리 글은 특정 토픽 뉴스가 아니므로 제외
 DIGEST = re.compile(r"你需要了解|要闻|早餐|晚报|午报|日报|一览|汇总|盘点|速览|week ahead|what to watch|morning brief|calendar", re.I)
-FEED_VIAS = {"FinancialJuice", "월스트리트견문(华尔街见闻)"}
+FEED_VIAS = {"FinancialJuice", "월스트리트견문(华尔街见闻)", "동방재부(东方财富) 7x24"}
 FJ_URL = "https://www.financialjuice.com/feed.ashx?xy=1"
 WSCN_URL = "https://api-one.wallstcn.com/apiv1/content/lives?channel=global-channel&limit=100"
 BROWSER_HDR = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
@@ -834,6 +844,124 @@ def fetch_wallstreetcn(start):
                         "via": "월스트리트견문(华尔街见闻)", "edition": "CN"})
         cursor = data.get("next_cursor")
         if not items or not cursor or min(int(i.get("display_time") or 0) for i in items) < start.timestamp():
+            break
+    return out
+
+
+# 언론사·기관 RSS (사장님 사이트 목록 중 서버에서 접속되는 곳) — 토픽 구분 없는 피드라 위 속보 피드처럼
+# 제목에 토픽별 고유 명칭(FEED_KEYWORDS)이 있고 토픽 단어(_kw)도 맞을 때만 그 토픽에 넣는다
+RSS_FEEDS = [
+    # (출처 이름 — 등급 판정에 쓰임, 주소, 도메인)
+    ("CNBC", "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114", "cnbc.com"),
+    ("CNBC", "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=15839069", "cnbc.com"),
+    ("CNBC", "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258", "cnbc.com"),
+    ("CNBC", "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=19854910", "cnbc.com"),
+    ("MarketWatch", "https://feeds.content.dowjones.io/public/rss/mw_topstories", "marketwatch.com"),
+    ("Wall Street Journal", "https://feeds.content.dowjones.io/public/rss/RSSMarketsMain", "wsj.com"),
+    ("Wall Street Journal", "https://feeds.content.dowjones.io/public/rss/RSSWSJD", "wsj.com"),
+    ("Financial Times", "https://www.ft.com/rss/home", "ft.com"),
+    ("The Economist", "https://www.economist.com/finance-and-economics/rss.xml", "economist.com"),
+    ("Investing.com", "https://www.investing.com/rss/news_25.rss", "investing.com"),
+    ("InvestingLive", "https://investinglive.com/feed", "investinglive.com"),
+    ("Seeking Alpha", "https://seekingalpha.com/market_currents.xml", "seekingalpha.com"),
+    ("Business Insider", "https://markets.businessinsider.com/rss/news", "businessinsider.com"),
+    ("Politico", "https://rss.politico.com/politics-news.xml", "politico.com"),
+    ("ZeroHedge", "https://feeds.feedburner.com/zerohedge/feed", "zerohedge.com"),
+    ("MishTalk", "https://mishtalk.com/feed", "mishtalk.com"),
+    # 산업 전문지
+    ("Electrek", "https://electrek.co/feed/", "electrek.co"),
+    ("CnEVPost", "https://cnevpost.com/feed/", "cnevpost.com"),
+    ("The Register", "https://www.theregister.com/headlines.atom", "theregister.com"),
+    ("EE Times", "https://www.eetimes.com/feed/", "eetimes.com"),
+    ("Digitimes", "https://www.digitimes.com/rss/daily.xml", "digitimes.com"),
+    ("MacRumors", "https://feeds.macrumors.com/MacRumors-All", "macrumors.com"),
+    ("AppleInsider", "https://appleinsider.com/rss/news/", "appleinsider.com"),
+    ("OilPrice", "https://oilprice.com/rss/main", "oilprice.com"),
+    ("Rigzone", "https://www.rigzone.com/news/rss/rigzone_latest.aspx", "rigzone.com"),
+    ("Natural Gas Intelligence", "https://www.naturalgasintel.com/feed/", "naturalgasintel.com"),
+    ("Hellenic Shipping News", "https://www.hellenicshippingnews.com/feed/", "hellenicshippingnews.com"),
+    ("Mining.com", "https://www.mining.com/feed/", "mining.com"),
+    ("Endpoints News", "https://endpts.com/feed/", "endpts.com"),
+    ("BioPharma Dive", "https://www.biopharmadive.com/feeds/news/", "biopharmadive.com"),
+    ("STAT", "https://www.statnews.com/feed/", "statnews.com"),
+    ("CoinDesk", "https://www.coindesk.com/arc/outboundfeeds/rss/", "coindesk.com"),
+    ("Cointelegraph", "https://cointelegraph.com/rss", "cointelegraph.com"),
+    ("The Block", "https://www.theblock.co/rss.xml", "theblock.co"),
+    # 공식 기관
+    ("Federal Reserve", "https://www.federalreserve.gov/feeds/press_all.xml", "federalreserve.gov"),
+    ("BEA", "https://apps.bea.gov/rss/rss.xml", "bea.gov"),
+    ("EIA", "https://www.eia.gov/rss/todayinenergy.xml", "eia.gov"),
+    ("EIA", "https://www.eia.gov/rss/press_rss.xml", "eia.gov"),
+    ("FDA", "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml", "fda.gov"),
+    ("White House", "https://www.whitehouse.gov/news/feed/", "whitehouse.gov"),
+]
+_ATOM = "{http://www.w3.org/2005/Atom}"
+
+
+def _feed_ts(s):
+    s = (s or "").strip()
+    try:
+        return int(parsedate_to_datetime(s).timestamp())
+    except Exception:
+        pass
+    try:
+        return int(datetime.fromisoformat(s.replace("Z", "+00:00")).timestamp())
+    except Exception:
+        return 0
+
+
+def fetch_rss(name, url, domain):
+    try:
+        root = ET.fromstring(requests.get(url, timeout=15, headers=BROWSER_HDR).content)
+    except Exception as ex:
+        print(f"[scanner/rss] {name}: {ex}")
+        return []
+    out = []
+    for it in root.findall(".//item") + root.findall(f".//{_ATOM}entry"):
+        title = re.sub(r"\s+", " ", it.findtext("title") or it.findtext(f"{_ATOM}title") or "").strip()
+        link = (it.findtext("link") or "").strip()
+        if not link:
+            el = it.find(f"{_ATOM}link")
+            link = el.get("href", "") if el is not None else ""
+        ts = _feed_ts(it.findtext("pubDate") or it.findtext("{http://purl.org/dc/elements/1.1/}date")
+                      or it.findtext(f"{_ATOM}published") or it.findtext(f"{_ATOM}updated"))
+        desc = re.sub(r"<[^>]+>|\s+", " ", it.findtext("description") or it.findtext(f"{_ATOM}summary") or "").strip()
+        if title and ts and not DIGEST.search(title):
+            out.append({"headline": title, "summary": desc[:400], "source": name, "domain": domain, "url": link,
+                        "published": ts, "via": f"RSS ({name})", "edition": "US"})
+    return out
+
+
+EASTMONEY_URL = ("https://np-listapi.eastmoney.com/comm/web/getFastNewsList?client=web&biz=web_724&fastColumn=102"
+                 "&pageSize=100&req_trace=1&sortEnd={}")
+
+
+def fetch_eastmoney(start):
+    """동방재부(东方财富) 7x24 속보 — 월스트리트견문처럼 거슬러 올라가며 start 시각까지 (최대 5페이지)."""
+    out, cursor = [], ""
+    for _ in range(5):
+        try:
+            data = requests.get(EASTMONEY_URL.format(cursor), timeout=15, headers=BROWSER_HDR).json().get("data") or {}
+        except Exception as ex:
+            print(f"[scanner/eastmoney] {ex}")
+            break
+        items = data.get("fastNewsList") or []
+        oldest = None
+        for it in items:
+            try:
+                ts = int(datetime.strptime(it["showTime"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=ZoneInfo("Asia/Shanghai")).timestamp())
+            except Exception:
+                continue
+            oldest = ts if oldest is None else min(oldest, ts)
+            title = re.sub(r"\s+", " ", it.get("title") or "").strip()
+            if not title or DIGEST.search(title):
+                continue
+            body = re.sub(r"^【[^】]*】", "", it.get("summary") or "").strip()
+            out.append({"headline": title[:140], "summary": body[:400], "source": "동방재부", "domain": "eastmoney.com",
+                        "url": f"https://finance.eastmoney.com/a/{it.get('code', '')}.html", "published": ts,
+                        "via": "동방재부(东方财富) 7x24", "edition": "CN"})
+        cursor = data.get("sortEnd")
+        if not items or not cursor or (oldest and oldest < start.timestamp()):
             break
     return out
 
@@ -899,8 +1027,12 @@ def build_briefing(start, end, mode, finnhub_token):
     # 토픽별 처리는 병렬로, 실제 HTTP 호출은 별도 풀(8개)에서 — 서로 다른 풀이라 교착 없음
     with ThreadPoolExecutor(max_workers=8) as fetch_pool, ThreadPoolExecutor(max_workers=len(TOPICS)) as topic_pool:
         fj, ws = fetch_pool.submit(fetch_financialjuice), fetch_pool.submit(fetch_wallstreetcn, start)
-        feed_items = fj.result() + ws.result()
-        print(f"[scanner] feeds: FinancialJuice {len(fj.result())}, 월스트리트견문 {len(ws.result())}")
+        em = fetch_pool.submit(fetch_eastmoney, start)
+        rss = [fetch_pool.submit(fetch_rss, *f) for f in RSS_FEEDS]
+        rss_items = [a for f in rss for a in f.result()]
+        feed_items = fj.result() + ws.result() + em.result() + rss_items
+        print(f"[scanner] feeds: FinancialJuice {len(fj.result())}, 월스트리트견문 {len(ws.result())}, "
+              f"동방재부 {len(em.result())}, RSS {len(rss_items)}건/{len(RSS_FEEDS)}곳")
         topics = list(topic_pool.map(lambda t: scan_topic(t, start, end, finnhub_token, fetch_pool, feed_items), TOPICS))
     stats = {"VERIFIED": 0, "SINGLE": 0, "UNVERIFIED": 0, "opinion": 0, "rumor": 0, "total": 0}
     for t in topics:
