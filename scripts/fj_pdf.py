@@ -159,13 +159,21 @@ def fetch_fj():
     return items
 
 
-def accumulate(store):
+def accumulate(store, dump=None):
     try:
         old = json.load(open(store, encoding="utf-8"))
     except Exception:
         old = []
+    new = []
+    if dump:   # 같은 실행의 뉴스 수집이 이미 받아 둔 목록 (같은 피드를 곧바로 다시 요청하면 빈 응답이 오는 경우가 있음)
+        try:
+            new = json.load(open(dump, encoding="utf-8"))
+        except Exception:
+            new = []
+    if not new:
+        new = fetch_fj()
     cut = time.time() - KEEP_HOURS * 3600
-    merged = {(x["ts"], x["headline"]): x for x in old + fetch_fj() if x["ts"] >= cut}
+    merged = {(x["ts"], x["headline"]): x for x in old + new if x["ts"] >= cut}
     os.makedirs(os.path.dirname(store) or ".", exist_ok=True)
     json.dump(sorted(merged.values(), key=lambda x: -x["ts"]), open(store, "w", encoding="utf-8"), ensure_ascii=False)
     print(f"[fj] 누적 {len(merged)}건 (직전 {KEEP_HOURS}시간)")
@@ -243,10 +251,11 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--accumulate", action="store_true")
     ap.add_argument("--store", default=".cache/fj.json")
+    ap.add_argument("--dump", default="", help="뉴스 수집이 남긴 FinancialJuice 목록 (있으면 다시 요청하지 않음)")
     ap.add_argument("--out", default="reports")
     ap.add_argument("--cache", default=".cache/ko.json")
     a = ap.parse_args()
     if a.accumulate:
-        accumulate(a.store)
+        accumulate(a.store, a.dump)
     else:
         build(a.out, a.store, a.cache)

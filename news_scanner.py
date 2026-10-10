@@ -796,6 +796,15 @@ def fetch_financialjuice():
             out.append({"headline": title, "summary": "", "source": "FinancialJuice", "domain": "financialjuice.com",
                         "url": (item.findtext("link") or "").strip(), "published": ts,
                         "via": "FinancialJuice", "edition": "US"})
+    # 일일 PDF 용 누적(scripts/fj_pdf.py --accumulate)이 같은 피드를 다시 요청하지 않도록 받은 목록을 남겨 둔다
+    dump = os.environ.get("FJ_DUMP")
+    if dump and out:
+        try:
+            os.makedirs(os.path.dirname(dump) or ".", exist_ok=True)
+            json.dump([{"ts": a["published"], "headline": a["headline"], "source": "FinancialJuice", "url": a["url"]}
+                       for a in out], open(dump, "w", encoding="utf-8"), ensure_ascii=False)
+        except Exception as ex:
+            print(f"[scanner/financialjuice] dump: {ex}")
     return out
 
 

@@ -51,6 +51,7 @@ jobs:
         env:
           FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
           FINNHUB_MIN_INTERVAL: "0.25"   # 45분에 한 번 몰아 호출 (59회 < 분당 60회 한도)
+          FJ_DUMP: .cache/fj_latest.json
         run: python scripts/build_static.py --out public
 
       # 번역 캐시: 실행마다 새 키로 저장하고, 가장 최근 것을 불러와 새 문장만 번역
@@ -69,7 +70,7 @@ jobs:
 
       - name: Accumulate FinancialJuice
         continue-on-error: true
-        run: python scripts/fj_pdf.py --accumulate --store .cache/fj.json
+        run: python scripts/fj_pdf.py --accumulate --store .cache/fj.json --dump .cache/fj_latest.json
 
       - name: Translate headlines (한국어)
         continue-on-error: true
