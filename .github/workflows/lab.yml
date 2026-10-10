@@ -5,6 +5,9 @@
 name: lab
 
 on:
+  # 예비: Worker 가 다시 동작하면 지운다
+  schedule:
+    - cron: "0 22 * * 2-6"       # 화~토 07:00 KST
   workflow_dispatch:
     inputs:
       days:
