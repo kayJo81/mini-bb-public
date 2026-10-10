@@ -37,13 +37,23 @@ a{color:inherit}
 .sec.on{border-color:#111827;box-shadow:0 0 0 2px #111827 inset}
 .sec .t{font-weight:800;font-size:16px}.sec .s{font-size:13px;color:var(--sub);margin-top:2px}
 .sec .s b{font-family:var(--mono);font-size:16px}
-.ncats{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
-.nc{padding:6px 12px;border-radius:999px;border:.5px solid var(--bd);background:#fff;font-weight:700;font-size:13.5px;cursor:pointer}
-.nc.on{background:#111827;color:#fff;border-color:#111827}
-.ngrp{display:flex;gap:6px;flex-wrap:wrap;align-items:center;width:100%;padding:6px 0 2px;border-top:.5px dashed var(--bd)}
-.nc.ng2{background:#eef2ff;border:1px dashed #a5b4fc;color:#3730a3;font-weight:800}
-.nc.ng2 em{font-style:normal;font-size:11px;font-weight:600;opacity:.7;margin-left:5px}
-.nc.ng2.on{background:#3730a3;color:#fff;border-style:solid}.nc small{font-family:var(--mono);opacity:.7;margin-left:3px}
+.ncats{background:#fff;border:.5px solid var(--bd);border-radius:14px;padding:14px;margin:0 0 12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.nav-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px}
+.nav-t{font-size:16px;font-weight:800}.nav-hint{font-size:12px;color:#6b7280}
+.ng{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13.5px;line-height:1.2;color:#374151;
+    margin:14px 0 7px;padding:4px 10px 4px 8px;border:1px dashed color-mix(in srgb,var(--gc) 45%,transparent);border-radius:999px;
+    background:color-mix(in srgb,var(--gc) 7%,#fff);cursor:pointer}
+.ng::before{content:"";width:8px;height:8px;border-radius:3px;background:var(--gc)}
+.ng .c{font-family:var(--mono);font-size:12px;font-weight:600;color:#4b5563}.ng .gh{font-size:11px;font-weight:500;color:#6b7280}
+.ng.on{background:var(--gc);border:1px solid var(--gc);color:#fff}.ng.on::before{background:#fff}.ng.on .c,.ng.on .gh{color:#fff}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.ni{--gc:#111827;display:inline-flex;align-items:center;gap:6px;padding:6px 6px 6px 11px;border:1px solid var(--bd);border-radius:999px;
+    background:#fff;cursor:pointer;font-weight:600;font-size:14px;line-height:1.2;color:#1f2937;white-space:nowrap}
+.ni .c{font-family:var(--mono);font-size:12px;font-weight:600;min-width:22px;text-align:center;padding:2px 6px;border-radius:999px;background:#f3f4f6;color:#4b5563}
+.ni.on{background:var(--gc);border-color:var(--gc);color:#fff}.ni.on .c{background:rgba(255,255,255,.25);color:#fff}
+.ni.on::before{content:"✓";font-size:11px;font-weight:700;margin-right:-2px}.ni.empty{opacity:.45}
+.ni.all{--gc:#111827;font-size:15px;padding:8px 8px 8px 14px}
+.ngap{height:10px}
 .nw{background:var(--card);border:.5px solid var(--bd);border-radius:12px;box-shadow:var(--sh);padding:10px 12px;margin-bottom:8px;min-width:0}
 .nr1{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
 .tb{font-family:var(--mono);font-size:12px;font-weight:700;background:#111827;color:#fff;border-radius:6px;padding:1px 7px}
@@ -289,12 +299,16 @@ function renderNews(){
     el.innerHTML=`<b>${n}</b>건 · ${hm}`;});
   if(sec==='theme')return;
   const T=d.topics.filter(t=>t.section===sec),tot=T.reduce((a,t)=>a+t.count,0);
-  // 그룹(K 테크·K 조방원 …)별로 묶어서 버튼 표시 — 그룹 이름을 누르면 그룹 전체
-  const chip=t=>`<span class="nc ${ns.cat===t.id?'on':''}" data-c="${t.id}">${esc(t.name)}<small>${t.count}</small></span>`;
+  // 미국판처럼: 그룹(색 점·점선 테두리, 누르면 그룹 전체) 아래 세부 카테고리 버튼
+  const GC={'K 테크':'#2563eb','K 조방원':'#059669','K 바이오':'#db2777','K 모빌리티':'#0891b2','K 금융':'#ca8a04','K 정책':'#7c3aed'};
+  const pill=(t,gc)=>`<button type="button" class="ni ${ns.cat===t.id?'on':''} ${t.count?'':'empty'}" style="--gc:${gc}" data-c="${t.id}"><span>${esc(t.name)}</span><span class="c">${t.count}</span></button>`;
   const groups=[];for(const t of T){const k=t.group||'';let g=groups.find(x=>x.k===k);if(!g)groups.push(g={k,ts:[]});g.ts.push(t);}
-  document.getElementById('ncats').innerHTML=`<span class="nc ${ns.cat==='ALL'?'on':''}" data-c="ALL">전체<small>${tot}</small></span>`+
-    groups.map(g=>g.k?`<div class="ngrp"><span class="nc ng2 ${ns.cat==='G:'+g.k?'on':''}" data-c="G:${esc(g.k)}">${esc(g.k)}<small>${g.ts.reduce((a,t)=>a+t.count,0)}</small><em>그룹 전체</em></span>${g.ts.map(chip).join('')}</div>`
-      :g.ts.map(chip).join('')).join('');
+  document.getElementById('ncats').innerHTML=
+    `<div class="nav-h"><span class="nav-t">${esc(sec)} 카테고리</span><span class="nav-hint">👆 눌러서 골라 보기</span></div>`+
+    `<div class="pills"><button type="button" class="ni all ${ns.cat==='ALL'?'on':''}" data-c="ALL"><span>전체</span><span class="c">${tot}</span></button></div>`+
+    groups.map(g=>{const gc=GC[g.k]||'#2563eb',on=ns.cat==='G:'+g.k;
+      return (g.k?`<div><button type="button" class="ng ${on?'on':''}" style="--gc:${gc}" data-c="G:${esc(g.k)}">${esc(g.k)}<span class="c">${g.ts.reduce((a,t)=>a+t.count,0)}</span><span class="gh">${on?'✓ 선택됨':'그룹 전체 보기'}</span></button></div>`:'<div class="ngap"></div>')+
+        `<div class="pills">${g.ts.map(t=>pill(t,gc)).join('')}</div>`;}).join('');
   const seen=new Set(),items=[];
   for(const t of T){if(ns.cat!=='ALL'&&ns.cat!==t.id&&ns.cat!=='G:'+t.group)continue;
     for(const x of t.stories){if(x.is_opinion||seen.has(x.headline))continue;seen.add(x.headline);items.push([x,t.name]);}}
@@ -306,7 +320,7 @@ function renderNews(){
       ${x.sources.length>1?`<details><summary>보도 ${x.sources.length}건 보기</summary>${x.sources.map(s=>`<div><span class="tm">${esc(s.time_kst.slice(6))}</span><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.headline)}</a> · ${esc(s.name)}</div>`).join('')}</details>`:`<div class="hsub" style="margin-top:3px">${esc(x.sources[0].name)}</div>`}</div>`;}).join('')
     :'<div class="empty">해당 카테고리 뉴스가 없어요.</div>';
 }
-document.getElementById('ncats').addEventListener('click',e=>{const c=e.target.closest('.nc');if(c){ns.cat=c.dataset.c;renderNews();}});
+document.getElementById('ncats').addEventListener('click',e=>{const c=e.target.closest('[data-c]');if(c){ns.cat=c.dataset.c;renderNews();}});
 document.querySelectorAll('.sec').forEach(b=>b.onclick=()=>setSec(b.dataset.sec));
 setInterval(()=>{if(sec!=='theme')loadNews();},5*60e3);
 document.getElementById('rbtn').onclick=()=>{load();if(sec!=='theme')loadNews();};
