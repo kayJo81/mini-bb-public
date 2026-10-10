@@ -30,13 +30,20 @@ jobs:
       - name: Install
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk >/dev/null
-          pip install -q requests playwright
+          pip install -q -r requirements.txt playwright
           python -m playwright install --with-deps chromium >/dev/null
       - name: Build close PDF
         id: pdf
         env:
           CLOSE_REQUIRE_TODAY: ${{ inputs.date == '' && '1' || '' }}
         run: python scripts/close_pdf.py --out reports_close ${{ inputs.date != '' && format('--date {0}', inputs.date) || '' }}
+      - name: Build close reasons PDF
+        if: ${{ steps.pdf.outputs.skip != 'true' }}
+        continue-on-error: true
+        env:
+          CLOSE_REQUIRE_TODAY: ${{ inputs.date == '' && '1' || '' }}
+          FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+        run: python scripts/reasons_pdf.py --out reports_close --pdf-only ${{ inputs.date != '' && format('--date {0}', inputs.date) || '' }}
       - uses: actions/upload-artifact@v4
         if: ${{ steps.pdf.outputs.skip != 'true' }}
         with:

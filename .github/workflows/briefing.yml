@@ -156,6 +156,15 @@ jobs:
           CLOSE_REQUIRE_TODAY: "1"
         run: python scripts/close_pdf.py --out reports --pdf-only
 
+      # 같은 종목들의 당일 등락 사유 (Finnhub·위불 종목 뉴스 중 움직임을 설명하는 기사, 한국어 번역 + 원문) — 따로 한 문서
+      - name: Build close reasons PDF
+        if: ${{ inputs.report }}
+        continue-on-error: true
+        env:
+          CLOSE_REQUIRE_TODAY: "1"
+          FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+        run: python scripts/reasons_pdf.py --out reports --pdf-only --cache .cache/ko.json
+
       - uses: actions/upload-artifact@v4
         if: ${{ inputs.report }}
         with:
