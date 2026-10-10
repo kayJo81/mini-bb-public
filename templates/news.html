@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>미니 블벅터</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --up:#16a34a;--dn:#dc2626;--neu:#6b7280;
+  --bd:#e5e5e5;--bg:#f4f5f7;--card:#fff;--ink:#111;--sub:#6b7280;--acc:#2563eb;
+  --r:12px;--sh:0 1px 4px rgba(0,0,0,.06);
+  --mono:'IBM Plex Mono',monospace;
+}
+html,body{max-width:100%;overflow-x:hidden}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-size:13px}
+/* 화면 폭 고정: 긴 단어·URL·종목 나열이 있어도 줄바꿈해서 페이지가 옆으로 넓어지지 않게 */
+.wrap,.main,.main>*,#list,.sec,.card{min-width:0;max-width:100%}
+.card{overflow:hidden}
+.hl,.orig,.sum,.notes,.det,.det a,.selbar,.sec-h,.stab2 .d{overflow-wrap:anywhere;word-break:break-word}
+.srcs{min-width:0}
+.src{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+a{color:inherit}
+
+#bar{position:sticky;top:0;z-index:100;background:#fff;border-bottom:.5px solid var(--bd);
+     display:flex;align-items:center;gap:10px;padding:9px 20px;box-shadow:0 1px 6px rgba(0,0,0,.05);flex-wrap:wrap}
+.brand{font-weight:700;font-size:15px;letter-spacing:-.3px;text-decoration:none}
+.brand em{color:var(--acc);font-style:normal}
+.spacer{flex:1}
+.btn{padding:5px 12px;border-radius:8px;border:.5px solid var(--bd);background:#fff;cursor:pointer;font-size:11px;font-weight:500;color:#374151;text-decoration:none}
+.btn:hover{background:#f3f4f6}
+#winlbl{font-family:var(--mono);font-size:11px;color:#374151}
+#gen{font-size:10px;color:#9ca3af}
+#visits{font-size:10px;color:#6b7280;font-family:var(--mono)}
+
+.wrap{padding:14px 20px;max-width:1500px;margin:0 auto}
+/* 시장을 움직인 뉴스 */
+.mv{background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:12px 14px;margin-bottom:12px}
+.mv-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.mv-t{font-size:13px;font-weight:700}
+.mv-note{font-size:10px;color:var(--sub)}
+.mv-idx{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.mv-i{display:flex;align-items:baseline;gap:6px;padding:6px 10px;border-radius:9px;background:#f9fafb;border:.5px solid var(--bd);font-family:var(--mono);font-size:12px}
+.mv-i b{font-family:'Inter',sans-serif;font-size:11px;color:#374151}
+.mv-i small{font-size:9px;color:var(--sub);font-family:'Inter',sans-serif}
+.up{color:var(--up)} .dn{color:var(--dn)}
+.mv-ev{border-top:.5px dashed var(--bd);padding:8px 0 4px}
+.mv-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mv-time{font-family:var(--mono);font-size:11px;font-weight:600;background:#111827;color:#fff;padding:2px 8px;border-radius:6px}
+.mv-chg{font-family:var(--mono);font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;background:#f3f4f6}
+.mv-chg.up{background:#dcfce7}.mv-chg.dn{background:#fee2e2}
+.mv-news{margin:5px 0 0 2px;display:flex;flex-direction:column;gap:3px}
+.mv-n{font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.mv-n a{text-decoration:none;color:#111827;font-weight:500}
+.mv-n a:hover{color:var(--acc)}
+.mv-n .tm{font-family:var(--mono);font-size:10px;color:var(--sub);margin-right:5px}
+.mv-n .mv-src{font-size:10px;color:var(--sub)}
+.mv-empty{font-size:12px;color:var(--sub);padding:4px 0}
+
+/* 상단 대분류 탭: 산업 / 매크로 / 지정학 */
+.sections{margin-bottom:12px}
+.sec-hint{font-size:11px;color:var(--sub);margin:0 2px 6px}
+.sec-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.el-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px}
+.el-c{border:.5px solid var(--bd);border-radius:10px;padding:10px 12px;background:#f9fafb;min-width:0}
+.el-k{font-size:11px;font-weight:700;color:#374151;margin-bottom:6px;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.el-k small{font-weight:500;font-size:9px;color:var(--sub)}
+.el-tag{font-size:9px;font-weight:700;padding:1px 6px;border-radius:5px;background:#e0e7ff;color:#3730a3}
+.el-tag.pm{background:#fef3c7;color:#92400e}
+.el-bar{display:flex;height:22px;border-radius:6px;overflow:hidden;font-family:var(--mono);font-size:11px;font-weight:700;color:#fff}
+.el-bar span{display:flex;align-items:center;padding:0 7px;white-space:nowrap;min-width:0}
+.el-d{background:#2563eb}.el-r{background:#dc2626;justify-content:flex-end}.el-o{background:#d1d5db;flex:1}
+.el-m{font-size:11px;margin-top:5px;color:#374151}
+.el-pm{display:flex;flex-direction:column;gap:7px}
+.el-pr{font-size:11px;display:grid;grid-template-columns:42px 1fr 46px;gap:6px;align-items:center}
+.el-pr a{color:#374151;text-decoration:none;font-weight:600}
+.el-pt{height:8px;border-radius:4px;background:#fecaca;overflow:hidden}.el-pt i{display:block;height:100%;background:#2563eb}
+.el-pr b{font-family:var(--mono);text-align:right}
+.el-c details{margin-top:6px;font-size:11px}.el-c summary{cursor:pointer;color:var(--sub)}
+.el-src{display:grid;grid-template-columns:1fr auto auto;gap:2px 8px;margin-top:5px;font-family:var(--mono);font-size:10.5px}
+.el-src span:first-child{font-family:'Inter',sans-serif;overflow-wrap:anywhere}
+.el-fail{font-size:12px;color:#b91c1c}
+.mv-cite{font-size:10px;font-weight:600;color:#9a3412;background:#ffedd5;border-radius:5px;padding:1px 6px;margin-left:4px;white-space:nowrap}
+body.market .filters,body.market .main{display:none}
+.stab2{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--bd);
+       background:#fff;cursor:pointer;text-align:left;font-family:inherit;box-shadow:var(--sh);transition:border-color .12s,transform .12s,box-shadow .12s}
+.stab2:hover{border-color:var(--sc);transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.stab2 .t{font-size:15px;font-weight:700;color:#111827}
+.stab2 .d{font-size:10px;color:var(--sub);line-height:1.35}
+.stab2 .n{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--sc)}
+.stab2.on{background:var(--sc);border-color:var(--sc);box-shadow:0 3px 12px color-mix(in srgb,var(--sc) 35%,transparent)}
+.stab2.on .t,.stab2.on .d,.stab2.on .n{color:#fff}
+.stab2.on .t::before{content:"✓ "}
+
+.filters{display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.chip{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:.5px solid var(--bd);background:#fff;color:#4b5563;user-select:none}
+.chip.on{background:#111;color:#fff;border-color:#111}
+.flbl{font-size:10px;color:var(--sub);font-weight:600;margin:0 2px 0 8px}
+#q{padding:4px 10px;border:.5px solid var(--bd);border-radius:8px;font-size:12px;min-width:200px;font-family:inherit}
+
+.main{display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start}
+/* 카테고리 선택 */
+.nav{background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);padding:14px;box-shadow:var(--sh);position:sticky;top:62px;max-height:calc(100vh - 76px);overflow:auto}
+#list{scroll-margin-top:70px}
+.nav-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px}
+.nav-t{font-size:13px;font-weight:700}
+.nav-hint{font-size:10px;color:var(--sub)}
+/* 그룹 제목도 버튼: 누르면 그 그룹 뉴스만 */
+.ng{display:inline-flex;align-items:center;gap:6px;font:700 11px/1.2 'Inter',sans-serif;color:#374151;letter-spacing:.3px;
+    margin:14px 0 7px;padding:4px 10px 4px 8px;border:1px dashed color-mix(in srgb,var(--gc) 45%,transparent);border-radius:999px;
+    background:color-mix(in srgb,var(--gc) 7%,#fff);cursor:pointer;transition:background .12s,border-color .12s}
+.ng::before{content:"";width:8px;height:8px;border-radius:3px;background:var(--gc,#9ca3af)}
+.ng .c{font-family:var(--mono);font-size:10px;font-weight:600;color:#4b5563}
+.ng .gh{font-size:9px;font-weight:500;color:var(--sub)}
+.ng:hover{border-style:solid;border-color:var(--gc)}
+.ng.on{background:var(--gc);border:1px solid var(--gc);color:#fff}
+.ng.on::before{background:#fff}
+.ng.on .c,.ng.on .gh{color:#fff}
+.ng-wrap{display:block}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.ni{--gc:var(--acc);display:inline-flex;align-items:center;gap:6px;padding:6px 6px 6px 11px;border:1px solid var(--bd);border-radius:999px;
+    background:#fff;cursor:pointer;font:500 12px/1.2 'Inter',sans-serif;color:#1f2937;white-space:nowrap;transition:border-color .12s,background .12s,box-shadow .12s,transform .12s}
+.ni:hover{border-color:var(--gc);box-shadow:0 2px 8px rgba(0,0,0,.07);transform:translateY(-1px)}
+.ni{max-width:100%}
+.ni>span:first-child{white-space:normal;text-align:left}
+.ni:focus-visible{outline:2px solid var(--gc);outline-offset:2px}
+.ni .c{font-family:var(--mono);font-size:10px;font-weight:600;min-width:22px;text-align:center;padding:2px 6px;border-radius:999px;background:#f3f4f6;color:#4b5563}
+.ni.on{background:var(--gc);border-color:var(--gc);color:#fff;box-shadow:0 2px 10px color-mix(in srgb,var(--gc) 35%,transparent)}
+.ni.on .c{background:rgba(255,255,255,.25);color:#fff}
+.ni.on::before{content:"✓";font-size:11px;font-weight:700;margin-right:-2px}
+.ni.empty{opacity:.45}
+.ni.all{--gc:#111827;font-weight:600}
+.selbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;font-size:12px;color:#1e40af}
+.selbar b{font-weight:700}
+.selbar button{margin-left:auto;border:0;background:#fff;border:1px solid #bfdbfe;color:#1e40af;border-radius:999px;padding:3px 10px;font-size:11px;cursor:pointer}
+
+.sec{margin-bottom:16px}
+.sec-h{font-size:13px;font-weight:700;margin:2px 2px 8px;display:flex;align-items:center;gap:8px}
+.sec-h .g{font-size:10px;font-weight:600;color:var(--sub)}
+.card{background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh);margin-bottom:8px}
+.card.opinion{opacity:.72}
+.row1{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px}
+.vb{padding:2px 7px;border-radius:5px;font-size:9px;font-weight:700;letter-spacing:.4px}
+.v-VERIFIED{background:#dcfce7;color:#15803d}
+.v-SINGLE{background:#fef9c3;color:#854d0e}
+.v-UNVERIFIED{background:#fee2e2;color:#b91c1c}
+.tag{padding:1px 6px;border-radius:5px;font-size:9px;font-weight:600;background:#f3f4f6;color:#4b5563}
+.tag.cat{background:#e0e7ff;color:#3730a3}
+.tag.rumor{background:#ffedd5;color:#c2410c}
+.tag.op{background:#ede9fe;color:#5b21b6}
+.time{font-family:var(--mono);font-size:10px;color:var(--sub)}
+.tbadge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:6px;background:#111827;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600}
+.tbadge .ago{font-family:'Inter',sans-serif;font-weight:500;font-size:10px;color:#cbd5e1}
+.tlast{font-family:var(--mono);font-size:10px;color:var(--sub)}
+.sent-bullish{color:var(--up)} .sent-bearish{color:var(--dn)} .sent-neutral{color:var(--neu)}
+.hl{font-size:14px;font-weight:600;line-height:1.4;text-decoration:none;display:block}
+.hl:hover{color:var(--acc)}
+.orig{font-size:11px;color:#9ca3af;margin-top:3px;line-height:1.4}
+.orig:empty{display:none}
+#koBtn{padding:5px 12px;border-radius:8px;border:1px solid var(--bd);background:#fff;cursor:pointer;font-size:11px;font-weight:600;color:#374151}
+#koBtn.on{background:#111827;border-color:#111827;color:#fff}
+.sum{font-size:12px;color:#4b5563;margin-top:4px;line-height:1.5}
+.notes{font-size:11px;color:var(--sub);margin-top:5px}
+.srcs{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}
+.src{padding:1px 7px;border-radius:5px;font-size:10px;border:.5px solid var(--bd);text-decoration:none;white-space:nowrap}
+.t-official{background:#dbeafe;border-color:#93c5fd;color:#1e40af;font-weight:600}
+.t-tier1{background:#ecfdf5;border-color:#86efac;color:#166534;font-weight:600}
+.t-tier2{background:#f9fafb;color:#374151}
+.t-tier3,.t-opinion,.t-social{background:#fff;color:#9ca3af}
+.more{font-size:10px;color:var(--acc);cursor:pointer;margin-top:6px;display:inline-block}
+.det{margin-top:6px;border-top:.5px dashed var(--bd);padding-top:6px;display:none}
+.det.open{display:block}
+.det div{font-size:11px;padding:2px 0;color:#374151}
+.det .time{margin-right:6px}
+.empty,.msg{background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);padding:30px;text-align:center;color:var(--sub)}
+.legend{font-size:10px;color:var(--sub);margin-top:14px;line-height:1.7}
+
+@media (max-width:820px){
+  .sec-tabs{grid-template-columns:repeat(2,1fr)}
+  #bar{padding:8px 16px}
+  .wrap{padding:12px 16px}
+  .main{grid-template-columns:1fr}
+  .nav{position:static;max-height:none}
+  #q{min-width:0;flex:1}
+}
+</style>
+</head>
+<body>
+<div id="bar">
+  <a class="brand" href="/news">미니 <em>블벅터</em></a>
+  <span id="winlbl">—</span>
+  <div class="spacer"></div>
+  <span id="visits"></span>
+  <span id="gen"></span>
+  <button type="button" id="koBtn" title="헤드라인 한국어 번역 켜기/끄기">가 한국어</button>
+  <a class="btn" id="labLink" href="https://mini-bblab.pages.dev" target="_blank" rel="noopener" title="뉴스 기반 롱/숏 후보 탐색">🧪 랩</a>
+  <button class="btn" id="rbtn">&#x21bb; 새로고침</button>
+  <a class="btn" id="dashLink" href="/">&larr; 대시보드</a>
+</div>
+
+<div class="wrap">
+  <div class="sections">
+    <div class="sec-hint">👆 보고 싶은 분야를 눌러서 선택하세요</div>
+    <div class="sec-tabs" id="secTabs"></div>
+  </div>
+  <div class="mv" id="moves" hidden></div>
+  <div class="mv" id="midterms" hidden></div>
+  <div class="filters">
+    <span class="flbl">팩트체크</span>
+    <span class="chip on" data-v="ALL">전체</span>
+    <span class="chip" data-v="VERIFIED">검증됨</span>
+    <span class="chip" data-v="SINGLE">단독보도</span>
+    <span class="chip" data-v="UNVERIFIED">미확인</span>
+    <span class="flbl">지역</span>
+    <span class="chip on" data-r="ALL">전체</span>
+    <span class="chip" data-r="US">미국</span>
+    <span class="chip" data-r="EU">유럽</span>
+    <span class="chip" data-r="CN">중화권</span>
+    <span class="flbl">정렬</span>
+    <span class="chip" data-s="time">최신순</span>
+    <span class="chip" data-s="rank">검증순</span>
+    <span class="chip on" id="hideOp">의견기사 숨김</span>
+    <input id="q" placeholder="헤드라인 검색…">
+  </div>
+  <div class="main">
+    <div class="nav" id="nav"></div>
+    <div id="list"><div class="msg">불러오는 중…</div></div>
+  </div>
+  <div class="legend">
+    <b>팩트체크 기준</b> · <span class="vb v-VERIFIED">검증됨</span> 공식 발표(IR·보도자료·규제기관) 확인 또는 신뢰 매체 2곳 이상 교차 보도
+    · <span class="vb v-SINGLE">단독보도</span> 주요 매체 1곳 보도 또는 익명 소식통 인용 — 후속 확인 필요
+    · <span class="vb v-UNVERIFIED">미확인</span> 신뢰도 낮은 출처만 존재.<br>
+    출처 등급: <span class="src t-official">공식</span> <span class="src t-tier1">Tier1 통신·메이저</span>
+    <span class="src t-tier2">Tier2 전문·대형</span> <span class="src t-tier3">Tier3/의견</span>
+    · 수집: Google News(US·UK 에디션), Finnhub 종목 뉴스, FinancialJuice 속보, 월스트리트견문(华尔街见闻) 속보 · 시각은 모두 KST
+  </div>
+</div>
+
+<script>
+const VL={VERIFIED:'검증됨',SINGLE:'단독보도',UNVERIFIED:'미확인'};
+const TL={official:'공식',tier1:'T1',tier2:'T2',tier3:'T3',opinion:'의견',social:'SNS'};
+const GROUP_COLOR={'기술주 실적':'#db2777','모빌리티 & 에너지':'#059669','메가테크':'#2563eb','AI 밸류체인':'#7c3aed','암호화폐':'#ea580c',
+  '로컬 매크로':'#0891b2','중앙은행':'#4f46e5','지정학':'#dc2626'};
+const SECTIONS=[['시장','나스닥·S&P 급변 구간과 그때 나온 뉴스','#0f766e'],['산업','실적·모빌리티·메가테크·AI·암호화폐','#2563eb'],['매크로','미국·아시아·유럽 / 연준·ECB·BOJ','#0891b2'],['지정학','미국 중간선거·정계 / 이란 & 중동','#dc2626']];
+const WINDOW_H=12;   // 마지막 수집 시각 기준 직전 12시간
+let st={section:'산업',topic:'ALL',verdict:'ALL',region:'ALL',hideOp:true,q:'',ko:true,sort:'time'};
+let raw=null,data=null,pollT=null;
+const STATIC=!!window.MBB_STATIC;   // 정적 배포(Cloudflare Pages): briefings/*.json 을 직접 읽음
+
+try{const s=JSON.parse(localStorage.getItem('mbb')||'{}');st.hideOp=s.hideOp??true;st.ko=s.ko??true;st.sort=s.sort||'time';st.section=s.section||'산업';}catch(e){}
+const save=()=>{try{localStorage.setItem('mbb',JSON.stringify({hideOp:st.hideOp,ko:st.ko,sort:st.sort,section:st.section}));}catch(e){}};
+const fmt=d=>{const p=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d).map(x=>[x.type,x.value]));return `${p.month}-${p.day} ${p.hour}:${p.minute}`;};
+const esc=s=>(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+async function load(){
+  clearTimeout(pollT);
+  try{
+    const r=await fetch(STATIC?'briefings/live.json':'/api/briefing',{cache:'no-store'});
+    raw=r.ok?await r.json():{status:'error',message:'데이터를 불러오지 못했습니다'};
+  }catch(e){raw={status:'error',message:'데이터를 불러오지 못했습니다'};}
+  if(raw.status!=='ready'){
+    data=null;
+    document.getElementById('list').innerHTML=`<div class="msg">${esc(raw.message||'준비 중…')}</div>`;
+    document.getElementById('nav').innerHTML='';
+    document.getElementById('winlbl').textContent='—';document.getElementById('gen').textContent='';
+    if(raw.status==='building')pollT=setTimeout(load,10000);
+    return;
+  }
+  // 수집 단계에서 미리 번역된 제목은 바로 사용 (방문자가 번역을 다시 요청하지 않음)
+  for(const t of raw.topics)for(const s of t.stories){if(s.headline_ko)tr.set(s.headline,s.headline_ko);}
+  applyWindow();
+}
+
+// 마지막 수집 시각 기준 직전 12시간 이내 보도가 하나라도 있는 이슈만 남김
+function applyWindow(){
+  const end=Date.parse(raw.generated_at),cut=end/1000-WINDOW_H*3600;
+  const stats={total:0,VERIFIED:0,SINGLE:0,UNVERIFIED:0,rumor:0,opinion:0};
+  const topics=raw.topics.map(t=>{
+    const stories=t.stories.filter(s=>s.sources.some(x=>(x.published??s.last_seen??s.first_seen)>=cut));
+    for(const s of stories){stats.total++;stats[s.verdict]++;stats.rumor+=s.is_rumor;stats.opinion+=s.is_opinion;}
+    return {...t,stories,count:stories.length};
+  });
+  data={...raw,topics,stats};
+  document.getElementById('winlbl').textContent=`${fmt(new Date(cut*1000))} ~ ${fmt(new Date(end))} KST`;
+  render();
+  tick();
+}
+
+// "수집 n분 전" 표시만 갱신 (목록은 그대로)
+function tick(){
+  if(!raw||raw.status!=='ready')return;
+  const ago=Math.round((Date.now()-Date.parse(raw.generated_at))/60000);
+  document.getElementById('gen').textContent=`수집 ${ago<1?'방금':ago+'분 전'}`;
+}
+
+function passes(s){
+  if(st.hideOp&&s.is_opinion)return false;
+  if(st.verdict!=='ALL'&&s.verdict!==st.verdict)return false;
+  if(st.region!=='ALL'&&!s.regions.includes(st.region))return false;
+  if(st.q){const q=st.q.toLowerCase();if(!s.sources.some(x=>x.headline.toLowerCase().includes(q))&&!(tr.get(s.headline)||'').includes(st.q))return false;}
+  return true;
+}
+
+// ── 시장을 움직인 뉴스: 나스닥·S&P 급변 구간과 같은 시간대 첫 보도 ──
+const pct=v=>v==null?'–':`${v>0?'+':''}${v.toFixed(2)}%`;
+const cls=v=>v>0?'up':v<0?'dn':'';
+const hm=ts=>fmt(new Date(ts*1000)).slice(6);
+function renderMoves(){
+  const box=document.getElementById('moves'),m=raw&&raw.moves;
+  const on=st.section==='시장';
+  document.body.classList.toggle('market',on);
+  if(!on||!m){box.hidden=true;if(on)box.hidden=false,box.innerHTML='<div class="mv-empty">시장 데이터를 불러오지 못했습니다</div>';return;}
+  box.hidden=false;
+  const idx=(m.indices||[]).map(i=>`<div class="mv-i"><b>${esc(i.name)}</b>${i.price.toLocaleString(undefined,{maximumFractionDigits:2})}
+    <span class="${cls(i.change_pct)}">${pct(i.change_pct)}</span><small>정규장·전일비</small></div>`).join('');
+  const evs=(m.events||[]).map(e=>{
+    const news=e.news.length?e.news.map(n=>{const h=(st.ko&&tr.get(n.headline))||n.headline;
+      return `<div class="mv-n"><span class="tm">${hm(n.first_seen)}</span><a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(h)}</a> <span class="mv-src">· ${esc(n.source)}</span>${n.cited>=2?`<span class="mv-cite" title="이후 '주가가 ~로 하락/상승' 기사 중 이 뉴스를 원인으로 언급한 수">📰 원인 지목 ${n.cited}건</span>`:''}</div>`;}).join('')
+      :'<div class="mv-n" style="color:var(--sub)">같은 시간대에 뚜렷한 관련 뉴스를 찾지 못했습니다</div>';
+    return `<div class="mv-ev"><div class="mv-row"><span class="mv-time">🕒 ${hm(e.start)}–${hm(e.end)}</span>
+      <span class="mv-chg ${cls(e.nq_pct)}">나스닥 ${pct(e.nq_pct)}</span><span class="mv-chg ${cls(e.es_pct)}">S&amp;P ${pct(e.es_pct)}</span></div>
+      <div class="mv-news">${news}</div></div>`;}).join('');
+  box.innerHTML=`<div class="mv-h"><span class="mv-t">📈 시장을 움직인 뉴스</span>
+      <span class="mv-note">나스닥·S&amp;P 선물 15분 급변 구간과 같은 시간대 첫 보도 · '원인 지목'은 이후 시장 반응 기사가 이 뉴스를 원인으로 언급한 수 · 인과관계는 추정</span></div>
+    <div class="mv-body"><div class="mv-idx">${idx}</div>${evs||'<div class="mv-empty">최근 12시간 동안 큰 움직임이 없었습니다</div>'}</div>`;
+}
+
+// ── 미국 중간선거: 하원 정당 지지도(여론조사 평균) + 예측시장 다수당 확률 ──
+function renderMidterms(){
+  const box=document.getElementById('midterms'),m=raw&&raw.midterms;
+  if(st.section!=='지정학'){box.hidden=true;return;}
+  box.hidden=false;
+  const fail='<div class="el-fail">⚠️ 갱신 실패 — 다음 수집 때 다시 시도합니다</div>';
+  const f1=v=>v==null?'–':v.toFixed(1);
+  const lead=x=>x.margin>0?`<b style="color:#2563eb">민주 +${f1(x.margin)}%p</b>`:x.margin<0?`<b style="color:#dc2626">공화 +${f1(-x.margin)}%p</b>`:'<b>동률</b>';
+  const g=m&&m.generic,k=m&&m.markets;
+  let gb=fail;
+  if(g&&g.average){const a=g.average;
+    gb=`<div class="el-bar"><span class="el-d" style="width:${a.dem}%">민주 ${f1(a.dem)}</span><span class="el-o"></span><span class="el-r" style="width:${a.rep}%">공화 ${f1(a.rep)}</span></div>
+      <div class="el-m">${lead(a)} <span style="color:var(--sub)">· ${esc(a.updated||'')} 기준</span></div>
+      ${(g.sources||[]).length?`<details><summary>집계 기관별 보기 (${g.sources.length})</summary><div class="el-src">${g.sources.map(x=>
+        `<span>${esc(x.source)}</span><span>D ${f1(x.dem)} · R ${f1(x.rep)}</span><span style="color:${x.margin>0?'#2563eb':'#dc2626'}">${x.margin>0?'D+':'R+'}${f1(Math.abs(x.margin))}</span>`).join('')}</div></details>`:''}
+      <div class="mv-note" style="margin-top:5px">출처: <a href="${esc(g.url)}" target="_blank" rel="noopener">위키백과 여론조사 집계표</a></div>`;}
+  const row=(n,v,u)=>v==null?`<div class="el-pr"><span>${n}</span><span class="el-fail">갱신 실패</span><span></span></div>`
+    :`<div class="el-pr"><a href="${esc(u||'#')}" target="_blank" rel="noopener">${n}</a><div class="el-pt"><i style="width:${v}%"></i></div><b style="color:${v>=50?'#2563eb':'#dc2626'}">${v.toFixed(0)}%</b></div>`;
+  const pm=k?`<div class="el-pm">${row('하원',k.house_dem,k.house_url)}${row('상원',k.senate_dem,k.senate_url)}</div>
+      <div class="mv-note" style="margin-top:6px">파란 막대 = 민주당이 다수당이 될 확률 (나머지는 공화당) · 폴리마켓 베팅 가격 기준</div>`:fail;
+  box.innerHTML=`<div class="mv-h"><span class="mv-t">🗳️ 2026 미국 중간선거 현황</span><span class="mv-note">선거일 11월 3일 · 수집 때마다 갱신</span></div>
+    <div class="el-grid">
+      <div class="el-c"><div class="el-k">하원 정당 지지도 <span class="el-tag">여론조사 평균</span><small>"오늘 선거라면 어느 당 하원 후보?"</small></div>${gb}</div>
+      <div class="el-c"><div class="el-k">다수당 확률 <span class="el-tag pm">예측시장 · 여론조사 아님</span></div>${pm}</div>
+    </div>`;
+}
+
+function render(){
+  if(!data||data.status!=='ready')return;
+  renderMoves();
+  renderMidterms();
+  const secOf=t=>t.section||'산업';
+  document.getElementById('secTabs').innerHTML=SECTIONS.map(([k,desc,c])=>{
+    const n=k==='시장'?`급변 ${((raw.moves||{}).events||[]).length}회`
+      :data.topics.filter(t=>secOf(t)===k).reduce((a,t)=>a+t.stories.filter(passes).length,0)+'건';
+    return `<button type="button" class="stab2 ${st.section===k?'on':''}" style="--sc:${c}" data-sec="${k}" aria-pressed="${st.section===k}">
+      <span class="t">${k}</span><span class="d">${desc}</span><span class="n">${n}</span></button>`;
+  }).join('');
+  const topics=data.topics.filter(t=>secOf(t)===st.section);
+  // st.topic: 'ALL' | 토픽 id | 'G:그룹명'(그룹 전체)
+  const selGroup=st.topic.startsWith('G:')?st.topic.slice(2):null;
+  if(st.topic!=='ALL'&&!(selGroup?topics.some(t=>t.group===selGroup):topics.some(t=>t.id===st.topic)))st.topic='ALL';
+  const groupCount={};for(const t of topics)groupCount[t.group]=(groupCount[t.group]||0)+t.stories.filter(passes).length;
+
+  let nav='',grp=null,total=0;
+  for(const t of topics){
+    const n=t.stories.filter(passes).length;total+=n;
+    const gc=GROUP_COLOR[t.group]||'#2563eb';
+    if(t.group!==grp){const gon=st.topic==='G:'+t.group;
+      nav+=(grp===null?'':'</div>')+`<div class="ng-wrap"><button type="button" class="ng ${gon?'on':''}" style="--gc:${gc}" data-t="G:${esc(t.group)}" aria-pressed="${gon}">${esc(t.group)}<span class="c">${groupCount[t.group]}</span><span class="gh">${gon?'✓ 선택됨':'그룹 전체 보기'}</span></button></div><div class="pills">`;grp=t.group;}
+    nav+=`<button type="button" class="ni ${st.topic===t.id?'on':''} ${n?'':'empty'}" style="--gc:${gc}" data-t="${t.id}" aria-pressed="${st.topic===t.id}"><span>${esc(t.name)}</span><span class="c">${n}</span></button>`;
+  }
+  document.getElementById('nav').innerHTML=
+    `<div class="nav-h"><span class="nav-t">${esc(st.section)} 카테고리</span><span class="nav-hint">👆 눌러서 골라 보기</span></div>`+
+    `<div class="pills"><button type="button" class="ni all ${st.topic==='ALL'?'on':''}" data-t="ALL" aria-pressed="${st.topic==='ALL'}"><span>전체</span><span class="c">${total}</span></button></div>`+
+    nav+'</div>';
+
+  const sel=st.topic.startsWith('G:')?{name:st.topic.slice(2)+' (그룹 전체)'}:topics.find(t=>t.id===st.topic);
+  let html=sel?`<div class="selbar">선택한 카테고리: <b>${esc(sel.name)}</b><button type="button" id="clearSel">✕ 전체 보기</button></div>`:'';
+  // 그룹 전체 / 전체(최신순): 해당 카테고리 뉴스를 하나로 합쳐 시간순(같은 기사는 한 번만, 카테고리 이름을 태그로)
+  const merged=selGroup||(st.topic==='ALL'&&st.sort==='time');
+  if(merged){
+    const seen=new Set(),list=[];
+    for(const t of topics){if(selGroup&&t.group!==selGroup)continue;
+      for(const x of t.stories.filter(passes)){if(seen.has(x.headline))continue;seen.add(x.headline);list.push([x,t.name]);}}
+    if(st.sort==='time')list.sort((a,b)=>b[0].first_seen-a[0].first_seen);
+    html+=`<div class="sec"><div class="sec-h">${esc(selGroup||st.section+' 전체')} <span class="g">${selGroup?'그룹 전체 · ':'최신순 · '}${list.length}건</span></div>`+
+      (list.length?list.map(([x,n])=>card(x,n)).join(''):'<div class="empty">조건에 맞는 뉴스가 없습니다</div>')+'</div>';
+  }
+  for(const t of topics){
+    if(merged||(st.topic!=='ALL'&&st.topic!==t.id))continue;
+    const list=t.stories.filter(passes);
+    // 최신순: 첫 보도(가장 빠른 기사) 시각 기준 (검증순은 수집 단계의 기본 순서: 검증 등급 → 출처 수)
+    if(st.sort==='time')list.sort((a,b)=>b.first_seen-a.first_seen);
+    if(!list.length&&st.topic==='ALL')continue;
+    html+=`<div class="sec"><div class="sec-h">${esc(t.name)} <span class="g">${esc(t.group)} · ${list.length}건</span></div>`;
+    html+=list.length?list.map(x=>card(x)).join(''):`<div class="empty">${t.id==='earnings'?'최근 12시간 안에 발표된 기술주 실적이 없습니다 (실적이 나오면 여기에 표시됩니다)':'조건에 맞는 뉴스가 없습니다'}</div>`;
+    html+='</div>';
+  }
+  document.getElementById('list').innerHTML=html||'<div class="empty">조건에 맞는 뉴스가 없습니다</div>';
+  watchCards();
+}
+
+// ── 헤드라인 한국어 번역: 화면에 보이는 카드만 20개씩 /api/translate 로 요청 ──
+const tr=new Map();            // 영문 → 한국어 (null = 번역 실패)
+const pending=new Set();
+let trTimer=null,trOff=false;  // trOff: 번역 기능을 쓸 수 없는 환경(서버 모드·한도 초과)
+const io=('IntersectionObserver' in window)?new IntersectionObserver(es=>{
+  for(const e of es){if(!e.isIntersecting)continue;io.unobserve(e.target);const h=e.target.dataset.h;if(!tr.has(h))pending.add(h);}
+  schedule();
+},{rootMargin:'600px 0px'}):null;
+function schedule(){if(trTimer||trOff||!st.ko||!pending.size)return;trTimer=setTimeout(flush,120);}
+async function flush(){
+  trTimer=null;const batch=[...pending].slice(0,20);batch.forEach(h=>pending.delete(h));
+  try{
+    const r=await fetch('api/translate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({texts:batch})});
+    const v=r.ok?await r.json():{};
+    if(!Array.isArray(v.ko)){trOff=true;document.getElementById('koBtn').title='번역을 사용할 수 없습니다';return;}
+    batch.forEach((h,i)=>{tr.set(h,v.ko[i]||null);document.querySelectorAll(`.card[data-h="${CSS.escape(h)}"]`).forEach(applyKo);});
+  }catch(e){batch.forEach(h=>pending.add(h));}
+  schedule();
+}
+function applyKo(c){
+  const h=c.dataset.h,ko=st.ko&&tr.get(h);
+  c.querySelector('.hl').textContent=ko||h;
+  c.querySelector('.orig').textContent=ko?h:'';
+  const sm=c.querySelector('.sum');
+  if(sm&&sm.dataset.ko)sm.textContent=st.ko?sm.dataset.ko:sm.dataset.orig;
+}
+function watchCards(){
+  document.querySelectorAll('#list .card').forEach(c=>{applyKo(c);if(st.ko&&!tr.has(c.dataset.h)){if(io)io.observe(c);else pending.add(c.dataset.h);}});
+  schedule();
+}
+
+function card(s,cat){
+  const sent={bullish:'▲',bearish:'▼',neutral:'■'}[s.sentiment];
+  const srcs=s.sources.slice(0,8).map(x=>`<a class="src t-${x.tier}" href="${esc(x.url)}" target="_blank" rel="noopener" title="${esc(x.headline)}">${esc(x.name)} · ${TL[x.tier]}</a>`).join('');
+  const det=s.sources.map(x=>`<div><span class="time">${x.time_kst}</span><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.headline)}</a> <span class="time">— ${esc(x.name)} (${esc(x.via)})</span></div>`).join('');
+  // 첫 보도 시각(가장 빠른 기사)을 크게, 이후 마지막 보도 시각은 작게
+  const mins=Math.max(0,Math.round((Date.now()/1000-s.first_seen)/60));
+  const ago=mins<60?`${mins}분 전`:`${Math.floor(mins/60)}시간 전`;
+  const first=`<span class="tbadge" title="가장 빠른 보도 시각 (KST)">🕒 ${s.first_seen_kst.slice(6)}<span class="ago">${s.first_seen_kst.slice(0,5).replace('-','/')} · ${ago}</span></span>`;
+  const last=s.last_seen_kst!==s.first_seen_kst?`<span class="tlast">최근 보도 ${s.last_seen_kst.slice(6)}</span>`:'';
+  return `<div class="card ${s.is_opinion?'opinion':''}" data-h="${esc(s.headline)}">
+    <div class="row1">${first}<span class="vb v-${s.verdict}">${VL[s.verdict]}</span>${cat?`<span class="tag cat">${esc(cat)}</span>`:''}
+      <span class="tag">출처 ${s.n_sources}</span>${s.regions.map(r=>`<span class="tag">${{EU:'유럽',CN:'중화권'}[r]||'미국'}</span>`).join('')}
+      ${s.is_rumor?'<span class="tag rumor">소식통/루머</span>':''}${s.is_opinion?'<span class="tag op">의견</span>':''}
+      <span class="time sent-${s.sentiment}">${sent}</span>${last}</div>
+    <a class="hl" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.headline)}</a><div class="orig"></div>
+    ${s.summary?`<div class="sum" data-ko="${esc(s.summary_ko||'')}" data-orig="${esc(s.summary.slice(0,240))}${s.summary.length>240?'…':''}">${esc(st.ko&&s.summary_ko?s.summary_ko:s.summary.slice(0,240))}${!(st.ko&&s.summary_ko)&&s.summary.length>240?'…':''}</div>`:''}
+    <div class="notes">${s.notes.map(esc).join(' · ')}</div>
+    <div class="srcs">${srcs}</div>
+    ${s.sources.length>1?`<span class="more">관련 보도 ${s.sources.length}건 보기</span><div class="det">${det}</div>`:''}
+  </div>`;
+}
+
+document.getElementById('rbtn').onclick=load;
+document.getElementById('koBtn').onclick=()=>{st.ko=!st.ko;save();document.getElementById('koBtn').classList.toggle('on',st.ko);watchCards();renderMoves();};
+document.querySelector('.filters').onclick=e=>{
+  const c=e.target.closest('.chip');if(!c)return;
+  if(c.id==='hideOp'){st.hideOp=!st.hideOp;c.classList.toggle('on',st.hideOp);save();}
+  else if(c.dataset.v){st.verdict=c.dataset.v;document.querySelectorAll('[data-v]').forEach(x=>x.classList.toggle('on',x===c));}
+  else if(c.dataset.s){st.sort=c.dataset.s;save();document.querySelectorAll('[data-s]').forEach(x=>x.classList.toggle('on',x===c));}
+  else if(c.dataset.r){st.region=c.dataset.r;document.querySelectorAll('[data-r]').forEach(x=>x.classList.toggle('on',x===c));}
+  render();
+};
+document.getElementById('q').oninput=e=>{st.q=e.target.value.trim();render();};
+document.getElementById('secTabs').onclick=e=>{const b=e.target.closest('.stab2');if(!b)return;
+  st.section=b.dataset.sec;st.topic='ALL';save();render();};
+document.getElementById('nav').onclick=e=>{const n=e.target.closest('.ni,.ng');if(!n)return;st.topic=n.dataset.t;render();
+  document.getElementById('list').scrollIntoView({behavior:'smooth',block:'start'});};
+document.getElementById('list').onclick=e=>{if(e.target.id==='clearSel'){st.topic='ALL';render();return;}if(e.target.classList.contains('more'))e.target.nextElementSibling.classList.toggle('open');};
+
+if(STATIC){document.getElementById('dashLink').remove();document.querySelector('.brand').href='./';}
+document.getElementById('hideOp').classList.toggle('on',st.hideOp);
+document.querySelectorAll('[data-s]').forEach(x=>x.classList.toggle('on',x.dataset.s===st.sort));
+document.getElementById('koBtn').classList.toggle('on',st.ko);
+// 방문자 수 (정적 배포에서만): 브라우저당 하루 1번만 집계
+async function visits(){
+  if(!STATIC)return;
+  const today=fmt(new Date()).slice(0,5);
+  let seen=null;try{seen=localStorage.getItem('mbb_visit');}catch(e){}
+  try{
+    const r=await fetch('api/visit',{method:seen===today?'GET':'POST',cache:'no-store'});
+    const v=await r.json();
+    if(v.today==null)return;
+    if(seen!==today){try{localStorage.setItem('mbb_visit',today);}catch(e){}}
+    document.getElementById('visits').textContent=`방문 오늘 ${v.today.toLocaleString()} · 누적 ${v.total.toLocaleString()}`;
+  }catch(e){}
+}
+
+load();
+visits();
+setInterval(tick,60*1000);         // '수집 n분 전' 갱신
+setInterval(load,10*60*1000);      // 새 수집 결과 확인
+</script>
+</body>
+</html>

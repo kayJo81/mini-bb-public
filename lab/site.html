@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>미니 블벅 랩</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--bd:#e5e7eb;--sub:#6b7280;--ink:#111827;--acc:#2563eb;--long:#15803d;--short:#b91c1c;--r:14px;
+  --sh:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);--mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,'Apple SD Gothic Neo','Noto Sans KR',sans-serif}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+h1{font-size:20px;margin:0;letter-spacing:-.02em}h1 b{color:var(--acc)}
+.hsub{font-size:12px;color:var(--sub)}
+.link{font-size:12px;font-weight:600;text-decoration:none;background:#111827;color:#fff;padding:7px 12px;border-radius:9px;white-space:nowrap}
+.card{background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:14px 16px;margin-bottom:12px;min-width:0}
+h2{font-size:15px;margin:0 0 4px}
+.note{font-size:12px;color:var(--sub);margin:0 0 10px}
+.warn{background:#fffbeb;border-color:#fde68a}
+.warn b{color:#92400e}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:10px}
+.cand{border:.5px solid var(--bd);border-radius:12px;padding:10px 12px;min-width:0}
+.ch{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.sym{font-family:var(--mono);font-weight:700;font-size:15px}
+.dir{font-size:11px;font-weight:700;border-radius:6px;padding:2px 8px;color:#fff}
+.dir.롱{background:var(--long)}.dir.숏{background:var(--short)}.dir.weak{background:#9ca3af}
+.tag{font-size:10px;font-weight:600;border-radius:5px;padding:1px 6px;background:#f3f4f6;color:#4b5563}
+.tag.ok{background:#dcfce7;color:#166534}.tag.mid{background:#fef3c7;color:#92400e}
+.kv{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:#374151;margin:4px 0}
+.kv b{font-family:var(--mono)}
+.up{color:var(--long)}.dn{color:var(--short)}
+.heads{margin:6px 0 0;padding:0;list-style:none;font-size:12px}
+.heads li{padding:3px 0;border-top:.5px dashed var(--bd);overflow-wrap:anywhere}
+.heads a{text-decoration:none}.heads a:hover{color:var(--acc)}
+.sc{font-family:var(--mono);font-size:10px;margin-right:4px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th,td{padding:6px 8px;border-bottom:.5px solid var(--bd);text-align:right;white-space:nowrap}
+th{font-size:11px;color:var(--sub);font-weight:600;background:#f9fafb}
+td:first-child,th:first-child{text-align:left;white-space:normal;min-width:150px}
+td.l,th.l{text-align:left}
+.mono{font-family:var(--mono)}
+.empty{font-size:13px;color:var(--sub);padding:8px 0}
+details{font-size:12px;color:#374151}details li{margin:3px 0}
+summary{cursor:pointer;font-weight:600}
+svg.sp{vertical-align:middle}
+footer{font-size:11px;color:var(--sub);text-align:center;padding:10px 0 30px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>미니 블벅 <b>랩</b></h1><div class="hsub" id="sub">뉴스로 찾는 롱/숏 후보 · 불러오는 중…</div></div>
+    <a class="link" href="https://mini-bbterminal.pages.dev">📰 미니 블벅터 뉴스 보기 →</a>
+  </header>
+  <div id="app"></div>
+  <footer>투자 판단 보조용 통계입니다 · 매매 추천이 아니며 과거 성과가 미래를 보장하지 않습니다</footer>
+</div>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct=(v,d=2)=>v==null?'–':`${v>0?'+':''}${Number(v).toFixed(d)}%`;
+const cls=v=>v>0?'up':v<0?'dn':'';
+const BN={pos_up:'호재·당일 상승',pos_dn:'호재·당일 하락',neg_dn:'악재·당일 하락',neg_up:'악재·당일 상승'};
+function spark(arr,color){
+  if(!arr||!arr.length)return'';const w=90,h=22,mx=Math.max(...arr.map(Math.abs),1),bw=w/arr.length;
+  return `<svg class="sp" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${arr.map((v,i)=>{const bh=Math.max(1,Math.abs(v)/mx*(h-2));
+    return `<rect x="${(i*bw).toFixed(1)}" y="${(h-bh).toFixed(1)}" width="${Math.max(1,bw-1).toFixed(1)}" height="${bh.toFixed(1)}" fill="${typeof color==='function'?color(v):color}" rx="1"/>`}).join('')}</svg>`;
+}
+function hitFor(st,dir){if(!st)return'–';return (dir==='숏'?(100-st.hit):st.hit).toFixed(0)+'%';}
+function render(d){
+  const days=d.coverage.start?Math.round((Date.parse(d.coverage.end)-Date.parse(d.coverage.start))/864e5):0;
+  document.getElementById('sub').textContent=`뉴스로 찾는 롱/숏 후보 · 데이터 ${d.coverage.start||'–'} ~ ${d.coverage.end} (${days}일, 종목 ${d.coverage.tickers}개) · ${d.generated} 갱신`;
+  const allThin=d.buckets.every(b=>b.verdict==='표본 부족');
+  let h='';
+  if(allThin||days<120)h+=`<div class="card warn"><b>📦 데이터를 쌓는 중이에요.</b> 과거 데이터가 충분히 모이기 전에는 아래 판정이 대부분 '표본 부족'으로 나와요. 신호가 검증되면 후보에 <b>롱/숏</b> 표시가 붙어요.</div>`;
+
+  // 오늘의 후보
+  h+=`<div class="card"><h2>🎯 최근 3거래일 신호</h2><p class="note">회사 언급 기사가 평소보다 크게 몰리고(평소 대비 z≥${d.rules.z}, ${d.rules.n}건 이상) 호재·악재가 한쪽으로 쏠린 종목. 방향은 과거 같은 유형 신호의 5거래일 뒤 ${d.rules.bench} 대비 초과수익으로 정해요.</p>`;
+  h+=d.candidates.length?`<div class="grid">${d.candidates.map(c=>{
+    const ok=c.verdict==='검증됨',dir=c.direction;
+    const badge=ok?`<span class="dir ${dir}">${dir} 후보</span>`:`<span class="dir weak">${dir?dir+' 경향':'판단 보류'}</span>`;
+    return `<div class="cand"><div class="ch"><span class="sym">${esc(c.sym)}</span>${badge}<span class="tag ${ok?'ok':c.verdict==='근거 약함'?'mid':''}">${esc(c.verdict)}</span><span class="tag">${esc(BN[c.b])}</span><span class="hsub">${esc(c.date)}</span></div>
+      <div class="kv"><span>기사 <b>${c.n}</b>건 (평소 ${c.avg??'–'})</span><span>급증 <b>z ${c.z}</b></span><span>호재 <b class="up">${c.pos}</b> · 악재 <b class="dn">${c.neg}</b></span><span>당일 <b class="${cls(c.react)}">${pct(c.react)}</b> (QQQ 대비)</span></div>
+      <div class="kv"><span>과거 같은 신호 5일 뒤: <b class="${cls(c.h5&&c.h5.mean)}">${c.h5?pct(c.h5.mean):'–'}</b></span><span>적중 <b>${hitFor(c.h5,dir)}</b></span><span>표본 <b>${c.h5?c.h5.n:0}</b>건</span></div>
+      <ul class="heads">${(c.heads||[]).map(x=>`<li><span class="sc ${cls(x[4])}">${x[4]>0?'▲':x[4]<0?'▼':'■'}</span><a href="${esc(x[3])}" target="_blank" rel="noopener">${esc(x[1])}</a> <span class="hsub">· ${esc(x[2])}</span></li>`).join('')}</ul></div>`;}).join('')}</div>`
+    :'<div class="empty">최근 3거래일에 조건을 만족한 신호가 없어요.</div>';
+  h+='</div>';
+
+  // 검증표
+  const cell=(st,dir)=>st?`<span class="${cls(st.mean)}">${pct(st.mean)}</span><br><span class="hsub">적중 ${hitFor(st,dir)}</span>`:'–';
+  h+=`<div class="card"><h2>🧪 신호 검증표 (과거 이벤트 스터디)</h2><p class="note">이벤트 날 종가에 사서(또는 팔아서) N거래일 뒤 종가까지 ${d.rules.bench} 대비 초과수익 평균. 같은 종목은 ${d.rules.dedup}거래일 안 중복 신호 제외. '검증됨' = 5일 기준 표본 30건↑, |t|≥2, 전반기(~${esc(d.coverage.split)})·후반기 같은 방향.</p>
+  <div class="tw"><table><tr><th>신호 유형</th><th>표본</th><th>1일</th><th>5일</th><th>10일</th><th>t (5일)</th><th>전반/후반 (5일)</th><th>판정</th></tr>
+  ${d.buckets.map(b=>`<tr><td><b>${esc(b.name)}</b><br><span class="hsub">${esc(b.desc)}</span></td><td class="mono">${b.h5?b.h5.n:0}</td>
+    <td class="mono">${cell(b.h1,b.direction)}</td><td class="mono">${cell(b.h5,b.direction)}</td><td class="mono">${cell(b.h10,b.direction)}</td>
+    <td class="mono">${b.h5?b.h5.t:'–'}</td><td class="mono">${b.first?pct(b.first.mean):'–'} / ${b.second?pct(b.second.mean):'–'}</td>
+    <td><span class="tag ${b.verdict==='검증됨'?'ok':b.verdict==='근거 약함'?'mid':''}">${esc(b.verdict)}</span>${b.direction&&b.verdict!=='표본 부족'?` <span class="dir ${b.verdict==='검증됨'?b.direction:'weak'}">${b.direction}</span>`:''}</td></tr>`).join('')}
+  </table></div></div>`;
+
+  // 관심 급증
+  h+=`<div class="card"><h2>📈 ${esc(d.last_trading_day)} 뉴스 관심 순위</h2><p class="note">평소(직전 ${d.rules.lookback}거래일) 대비 기사 수가 많이 늘어난 순. 막대: 최근 30거래일 기사 수 / 호재-악재 차이.</p>
+  ${d.movers.length?`<div class="tw"><table><tr><th>종목</th><th>기사</th><th>평소</th><th>z</th><th>호재/악재</th><th>당일 (QQQ 대비)</th><th class="l">30일 기사 수</th><th class="l">30일 논조</th></tr>
+  ${d.movers.map(m=>`<tr><td><span class="sym">${esc(m.sym)}</span><br><span class="hsub">${esc((m.heads[0]||[])[1]||'')}</span></td><td class="mono">${m.n}</td><td class="mono">${m.avg}</td><td class="mono">${m.z}</td>
+    <td class="mono"><span class="up">${m.pos}</span>/<span class="dn">${m.neg}</span></td><td class="mono ${cls(m.react)}">${pct(m.react)}</td>
+    <td class="l">${spark(m.spark,'#93c5fd')}</td><td class="l">${spark(m.tone,v=>v>=0?'#86efac':'#fca5a5')}</td></tr>`).join('')}</table></div>`:'<div class="empty">아직 데이터가 없어요.</div>'}</div>`;
+
+  // 지난 신호 기록
+  h+=`<div class="card"><h2>🗂️ 지난 신호와 결과</h2><p class="note">최근 신호 60건과 실제 결과 (${d.rules.bench} 대비 초과수익).</p>
+  ${d.past.length?`<div class="tw"><table><tr><th>날짜 · 종목</th><th class="l">유형</th><th>기사</th><th>당일</th><th>1일</th><th>5일</th><th>10일</th></tr>
+  ${d.past.map(p=>`<tr><td><span class="mono">${esc(p.date)}</span> <span class="sym">${esc(p.sym)}</span><br><span class="hsub">${esc(p.head)}</span></td><td class="l">${esc(BN[p.b])}</td><td class="mono">${p.n}</td>
+    <td class="mono ${cls(p.react)}">${pct(p.react)}</td><td class="mono ${cls(p.f1)}">${pct(p.f1)}</td><td class="mono ${cls(p.f5)}">${pct(p.f5)}</td><td class="mono ${cls(p.f10)}">${pct(p.f10)}</td></tr>`).join('')}</table></div>`:'<div class="empty">아직 결과가 확정된 신호가 없어요.</div>'}</div>`;
+
+  h+=`<div class="card"><details><summary>방법 자세히 보기</summary><ul>
+    <li><b>뉴스:</b> Finnhub 종목 뉴스(과거 1년치 포함, 같은 출처로 일관되게) 중 제목에 회사명·티커가 들어간 기사만. 종목 추천·순위형 글 제외.</li>
+    <li><b>날짜:</b> 미국 동부시간 16:00(장 마감) 이후 기사는 다음 거래일 신호로 — 장중에 알 수 없었던 뉴스로 그날 수익을 계산하지 않도록.</li>
+    <li><b>호재/악재:</b> 제목의 금융 단어(실적 상회·상향·수주 / 실적 하회·하향·소송 등)로 판단하는 단순한 방식. 기계적 판정이라 틀릴 수 있어요.</li>
+    <li><b>급증(z):</b> (그날 기사 수 − 직전 ${d.rules.lookback}거래일 평균) ÷ 표준편차(최소 1).</li>
+    <li><b>수익:</b> 이벤트 날 종가 → N거래일 뒤 종가, ${d.rules.bench} 수익률을 뺀 초과수익. 거래비용·공매도 비용은 빠져 있어요.</li>
+    <li><b>한계:</b> 신호 유형 4가지를 미리 정해 두고 검증하지만, 표본이 적거나 시장 국면이 바뀌면 결과가 달라질 수 있어요.</li></ul></details></div>`;
+  document.getElementById('app').innerHTML=h;
+}
+fetch('data.json?'+Date.now()).then(r=>r.json()).then(render).catch(()=>{document.getElementById('app').innerHTML='<div class="card empty">데이터를 불러오지 못했어요.</div>';});
+</script>
+</body>
+</html>

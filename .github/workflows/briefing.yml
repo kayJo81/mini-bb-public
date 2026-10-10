@@ -1,0 +1,158 @@
+# 미니 블벅터 — 직전 14시간 뉴스를 수집해 Cloudflare Pages 에 배포
+#  · 화면은 조회하는 순간 기준 12시간 이내 보도만 보여준다
+#  · 45분마다 실행 (공개 저장소라 Actions 사용 시간 제한 없음)
+#  · 실행 신호: Cloudflare Worker 크론 (scheduler/)
+#  · report=true 로 실행되면(매일 05:30 KST, scheduler/) 수집 후 PDF를 만들어 메일로 보낸다
+# 필요한 저장소 Secrets: FINNHUB_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+#   (일일 PDF 메일) GMAIL_USER, GMAIL_APP_PASSWORD, 선택 MAIL_TO
+name: briefing
+
+on:
+  # 실행 시점은 Cloudflare Worker(scheduler/)가 45분마다 workflow_dispatch 로 호출한다.
+  # GitHub 자체 schedule 은 이 저장소에서 동작하지 않아 쓰지 않음 (중복 실행·한도 초과 방지).
+  workflow_dispatch:
+    inputs:
+      report:
+        description: "일일 PDF를 만들어 메일로 보내기"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: briefing
+  cancel-in-progress: false
+
+env:
+  CF_PROJECT: mini-bbterminal
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      HAS_CF: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install requests
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-wrangler3
+
+      - name: Build briefing
+        env:
+          FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+          FINNHUB_MIN_INTERVAL: "0.25"   # 45분에 한 번 몰아 호출 (59회 < 분당 60회 한도)
+        run: python scripts/build_static.py --out public
+
+      # 번역 캐시: 실행마다 새 키로 저장하고, 가장 최근 것을 불러와 새 문장만 번역
+      - uses: actions/cache@v4
+        with:
+          path: .cache/ko.json
+          key: ko-${{ github.run_id }}
+          restore-keys: ko-
+
+      # FinancialJuice 공개 피드는 최근 100건만 주므로 실행마다 모아 둔다 (일일 PDF용, 최대 30시간)
+      - uses: actions/cache@v4
+        with:
+          path: .cache/fj.json
+          key: fj-${{ github.run_id }}
+          restore-keys: fj-
+
+      - name: Accumulate FinancialJuice
+        continue-on-error: true
+        run: python scripts/fj_pdf.py --accumulate --store .cache/fj.json
+
+      - name: Translate headlines (한국어)
+        continue-on-error: true
+        run: python scripts/translate_ko.py public/briefings/live.json --cache .cache/ko.json
+
+      - name: Prepare bindings (방문자 수 KV + 번역 AI)
+        if: ${{ env.HAS_CF == 'true' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # wrangler.toml: 번역용 Workers AI 는 항상 연결, 방문자 수 KV 는 찾거나 만들어 연결 (권한 없으면 건너뜀)
+          printf 'name = "%s"\npages_build_output_dir = "public"\ncompatibility_date = "2024-09-01"\n\n[ai]\nbinding = "AI"\n' "$CF_PROJECT" > wrangler.toml
+          find_id() {
+            npx --yes wrangler@3 kv namespace list 2>/dev/null | python3 scripts/kv_id.py MBB_VISITS
+          }
+          ID=$(find_id)
+          if [ -z "$ID" ]; then
+            npx --yes wrangler@3 kv namespace create MBB_VISITS || true
+            ID=$(find_id)
+          fi
+          if [ -n "$ID" ]; then
+            printf '\n[[kv_namespaces]]\nbinding = "VISITS"\nid = "%s"\n' "$ID" >> wrangler.toml
+            echo "KV 연결: $ID"
+          else
+            echo "::warning::Cloudflare 토큰에 Workers KV 편집 권한이 없어 방문자 수 없이 배포합니다"
+          fi
+
+      - name: Deploy to Cloudflare Pages
+        if: ${{ env.HAS_CF == 'true' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx --yes wrangler@3 pages deploy public --project-name="$CF_PROJECT" --branch=main --commit-dirty=true
+
+      # ── 일일 PDF (report=true 일 때만) ──
+      - name: Install PDF tools
+        if: ${{ inputs.report }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk >/dev/null
+          pip install -q playwright
+          python -m playwright install --with-deps chromium >/dev/null
+
+      - name: Build PDFs
+        if: ${{ inputs.report }}
+        run: python scripts/daily_pdf.py public/briefings/live.json --out reports
+
+      # 월스트리트견문 실시간 속보 직전 18시간 전체 (한국어 번역) — 실패해도 나머지 PDF 메일은 보냄
+      - name: Build WallstreetCN PDF
+        if: ${{ inputs.report }}
+        continue-on-error: true
+        run: python scripts/wscn_pdf.py --out reports --cache .cache/ko.json
+
+      # FinancialJuice + 뉴스 소스(WSJ·CNBC·블룸버그·로이터·연준 …) 직전 18시간 헤드라인
+      - name: Build FinancialJuice PDF
+        if: ${{ inputs.report }}
+        continue-on-error: true
+        run: python scripts/fj_pdf.py --out reports --store .cache/fj.json --cache .cache/ko.json
+
+      # 블룸버그 최신 기사(bloomberg.com/latest) 직전 18시간
+      - name: Build Bloomberg PDF
+        if: ${{ inputs.report }}
+        continue-on-error: true
+        run: python scripts/bbg_pdf.py --out reports --cache .cache/ko.json
+
+      # 위불(Webull) 추적 종목 59개 뉴스 직전 18시간
+      - name: Build Webull PDF
+        if: ${{ inputs.report }}
+        continue-on-error: true
+        run: python scripts/webull_pdf.py --out reports --cache .cache/ko.json
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.report }}
+        with:
+          name: daily-pdf
+          path: reports/*.pdf
+          retention-days: 7
+
+      - name: Send mail
+        if: ${{ inputs.report }}
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+        run: python scripts/send_mail.py reports

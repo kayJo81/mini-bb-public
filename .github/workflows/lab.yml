@@ -1,0 +1,75 @@
+# 미니 블벅 랩 — 종목 뉴스 집계·가격 저장(lab-data 브랜치) → 신호 검증 → Cloudflare Pages(mini-bblab) 배포
+#  · 매일 07:00 KST(화~토, 미국 장 마감 뒤) scheduler/ 가 days=4 로 실행
+#  · 처음 한 번은 days=365 로 수동 실행해 1년치 채우기 (Finnhub 무료 한도 때문에 약 1시간)
+# 필요한 저장소 Secrets: FINNHUB_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+name: lab
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "다시 받을 뉴스 기간(일). 처음 채울 땐 365"
+        default: "4"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lab
+  cancel-in-progress: false
+
+env:
+  CF_PROJECT: mini-bblab
+  LAB_DATA: labdata
+
+jobs:
+  lab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install requests
+
+      - name: Checkout lab-data branch
+        env:
+          REPO_URL: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
+        run: |
+          if git ls-remote --exit-code --heads origin lab-data >/dev/null; then
+            git clone --quiet --branch lab-data --single-branch --depth 1 "$REPO_URL" labdata
+          else
+            mkdir labdata && cd labdata && git init -q -b lab-data && git remote add origin "$REPO_URL"
+          fi
+
+      - name: Prices
+        run: python lab/prices.py
+
+      - name: News (Finnhub)
+        env:
+          FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+        run: python lab/update_news.py --days "${{ inputs.days || '4' }}"
+
+      - name: Save data
+        if: always()
+        working-directory: labdata
+        run: |
+          git add -A
+          git -c user.name="mini-bblab" -c user.email="actions@users.noreply.github.com" commit -qm "data $(date -u +%F' '%H:%M)" || exit 0
+          git push -q origin lab-data
+
+      - name: Signals
+        run: |
+          python lab/signals.py --out public_lab
+          cp lab/site.html public_lab/index.html
+
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx --yes wrangler@3 pages project create "$CF_PROJECT" --production-branch=main 2>/dev/null || true
+          npx --yes wrangler@3 pages deploy public_lab --project-name="$CF_PROJECT" --branch=main --commit-dirty=true
