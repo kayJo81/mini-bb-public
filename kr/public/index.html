@@ -39,7 +39,11 @@ a{color:inherit}
 .sec .s b{font-family:var(--mono);font-size:16px}
 .ncats{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
 .nc{padding:6px 12px;border-radius:999px;border:.5px solid var(--bd);background:#fff;font-weight:700;font-size:13.5px;cursor:pointer}
-.nc.on{background:#111827;color:#fff;border-color:#111827}.nc small{font-family:var(--mono);opacity:.7;margin-left:3px}
+.nc.on{background:#111827;color:#fff;border-color:#111827}
+.ngrp{display:flex;gap:6px;flex-wrap:wrap;align-items:center;width:100%;padding:6px 0 2px;border-top:.5px dashed var(--bd)}
+.nc.ng2{background:#eef2ff;border:1px dashed #a5b4fc;color:#3730a3;font-weight:800}
+.nc.ng2 em{font-style:normal;font-size:11px;font-weight:600;opacity:.7;margin-left:5px}
+.nc.ng2.on{background:#3730a3;color:#fff;border-style:solid}.nc small{font-family:var(--mono);opacity:.7;margin-left:3px}
 .nw{background:var(--card);border:.5px solid var(--bd);border-radius:12px;box-shadow:var(--sh);padding:10px 12px;margin-bottom:8px;min-width:0}
 .nr1{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
 .tb{font-family:var(--mono);font-size:12px;font-weight:700;background:#111827;color:#fff;border-radius:6px;padding:1px 7px}
@@ -285,10 +289,14 @@ function renderNews(){
     el.innerHTML=`<b>${n}</b>건 · ${hm}`;});
   if(sec==='theme')return;
   const T=d.topics.filter(t=>t.section===sec),tot=T.reduce((a,t)=>a+t.count,0);
-  document.getElementById('ncats').innerHTML=[`<span class="nc ${ns.cat==='ALL'?'on':''}" data-c="ALL">전체<small>${tot}</small></span>`,
-    ...T.map(t=>`<span class="nc ${ns.cat===t.id?'on':''}" data-c="${t.id}">${esc(t.name)}<small>${t.count}</small></span>`)].join('');
+  // 그룹(K 테크·K 조방원 …)별로 묶어서 버튼 표시 — 그룹 이름을 누르면 그룹 전체
+  const chip=t=>`<span class="nc ${ns.cat===t.id?'on':''}" data-c="${t.id}">${esc(t.name)}<small>${t.count}</small></span>`;
+  const groups=[];for(const t of T){const k=t.group||'';let g=groups.find(x=>x.k===k);if(!g)groups.push(g={k,ts:[]});g.ts.push(t);}
+  document.getElementById('ncats').innerHTML=`<span class="nc ${ns.cat==='ALL'?'on':''}" data-c="ALL">전체<small>${tot}</small></span>`+
+    groups.map(g=>g.k?`<div class="ngrp"><span class="nc ng2 ${ns.cat==='G:'+g.k?'on':''}" data-c="G:${esc(g.k)}">${esc(g.k)}<small>${g.ts.reduce((a,t)=>a+t.count,0)}</small><em>그룹 전체</em></span>${g.ts.map(chip).join('')}</div>`
+      :g.ts.map(chip).join('')).join('');
   const seen=new Set(),items=[];
-  for(const t of T){if(ns.cat!=='ALL'&&ns.cat!==t.id)continue;
+  for(const t of T){if(ns.cat!=='ALL'&&ns.cat!==t.id&&ns.cat!=='G:'+t.group)continue;
     for(const x of t.stories){if(x.is_opinion||seen.has(x.headline))continue;seen.add(x.headline);items.push([x,t.name]);}}
   items.sort((a,b)=>b[0].first_seen-a[0].first_seen);
   document.getElementById('nlist').innerHTML=items.length?items.map(([x,cat])=>{
