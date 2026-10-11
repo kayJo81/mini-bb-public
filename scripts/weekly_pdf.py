@@ -5,8 +5,7 @@
 
   1. 매크로: 미국·유럽(유로·영국)·일본 경제지표, 중앙은행 이벤트·인사 연설 (Forex Factory 주간 캘린더, 영향 High = **),
      미 국채 입찰 (TreasuryDirect, 10·20·30년물 = **), 옵션 만기 (매월 셋째 금요일 = **)
-  2. 정치: 이번 주 정치 일정 보도 (구글 뉴스: 선거·정상회담·대통령 연설)
-  3. 산업·기업: 기술 산업 행사·IB 기술 컨퍼런스·기업 행사 보도 (구글 뉴스)
+  2. 정치 / 3. 산업·기업: 이번 주 날짜가 명시된 보도만 골라 요일별로 (scripts/weekly_events.py)
   4. 실적 발표: Nasdaq 실적 캘린더 — 시가총액 200억 달러 이상(S&P 500 대형주) + 미니 블벅터 추적 종목
   5. 주간 전략: 위 일정과 시장 환경(랩 기록)으로 정리한 체크 포인트
 """
@@ -107,28 +106,6 @@ def earnings(mon, fri, watch):
     return sorted(out, key=lambda x: (x["day"], -x["cap"]))
 
 
-def news_events(start, end, queries):
-    import news_scanner as ns
-    seen, out = set(), []
-    for q in queries:
-        try:
-            for x in ns.fetch_gnews(q, "US", start, end):
-                k = re.sub(r"\W+", " ", x["headline"].lower())[:70]
-                if k in seen:
-                    continue
-                seen.add(k)
-                out.append({"title": x["headline"], "src": x["source"], "url": x["url"], "ts": x["published"]})
-        except Exception as ex:
-            print(f"[weekly] news {q}: {ex}")
-    return sorted(out, key=lambda x: -x["ts"])[:12]
-
-
-POL_Q = ['"this week" election OR summit OR "Trump to"', 'Trump speech OR address this week', 'summit talks next week leaders',
-         'election results week ahead']
-IND_Q = ['tech conference this week', 'investor day OR "developer conference" OR "product event" this week',
-         'Goldman Sachs OR Morgan Stanley OR JPMorgan technology conference', '"week ahead" earnings tech stocks']
-
-
 def env_snapshot():
     for p in ("public_lab/env.json", "labdata/env/summary.json"):
         try:
@@ -209,8 +186,18 @@ def build(out_dir, json_out=None):
     E = earnings(mon, fri, watch)
     nstart = datetime.combine(mon - timedelta(days=4), datetime.min.time(), tzinfo=ET)
     nend = datetime.now(ET)
-    P = news_events(nstart, nend, POL_Q)
-    I = news_events(nstart, nend, IND_Q)
+    from weekly_events import dated_events, translate_all
+    P = dated_events(mon, fri, "pol")
+    names = []
+    try:
+        from close_pdf import GROUPS
+        names = [n for _, g in GROUPS for _, n in g if len(n) > 3]
+    except Exception:
+        pass
+    I = dated_events(mon, fri, "ind", extra_names=names)
+    KO = translate_all([m["title"] for m in M] + [x["title"] for x in P + I])
+    for x in M + P + I:
+        x["ko"] = KO.get(x["title"])
     env = env_snapshot()
     S = strategy(M, E, env)
     e = html.escape
@@ -221,13 +208,30 @@ def build(out_dir, json_out=None):
         rows = [m for m in M if m["day"] == d.isoformat()]
         body += f"<h3>{d.month}/{d.day} ({WD[d.weekday()]})</h3>"
         body += "<table>" + ("".join(
-            f"<tr><td class='t'>{m['kst']}</td><td class='w'>{e(m['who'])}</td><td>{'<span class=star>** </span>' if m['star'] else ''}{e(m['title'])}"
+            f"<tr><td class='t'>{m['kst']}</td><td class='w'>{e(m['who'])}</td><td>{'<span class=star>** </span>' if m['star'] else ''}{e(m.get('ko') or m['title'])}"
             f" <span class='k'>{e(m['kind'])}</span>{fcprev(m)}</td></tr>"
             for m in rows) or "<tr><td class='none'>주요 일정 없음</td></tr>") + "</table>"
-    body += "<h2>2. 정치 <span class='k'>이번 주 정치 일정 관련 보도 (선거·정상회담·대통령 연설)</span></h2><ul>" + (
-        "".join(f"<li><a href='{e(x['url'])}'>{e(x['title'])}</a> <span class='n'>· {e(x['src'])}</span></li>" for x in P) or "<li class='none'>없음</li>") + "</ul>"
-    body += "<h2>3. 산업 및 기업 <span class='k'>기술 산업 행사·IB 기술 컨퍼런스·기업 행사 관련 보도</span></h2><ul>" + (
-        "".join(f"<li><a href='{e(x['url'])}'>{e(x['title'])}</a> <span class='n'>· {e(x['src'])}</span></li>" for x in I) or "<li class='none'>없음</li>") + "</ul>"
+    def by_day(L):
+        h = ""
+        for d in days + ["week"]:
+            rows = [x for x in L if x["day"] == (d if d == "week" else d.isoformat())]
+            if d == "week":
+                if not rows:
+                    continue
+                h += "<h3>이번 주 중 (요일 미정)</h3><table>"
+            else:
+                h += f"<h3>{d.month}/{d.day} ({WD[d.weekday()]})</h3><table>"
+            if not rows:
+                h += "<tr><td class='none'>확인된 일정 없음</td></tr>"
+            for x in rows:
+                org = f"<div class='n'>{e(x['title'])}</div>" if x.get("ko") else ""
+                more = f" 외 {x['n'] - 1}곳" if x["n"] > 1 else ""
+                h += (f"<tr><td><a href='{e(x['url'])}'>{e(x.get('ko') or x['title'])}</a>{org}"
+                      f"<span class='n'>{e(x['src'])}{more} 보도</span></td></tr>")
+            h += "</table>"
+        return h
+    body += "<h2>2. 정치 <span class='k'>이번 주 날짜가 명시된 보도 기준 (선거·정상회담·연설·청문회 등)</span></h2>" + by_day(P)
+    body += "<h2>3. 산업 및 기업 <span class='k'>이번 주 날짜가 명시된 보도 기준 (기술 행사·컨퍼런스·제품 발표·투자자의 날 등)</span></h2>" + by_day(I)
     body += "<h2>4. 실적 발표 <span class='k'>시가총액 200억$ 이상 + 추적 종목 · <span class='star'>**</span> = 시총 2천억$ 이상·추적 종목</span></h2>"
     for d in days:
         rows = [x for x in E if x["day"] == d.isoformat()]

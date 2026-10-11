@@ -41,11 +41,15 @@ function render(){
   h+=`<div class="card"><h2>5. 주간 전략</h2><ul>${D.strategy.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`;
   h+=`<div class="tabs">${[['all','전체'],['macro','1. 매크로'],['pol','2. 정치'],['ind','3. 산업·기업'],['earn','4. 실적']].map(([k,n])=>`<span class="tab ${tab===k?'on':''}" data-k="${k}">${n}</span>`).join('')}</div>`;
   if(tab==='all'||tab==='macro'){h+=`<div class="card"><h2>1. 매크로 <span class="k">미국·유럽·일본 지표 · 중앙은행 · 미 국채 입찰 · 파생 만기 · <span class="star">**</span> = 중요</span></h2>`;
-    for(const d of W){const R=D.macro.filter(m=>m.day===d);h+=`<div class="day">${lbl(d)}</div>`+(R.length?R.map(m=>`<div class="row"><span class="t">${esc(m.kst.slice(6))} KST</span><span>${m.star?'<span class="star">** </span>':''}${esc(m.who)} · ${esc(m.title)} <span class="k">${esc(m.kind)}${m.fc||m.prev?` · 예상 ${esc(m.fc||'–')} · 이전 ${esc(m.prev||'–')}`:''}</span></span></div>`).join(''):'<div class="none">주요 일정 없음</div>');}
+    for(const d of W){const R=D.macro.filter(m=>m.day===d);h+=`<div class="day">${lbl(d)}</div>`+(R.length?R.map(m=>`<div class="row"><span class="t">${esc(m.kst.slice(6))} KST</span><span>${m.star?'<span class="star">** </span>':''}${esc(m.who)} · ${esc(m.ko||m.title)} <span class="k">${esc(m.kind)}${m.fc||m.prev?` · 예상 ${esc(m.fc||'–')} · 이전 ${esc(m.prev||'–')}`:''}</span></span></div>`).join(''):'<div class="none">주요 일정 없음</div>');}
     h+='</div>';}
-  const news=(L,t)=>`<div class="card"><h2>${t}</h2><ul>${L.length?L.map(x=>`<li><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a> <span class="k">· ${esc(x.src)}</span></li>`).join(''):'<li class="none">없음</li>'}</ul></div>`;
-  if(tab==='all'||tab==='pol')h+=news(D.politics,'2. 정치 <span class="k">이번 주 정치 일정 관련 보도</span>');
-  if(tab==='all'||tab==='ind')h+=news(D.industry,'3. 산업 및 기업 <span class="k">기술 산업 행사·IB 컨퍼런스·기업 행사 관련 보도</span>');
+  // 정치·산업: 요일별 (이번 주 날짜가 명시된 보도 기준) + 이번 주 중(요일 미정)
+  const news=(L,t)=>{let h=`<div class="card"><h2>${t}</h2>`;
+    for(const d of [...W,'week']){const R=L.filter(x=>x.day===d);if(d==='week'&&!R.length)continue;
+      h+=`<div class="day">${d==='week'?'이번 주 중 (요일 미정)':lbl(d)}</div>`+(R.length?R.map(x=>`<div class="row" style="grid-template-columns:1fr"><span><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.ko||x.title)}</a>${x.ko?`<div class="k">${esc(x.title)}</div>`:''}<span class="k">${esc(x.src)}${x.n>1?` 외 ${x.n-1}곳`:''} 보도</span></span></div>`).join(''):'<div class="none">확인된 일정 없음</div>');}
+    return h+'</div>';};
+  if(tab==='all'||tab==='pol')h+=news(D.politics,'2. 정치 <span class="k">이번 주 날짜가 명시된 보도 기준</span>');
+  if(tab==='all'||tab==='ind')h+=news(D.industry,'3. 산업 및 기업 <span class="k">이번 주 날짜가 명시된 보도 기준</span>');
   if(tab==='all'||tab==='earn'){h+=`<div class="card"><h2>4. 실적 발표 <span class="k">시총 200억$ 이상 + 추적 종목 · <span class="star">**</span> = 시총 2천억$ 이상·추적 종목</span></h2>`;
     for(const d of W){const R=D.earnings.filter(x=>x.day===d);h+=`<div class="day">${lbl(d)}</div>`+(R.length?R.map(x=>`<div class="row"><span class="t">${esc(x.when)}</span><span>${x.star?'<span class="star">** </span>':''}<b>${esc(x.sym)}</b> ${esc(x.name)} <span class="k">· 시총 ${Math.round(x.cap/1e9).toLocaleString()}B$ · EPS 예상 ${esc(x.eps||'–')}</span></span></div>`).join(''):'<div class="none">해당 없음</div>');}
     h+='</div>';}
