@@ -65,6 +65,8 @@ def options(sym):
     S = d.get("current_price") or d.get("close")
     asof = (d.get("last_trade_time") or "")[:10]
     today = datetime.strptime(asof, "%Y-%m-%d").date() if asof else datetime.now(ET).date()
+    ltt = d.get("last_trade_time") or ""
+    closed = ltt[11:16] >= "16:00" or datetime.now(ET).date() > today or datetime.now(ET).hour >= 16
     cv = pv = coi = poi = 0.0
     gex = 0.0
     near = {}   # 만기 → [(행사가, C/P, iv, delta, oi)]
@@ -73,14 +75,16 @@ def options(sym):
         if not m:
             continue
         exp = datetime.strptime(m.group(1), "%y%m%d").date()
-        if exp <= today:
-            continue   # 그날 만기(이미 끝난) 옵션은 다음 거래일 수급과 무관
+        if exp < today:
+            continue
         cp, k = m.group(2), int(m.group(3)) / 1000
         vol, oi = o.get("volume") or 0, o.get("open_interest") or 0
-        if cp == "C":
+        if cp == "C":   # 거래량·미결제 비율에는 당일 만기(0DTE)도 포함
             cv += vol; coi += oi
         else:
             pv += vol; poi += oi
+        if exp == today and closed:
+            continue   # 장 마감 뒤: 그날 만기 옵션은 끝났으므로 감마·콜월/풋월 계산에서 뺌 (장중엔 포함)
         g = o.get("gamma") or 0
         gex += (1 if cp == "C" else -1) * g * oi * 100 * S * S * 0.01
         dte = (exp - today).days

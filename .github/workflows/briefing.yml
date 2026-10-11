@@ -81,6 +81,22 @@ jobs:
         continue-on-error: true
         run: python scripts/translate_ko.py public/briefings/live.json --cache .cache/ko.json
 
+      # 미국 당일 테마 (themes.html) — 테마 등락·이슈 테마·이유
+      - name: US themes
+        continue-on-error: true
+        run: python scripts/us_themes.py --out public/briefings/us_themes.json --cache .cache/ko.json
+
+      # 장중 옵션 수급 (CBOE 15분 지연) — 그날 기록을 모아 장중 흐름으로
+      - uses: actions/cache@v4
+        with:
+          path: .cache/opt_intraday.json
+          key: opt-${{ github.run_id }}
+          restore-keys: opt-
+
+      - name: Intraday options
+        continue-on-error: true
+        run: python scripts/options_live.py --out public/briefings/options_live.json --store .cache/opt_intraday.json
+
       - name: Prepare bindings (방문자 수 KV + 번역 AI)
         if: ${{ env.HAS_CF == 'true' }}
         env:

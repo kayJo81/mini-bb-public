@@ -50,6 +50,14 @@ def main():
     html = html.replace("<script>", "<script>window.MBB_STATIC=true;</script>\n<script>", 1)
     with open(os.path.join(args.out, "index.html"), "w", encoding="utf-8") as f:
         f.write(html)
+    # 미국 당일 테마 화면 (데이터: briefings/us_themes.json·options_live.json — briefing.yml 의 뒤 단계에서 만듦)
+    with open(os.path.join(ROOT, "templates", "themes.html"), encoding="utf-8") as f:
+        themes_html = f.read()
+    with open(os.path.join(args.out, "themes.html"), "w", encoding="utf-8") as f:
+        f.write(themes_html)
+    # 랩(mini-bblab) 화면이 장중 옵션 수급 등을 가져갈 수 있게 briefings/ 는 다른 사이트에서도 읽기 허용
+    with open(os.path.join(args.out, "_headers"), "w", encoding="utf-8") as f:
+        f.write("/briefings/*\n  Access-Control-Allow-Origin: *\n")
     print(f"[build] {start:%m-%d %H:%M} ~ {end:%m-%d %H:%M} KST 수집 → {args.out}/")
 
 

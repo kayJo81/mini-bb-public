@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>미니 블벅터 US 테마</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--bd:#e5e7eb;--sub:#6b7280;--ink:#111827;--acc:#2563eb;--up:#dc2626;--dn:#2563eb;--r:14px;
+  --sh:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);--mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,'Apple SD Gothic Neo','Noto Sans KR',sans-serif}
+a{color:inherit}
+.top{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:.5px solid var(--bd);
+  padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:20px;letter-spacing:-.02em;white-space:nowrap}.brand b{color:var(--acc)}.brand small{font-size:13px;color:var(--sub);font-weight:600}
+.state{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:#f3f4f6;color:#374151}
+.state.open{background:#dcfce7;color:#166534}
+.spacer{flex:1}
+.btn{padding:8px 14px;border-radius:10px;border:.5px solid var(--bd);background:#fff;cursor:pointer;font-size:14px;font-weight:700;color:#374151;text-decoration:none;white-space:nowrap}
+.hsub{font-size:12.5px;color:var(--sub)}
+.wrap{max-width:980px;margin:0 auto;padding:12px 16px 40px}
+.card{background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:12px 14px;margin-bottom:10px;min-width:0}
+.ihd{font-weight:800;font-size:16px;margin:16px 2px 8px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.th{background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:8px;min-width:0}
+.th.iss{background:linear-gradient(135deg,#fff7ed,#fff);border:1px solid #fed7aa}
+.th-h{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:11px 12px;cursor:pointer}
+.rk{font-family:var(--mono);font-weight:700;color:var(--sub);text-align:center;font-size:13px}
+.nm{font-weight:800;font-size:16px;overflow-wrap:anywhere}
+.iss .nm{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.meta{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--sub);margin-top:2px;align-items:center}
+.breadth{display:inline-block;width:60px;height:5px;border-radius:3px;background:#dbeafe;overflow:hidden}.breadth i{display:block;height:100%;background:var(--up)}
+.chg{font-family:var(--mono);font-weight:700;font-size:20px;white-space:nowrap}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.chip{font-size:12.5px;border-radius:6px;padding:1px 7px;background:#f9fafb;border:.5px solid var(--bd);white-space:nowrap}
+.chip b{font-family:var(--mono)}
+.why{margin-top:6px;font-size:13px;line-height:1.45;background:#fffbeb;border:.5px solid #fde68a;border-radius:8px;padding:5px 8px;overflow-wrap:anywhere}
+.why a{text-decoration:none;font-weight:600}.why a:hover{color:var(--acc)}
+.why .src{font-size:11.5px;color:var(--sub)}.why .org{display:block;font-size:11.5px;color:var(--sub);margin-top:1px}
+.det{border-top:.5px solid var(--bd);padding:8px 12px 10px}
+.det table{width:100%;border-collapse:collapse;font-size:13px}
+.det td{padding:4px 4px;border-bottom:.5px solid #f1f2f4}.det td.n{text-align:right;font-family:var(--mono);white-space:nowrap}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 8px}
+input#q{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:.5px solid var(--bd);font:inherit;background:#fff}
+.opt{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:8px}
+.ot{border:.5px solid var(--bd);border-radius:10px;padding:7px 10px}
+.ot .k{font-size:12px;color:var(--sub);font-weight:600}.ot .v{font-family:var(--mono);font-size:17px;font-weight:700}
+.ot svg{display:block;width:100%;height:22px;margin-top:3px}
+.mv{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.mv{grid-template-columns:1fr}.chg{font-size:17px}}
+.mvl div{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:.5px solid #f1f2f4;font-size:13.5px}
+.mvl b{font-family:var(--mono)}
+.empty{color:var(--sub);text-align:center;padding:24px}
+</style>
+</head>
+<body>
+<div class="top">
+  <span class="brand">미니 블벅터 <b>US</b> <small>미국 당일 테마</small></span>
+  <span class="state" id="state">불러오는 중</span>
+  <span class="hsub" id="upd"></span>
+  <span class="spacer"></span>
+  <a class="btn" href="./">📰 미국 뉴스</a>
+  <a class="btn" href="https://mini-bbterminal-kr.pages.dev">🇰🇷 한국 증시</a>
+</div>
+<div class="wrap">
+  <div class="card" id="optCard" hidden><div class="ihd" style="margin:0 0 6px">🧩 옵션 수급 (장중 · 15분 지연) <span class="hsub" id="optSub"></span></div><div class="opt" id="opt"></div></div>
+  <div class="ihd">🔥 상승 상위 5 <span class="hsub">🧩 뉴스로 묶은 이슈 테마 + 📂 테마</span></div>
+  <div id="up"><div class="empty">불러오는 중…</div></div>
+  <div class="ihd">🧊 하락 상위 5</div>
+  <div id="down"></div>
+  <div class="tabs"><input id="q" placeholder="🔎 다른 테마 찾기 (예: 양자, 원자력, 광통신)"></div>
+  <div id="qlist"></div>
+  <div class="ihd">⚡ 급등·급락 종목 <span class="hsub">시가총액 큰 종목 중 (야후 상승·하락 상위)</span></div>
+  <div class="card mv"><div class="mvl" id="gainers"></div><div class="mvl" id="losers"></div></div>
+  <p class="hsub" style="margin-top:14px">시세: 야후 파이낸스(장중 약 15분 지연) · 15분마다 갱신 · 테마 등락률 = 구성 종목 단순 평균 · 이슈 테마 = 시가총액 3억 달러 이상 ±5% 종목을 Finviz 종목 뉴스로 '같은 뉴스로 움직인 종목'끼리 묶음 · 💡 이유 = 대장주 당일 기사(한국어 기계번역)</p>
+</div>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cls=v=>v>0?'up':v<0?'dn':'';
+const pct=v=>v==null?'–':(v>0?'+':'')+Number(v).toFixed(2)+'%';
+const capf=v=>!v?'':v>=1e12?(v/1e12).toFixed(2)+'조$':v>=1e9?(v/1e9).toFixed(1)+'B':(v/1e6).toFixed(0)+'M';
+const tmf=ts=>ts?new Date(ts*1000).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}):'';
+let D=null,open=new Set();
+function why(w,up){
+  if(!w)return '';
+  return `<div class="why">💡 <b>${up?'강세':'약세'} 이유</b> <a href="${esc(w.url)}" target="_blank" rel="noopener">${esc(w.ko||w.title)}</a>`+
+    `${w.ko?`<span class="org">${esc(w.title)}</span>`:''} <span class="src">· ${esc(w.stock?w.stock+' · ':'')}${esc(w.src||'')} ${tmf(w.ts)}</span></div>`;
+}
+const chip=s=>`<span class="chip">${esc(s.s)} <b class="${cls(s.chg)}">${pct(s.chg)}</b></span>`;
+function themeCard(t,rank){
+  const up=t.chg>=0,ratio=t.n?Math.round(t.rise/t.n*100):0;
+  const lead=up?t.stocks.slice(0,4):t.stocks.slice(-4).reverse();
+  const det=open.has(t.id)?`<div class="det"><div class="hsub" style="margin-bottom:4px">${esc(t.desc)}</div><table>${t.stocks.map(s=>
+    `<tr><td><b>${esc(s.s)}</b> <span class="hsub">${esc(s.n)}</span></td><td class="n">$${Number(s.p).toLocaleString('en-US',{maximumFractionDigits:2})}</td><td class="n ${cls(s.chg)}">${pct(s.chg)}</td><td class="n hsub">${capf(s.cap)}</td></tr>`).join('')}</table></div>`:'';
+  return `<div class="th"><div class="th-h" data-id="${t.id}"><span class="rk">${rank}</span><div style="min-width:0">
+    <div class="nm">📂 ${esc(t.name)}</div>
+    <div class="meta"><span class="breadth" title="오른 종목 비율"><i style="width:${ratio}%"></i></span><span>▲${t.rise} ▼${t.fall} / ${t.n}종목</span><span>${esc(t.desc)}</span></div>
+    <div class="chips">${lead.map(chip).join('')}</div>${why(t.why,up)}</div>
+    <span class="chg ${cls(t.chg)}">${pct(t.chg)}</span></div>${det}</div>`;
+}
+function issueCard(i,rank){
+  // 이름이 대표 기사 제목이므로, 이유 칸에는 두 번째 기사(없으면 출처·시각만)
+  const up=i.chg>=0,a0=i.articles[0],a=i.articles[1];
+  return `<div class="th iss"><div class="th-h" style="cursor:default"><span class="rk">${rank}</span><div style="min-width:0">
+    <div class="nm">🧩 ${esc(i.name)} <span class="hsub">이슈 테마 · ${i.stocks.length}종목</span></div>
+    <div class="chips">${i.stocks.slice(0,8).map(chip).join('')}${i.stocks.length>8?`<span class="chip">외 ${i.stocks.length-8}</span>`:''}</div>
+    ${a?why({title:a.title,ko:a.ko,url:a.url,src:a.src,ts:a.ts},up):a0?`<div class="hsub" style="margin-top:4px">📰 <a href="${esc(a0.url)}" target="_blank" rel="noopener">${esc(a0.src)} · ${tmf(a0.ts)}</a>${a0.ko?` · 원문: ${esc(a0.title)}`:''}</div>`:''}</div>
+    <span class="chg ${cls(i.chg)}">${pct(i.chg)}</span></div></div>`;
+}
+// 상승·하락 상위 5: 이슈 테마 + (이슈 종목으로 설명되지 않는) 테마를 등락률 크기순으로
+function pickTop(up){
+  const iss=(D.issues[up?'up':'down']||[]).map(i=>({k:'i',v:i.chg,x:i}));
+  const covered=new Set((D.issues[up?'up':'down']||[]).flatMap(i=>i.stocks.map(s=>s.s)));
+  const th=D.themes.filter(t=>up?t.chg>0:t.chg<0).filter(t=>{const lead=up?t.stocks.slice(0,2):t.stocks.slice(-2);return !lead.every(s=>covered.has(s.s));})
+    .map(t=>({k:'t',v:t.chg,x:t}));
+  return [...iss,...th].sort((a,b)=>up?b.v-a.v:a.v-b.v).slice(0,5);
+}
+function render(){
+  if(!D)return;
+  document.getElementById('state').textContent=D.market_open?'장중':'장 마감';
+  document.getElementById('state').classList.toggle('open',!!D.market_open);
+  const qt=D.quote_time?new Date(D.quote_time):null;
+  document.getElementById('upd').textContent=`시세 ${qt?qt.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}):'–'} 기준 · ${new Date(D.at).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} 갱신`;
+  for(const up of [true,false]){
+    const L=pickTop(up);
+    document.getElementById(up?'up':'down').innerHTML=L.length?L.map((x,i)=>x.k==='i'?issueCard(x.x,i+1):themeCard(x.x,i+1)).join(''):'<div class="card empty">해당 테마가 없어요</div>';
+  }
+  const q=(document.getElementById('q').value||'').trim().toLowerCase();
+  const L=q?D.themes.filter(t=>(t.name+' '+t.desc+' '+t.stocks.map(s=>s.s+' '+s.n).join(' ')).toLowerCase().includes(q)):D.themes;
+  document.getElementById('qlist').innerHTML=(q?'':'<div class="hsub" style="margin:0 2px 6px">전체 테마 (등락률 순 · 누르면 구성 종목)</div>')+
+    (L.length?L.map((t,i)=>themeCard(t,i+1)).join(''):'<div class="card empty">찾는 테마가 없어요</div>');
+  const row=s=>`<div><span><b>${esc(s.s)}</b> <span class="hsub">${esc(s.n)} · ${capf(s.cap)}</span></span><b class="${cls(s.chg)}">${pct(s.chg)}</b></div>`;
+  document.getElementById('gainers').innerHTML=(D.gainers||[]).slice(0,12).map(row).join('')||'<div class="hsub">없음</div>';
+  document.getElementById('losers').innerHTML=(D.losers||[]).slice(0,12).map(row).join('')||'<div class="hsub">없음</div>';
+}
+function spark(vals,color){
+  const v=vals.filter(x=>x!=null);if(v.length<2)return '';
+  const mn=Math.min(...v),mx=Math.max(...v),n=vals.length;
+  const pts=vals.map((x,i)=>x==null?null:`${(i/(n-1)*100).toFixed(1)},${(20-(x-mn)/((mx-mn)||1)*18).toFixed(1)}`).filter(Boolean).join(' ');
+  return `<svg viewBox="0 0 100 22" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color||'#2563eb'}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
+}
+function renderOpt(O){
+  if(!O||!O.latest||!Object.keys(O.latest).length)return;
+  const L=O.latest,S=O.series||{},f=(v,d=2)=>v==null?'–':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const tiles=[['SPX','pc_vol','SPX 풋/콜 거래량',2],['SPX','gex_musd','SPX 감마(백만$/1%)',0],['SPX','skew25','SPX 25Δ 스큐',2],['SPX','atm_iv30','SPX ATM IV',1],
+    ['QQQ','pc_vol','QQQ 풋/콜 거래량',2],['QQQ','gex_musd','QQQ 감마',0],['SPY','pc_vol','SPY 풋/콜 거래량',2],['NVDA','pc_vol','NVDA 풋/콜',2],['TSLA','pc_vol','TSLA 풋/콜',2]];
+  let h=tiles.map(([s,k,n,d])=>`<div class="ot"><div class="k">${n}</div><div class="v">${f((L[s]||{})[k],d)}</div>${spark((S[s]||{})[k]||[])}</div>`).join('');
+  if(L.SPX)h+=`<div class="ot"><div class="k">SPX 콜월 / 풋월</div><div class="v">${f(L.SPX.call_wall,0)} / ${f(L.SPX.put_wall,0)}</div></div>`;
+  if(O.pc&&O.pc.total!=null)h+=`<div class="ot"><div class="k">CBOE 풋/콜 (전체·주식)</div><div class="v">${O.pc.total} · ${O.pc.equity}</div></div>`;
+  document.getElementById('opt').innerHTML=h;
+  document.getElementById('optSub').textContent=`${O.date} · ${O.session?'장중':'마지막'} ${O.times.slice(-1)[0]||''} KST · 오늘 ${O.times.length}회 기록 · 작은 선 = 장중 흐름`;
+  document.getElementById('optCard').hidden=false;
+}
+document.addEventListener('click',e=>{const h=e.target.closest('.th-h[data-id]');if(!h||e.target.closest('a'))return;
+  const id=h.dataset.id;open.has(id)?open.delete(id):open.add(id);render();});
+document.getElementById('q').oninput=render;
+async function load(){
+  try{D=await (await fetch('briefings/us_themes.json',{cache:'no-store'})).json();render();}
+  catch(e){document.getElementById('up').innerHTML=`<div class="card empty">불러오지 못했어요 (${esc(e.message)})</div>`;}
+  try{renderOpt(await (await fetch('briefings/options_live.json',{cache:'no-store'})).json());}catch(e){}
+}
+load();setInterval(load,60e3);
+</script>
+</body>
+</html>
