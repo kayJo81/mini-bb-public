@@ -85,6 +85,8 @@ a.stab2{text-decoration:none}
 .el-fail{font-size:12px;color:#b91c1c}
 .mv-cite{font-size:10px;font-weight:600;color:#9a3412;background:#ffedd5;border-radius:5px;padding:1px 6px;margin-left:4px;white-space:nowrap}
 body.market .filters,body.market .main{display:none}
+body.theme .filters,body.theme .main{display:none}
+#themesView iframe{width:100%;border:0;display:block;min-height:600px;background:transparent}
 .stab2{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--bd);
        background:#fff;cursor:pointer;text-align:left;font-family:inherit;box-shadow:var(--sh);transition:border-color .12s,transform .12s,box-shadow .12s}
 .stab2:hover{border-color:var(--sc);transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.08)}
@@ -239,6 +241,7 @@ body{font-size:15px}
     <div class="sec-hint">👆 보고 싶은 분야를 눌러서 선택하세요</div>
     <div class="sec-tabs" id="secTabs"></div>
   </div>
+  <div id="themesView" hidden><iframe id="themesFrame" title="장중 테마" loading="lazy"></iframe></div>
   <div class="mv" id="moves" hidden></div>
   <div class="mv" id="midterms" hidden></div>
   <div class="filters">
@@ -399,8 +402,11 @@ function render(){
     return `<button type="button" class="stab2 ${st.section===k?'on':''}" style="--sc:${c}" data-sec="${k}" aria-pressed="${st.section===k}">
       <span class="t">${k}</span><span class="d">${desc}</span><span class="n">${n}</span></button>`;
   }).join('')+
-    // 장중 테마: 별도 화면(themes)으로 이동
-    `<a class="stab2 go" style="--sc:#ea580c" href="themes"><span class="t">🔥 장중 테마</span><span class="d">미국 당일 테마·이슈 테마·옵션 수급</span><span class="n" id="themeTop">${THEME_TOP||'보기 →'}</span></a>`;
+    // 장중 테마: 이 화면 안에 테마(themes?embed=1)를 펼쳐 보여 줌
+    `<button type="button" class="stab2 go ${st.section==='테마'?'on':''}" style="--sc:#ea580c" data-sec="테마" aria-pressed="${st.section==='테마'}"><span class="t">🔥 장중 테마</span><span class="d">미국 당일 테마·이슈 테마·옵션 수급</span><span class="n" id="themeTop">${THEME_TOP||'15분마다 갱신'}</span></button>`;
+  const thOn=st.section==='테마',tv=document.getElementById('themesView');
+  document.body.classList.toggle('theme',thOn);tv.hidden=!thOn;
+  if(thOn){const f=document.getElementById('themesFrame');if(!f.src)f.src='themes?embed=1';return;}
   const topics=data.topics.filter(t=>secOf(t)===st.section);
   // st.topic: 'ALL' | 토픽 id | 'G:그룹명'(그룹 전체)
   const selGroup=st.topic.startsWith('G:')?st.topic.slice(2):null;
@@ -512,6 +518,8 @@ document.querySelector('.filters').onclick=e=>{
 document.getElementById('q').oninput=e=>{st.q=e.target.value.trim();render();};
 // 장중 테마 카드에 상승 1위 테마 표시
 var THEME_TOP='';
+// 펼친 테마 화면 높이에 맞춰 iframe 크기 조절
+addEventListener('message',e=>{if(e.data&&e.data.mbbThemesHeight){document.getElementById('themesFrame').style.height=e.data.mbbThemesHeight+'px';}});
 fetch('briefings/us_themes.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{const t=(d.themes||[])[0];if(!t)return;
   THEME_TOP=`1위 ${t.name} ${t.chg>0?'+':''}${t.chg.toFixed(2)}%`;const el=document.getElementById('themeTop');if(el)el.textContent=THEME_TOP;}).catch(()=>{});
 document.getElementById('secTabs').onclick=e=>{const b=e.target.closest('button.stab2');if(!b)return;

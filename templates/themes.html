@@ -53,6 +53,8 @@ input#q{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:.5px soli
 .mvl div{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:.5px solid #f1f2f4;font-size:13.5px}
 .mvl b{font-family:var(--mono)}
 .empty{color:var(--sub);text-align:center;padding:24px}
+.embed body{background:transparent}.embed .top{position:static;background:transparent;border:0;padding:4px 0 0}
+.embed .top .btn,.embed .brand small{display:none}.embed .wrap{padding:6px 0 10px;max-width:none}
 </style>
 </head>
 <body>
@@ -65,11 +67,12 @@ input#q{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:.5px soli
   <a class="btn" href="https://mini-bbterminal-kr.pages.dev">🇰🇷 한국 증시</a>
 </div>
 <div class="wrap">
-  <div class="card" id="optCard" hidden><div class="ihd" style="margin:0 0 6px">🧩 옵션 수급 (장중 · 15분 지연) <span class="hsub" id="optSub"></span></div><div class="opt" id="opt"></div></div>
   <div class="ihd">🔥 상승 상위 5 <span class="hsub">🧩 뉴스로 묶은 이슈 테마 + 📂 테마</span></div>
   <div id="up"><div class="empty">불러오는 중…</div></div>
   <div class="ihd">🧊 하락 상위 5</div>
   <div id="down"></div>
+  <div class="ihd">📊 옵션 수급 <span class="hsub">장중 · 15분 지연</span></div>
+  <div class="card" id="optCard" hidden><div class="hsub" id="optSub" style="margin-bottom:6px"></div><div class="opt" id="opt"></div></div>
   <div class="tabs"><input id="q" placeholder="🔎 다른 테마 찾기 (예: 양자, 원자력, 광통신)"></div>
   <div id="qlist"></div>
   <div class="ihd">⚡ 급등·급락 종목 <span class="hsub">시가총액 큰 종목 중 (야후 상승·하락 상위)</span></div>
@@ -77,6 +80,12 @@ input#q{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:.5px soli
   <p class="hsub" style="margin-top:14px">시세: 야후 파이낸스(장중 약 15분 지연) · 15분마다 갱신 · 테마 등락률 = 구성 종목 단순 평균 · 이슈 테마 = 시가총액 3억 달러 이상 ±5% 종목을 Finviz 종목 뉴스로 '같은 뉴스로 움직인 종목'끼리 묶음 · 💡 이유 = 대장주 당일 기사(한국어 기계번역)</p>
 </div>
 <script>
+// 미니 블벅터 메인 화면 안에 펼쳐질 때(embed=1): 위쪽 머리글을 줄이고 높이를 부모에 알림
+const EMBED=/[?&]embed=1/.test(location.search);
+if(EMBED){document.documentElement.classList.add('embed');}
+function postH(){if(EMBED)parent.postMessage({mbbThemesHeight:document.documentElement.scrollHeight},'*');}
+new ResizeObserver(postH).observe(document.documentElement);
+document.addEventListener('click',e=>{const a=e.target.closest('a[href]');if(EMBED&&a&&!a.target)a.target='_top';},true);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cls=v=>v>0?'up':v<0?'dn':'';
 const pct=v=>v==null?'–':(v>0?'+':'')+Number(v).toFixed(2)+'%';
