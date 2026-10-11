@@ -75,7 +75,11 @@ jobs:
         run: |
           git add -A
           git -c user.name="mini-bblab" -c user.email="actions@users.noreply.github.com" commit -qm "data $(date -u +%F' '%H:%M)" || exit 0
-          git push -q origin lab-data
+          # 같은 브랜치에 주간 전략(weekly.yml)이 먼저 저장했으면 받아서 합친 뒤 다시 (최대 3번)
+          for i in 1 2 3; do
+            git push -q origin lab-data && break
+            git -c user.name="mini-bblab" -c user.email="actions@users.noreply.github.com" pull -q --rebase origin lab-data
+          done
 
       - name: Deploy to Cloudflare Pages
         env:

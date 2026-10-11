@@ -35,7 +35,10 @@ jobs:
           cp reports_weekly/weekly.json labdata/weekly.json
           cd labdata && git add weekly.json
           git -c user.name="mini-bblab" -c user.email="actions@users.noreply.github.com" commit -qm "weekly $(date -u +%F)" || exit 0
-          git push -q origin lab-data
+          for i in 1 2 3; do
+            git push -q origin lab-data && break
+            git -c user.name="mini-bblab" -c user.email="actions@users.noreply.github.com" pull -q --rebase origin lab-data
+          done
 
       - uses: actions/upload-artifact@v4
         with:
