@@ -216,6 +216,8 @@ def speakers(events, days_back=21):
                 if name.lower() in h.lower():
                     ceo[ko] += 1
             for c in cos:
+                if c.lower() in e["title"].lower():   # 행사 이름에 이미 있는 회사(애플 이벤트의 애플)는 빼고
+                    continue
                 if re.search(r"(?<![A-Za-z])" + re.escape(c) + r"(?![A-Za-z])", h):
                     co[KO_CO[c]] += 1
         e["ceo"] = [k for k, _ in ceo.most_common(3)]
