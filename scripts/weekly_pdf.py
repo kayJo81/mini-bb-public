@@ -27,7 +27,9 @@ HDR = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.
        "Accept": "application/json"}
 WD = "월화수목금토일"
 CUR = {"USD": "🇺🇸 미국", "EUR": "🇪🇺 유로존", "GBP": "🇬🇧 영국", "JPY": "🇯🇵 일본"}
-CB = re.compile(r"Fed|FOMC|Powell|ECB|Lagarde|BOJ|Ueda|BOE|Bailey|Monetary Policy|Rate Statement|Minutes|Speaks|Press Conference", re.I)
+# 중앙은행 이벤트: 발언·기자회견·금리 결정·의사록·베이지북 (지표 이름의 'Fed'—필라델피아 연은 지수·연방 예산—는 제외)
+CB = re.compile(r"Speaks|Testifies|Press Conference|Monetary Policy Statement|Rate Statement|Interest Rate Decision|"
+                r"Policy Rate|Cash Rate|Bank Rate|Minutes|Beige Book|Monetary Policy Report", re.I)
 STRONG_BOND = re.compile(r"\b(10|20|30)-Year|19-Year|29-Year", re.I)
 
 
@@ -168,6 +170,8 @@ ul{margin:4px 0 0 16px;padding:0}li{margin:3px 0}
 .card{border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px 8px;margin:0 0 10px;break-inside:avoid}
 .ch{font-weight:800;font-size:11.5pt;color:#1d4ed8;margin:2px 0 4px}
 .more{font-size:8pt;color:#6b7280;margin-top:5px;line-height:1.45}
+.day{font-weight:800;font-size:11.5pt;margin:12px 0 4px;break-after:avoid}
+.ln{margin:3px 0 3px 4px;line-height:1.55;break-inside:avoid}
 """
 
 
@@ -244,6 +248,105 @@ def day_cards(M, E, P, I, mon):
     return out
 
 
+CB_NAME = [("FOMC|Fed |Federal Reserve|Powell|Warsh", "연준"), ("MPC|BOE|Bailey", "영란은행"), ("ECB|Lagarde", "ECB"),
+           ("BOJ|Ueda", "일본은행")]
+STRIP = re.compile(r"FOMC|MPC|ECB|BOE|BOJ|위원|총재|의장|부의장|이사|발언|연설|연준|영란은행|일본은행|중앙은행|·|\s+")
+
+
+def _cb(m):
+    for pat, name in CB_NAME:
+        if re.search(pat, m["title"]):
+            return name
+    return m["who"].split(" ", 1)[-1]
+
+
+VARIANT = re.compile(r"\b(?:m/m|y/y|q/q)\b|월별|연간|전월비|전월 대비|전년비|전년 대비|분기별|예비치|확정치|속보치|"
+                     r"코어|핵심|근원|헤드라인", re.I)
+
+
+def calendar(M, E, P, I, mon):
+    """요일별 한 줄 요약 캘린더 (미국 날짜 기준): 요일마다 @매크로 / @정치 / @산업 및 기업 / @실적 발표
+    · 항목은 ' / ' 로 잇고 중요(**) 일정을 앞에 · 중앙은행 인사 발언은 은행별로 이름을 묶고, 단기 국채 입찰도 한 줄로"""
+    days = [mon + timedelta(days=i) for i in range(5)]
+    out = []
+    for d in days:
+        ds = d.isoformat()
+        ms = [m for m in M if m["day"] == ds]
+        star, plain = [], []
+        # 지표: 같은 시각·같은 나라는 하나로 — 월별/연간/근원 같은 변형은 한 이름으로, 다른 지표는 '·'로 이어서
+        seen = {}
+        for m in ms:
+            if m["kind"] != "지표":
+                continue
+            k = (m["ts"], m["who"])
+            g = seen.setdefault(k, {"star": False, "bases": [], "fc": [], "country": m["who"].split(" ", 1)[-1]})
+            g["star"] = g["star"] or m["star"]
+            base = re.sub(r"\s+", " ", VARIANT.sub("", m.get("ko") or m["title"])).strip(" ·") or (m.get("ko") or m["title"])
+            if base not in g["bases"]:
+                g["bases"].append(base)
+            if m["fc"] and m["star"] and len(g["fc"]) < 2:
+                g["fc"].append(m["fc"])
+        for g in seen.values():
+            fc = f"(예상 {'·'.join(g['fc'])})" if g["fc"] else ""
+            text = f"{g['country']} {'·'.join(g['bases'])}{fc}"
+            (star if g["star"] else plain).append(("** " if g["star"] else "") + text)
+        # 중앙은행 발언: 중요(**)는 따로, 나머지는 은행별로 이름을 묶음
+        cb = {}
+        for m in ms:
+            if m["kind"] != "중앙은행":
+                continue
+            if re.search(r"Beige Book", m["title"], re.I):
+                star.append("** 연준 베이지북")
+                continue
+            if re.search(r"Minutes", m["title"], re.I):
+                star.append(f"** {_cb(m)} 의사록")
+                continue
+            if m["star"]:
+                star.append("** " + (m.get("ko") or m["title"]))
+                continue
+            nm = re.sub(r"\s+", " ", STRIP.sub(" ", m.get("ko") or m["title"])).strip() or m["title"]
+            cb.setdefault(_cb(m), []).append(nm)
+        for bank, names in cb.items():
+            plain.append(f"{bank} {'·'.join(dict.fromkeys(names))} 발언")
+        # 국채 입찰·만기
+        short = []
+        for m in ms:
+            if m["kind"] == "국채 입찰":
+                term = re.sub(r"\s*(Bill|Note|Bond|TIPS|FRN|CMB)?\s*입찰$", "", m["title"]).replace("-Week", "주").replace("-Year", "년")
+                (star.append(f"** 미 국채 {term} 입찰") if m["star"] else short.append(term))
+            elif m["kind"] == "만기":
+                star.append("** " + (m.get("ko") or m["title"]))
+        if short:
+            plain.append("미 국채 " + "·".join(short) + " 입찰")
+        lines = []
+        macro = star + plain
+        if macro:
+            lines.append(("매크로", " / ".join(macro)))
+        for L, cat in ((P, "정치"), (I, "산업 및 기업")):
+            xs = sorted([x for x in L if x["day"] == ds], key=lambda x: -x["n"])
+            if xs:
+                lines.append((cat, " / ".join(("** " if x["n"] >= 8 else "") + _short(x.get("ko") or x["title"]) for x in xs)))
+        es = [x for x in E if x["day"] == ds]
+        if es:
+            parts = []
+            for when in ("장 전", "장 마감 후", "시간 미정"):
+                xs = sorted([x for x in es if x["when"] == when], key=lambda x: -x["cap"])
+                if xs:
+                    st = any(x["star"] for x in xs)
+                    parts.append(("** " if st else "") + "·".join(x["sym"] for x in xs) + " " + when.replace(" ", ""))
+            lines.append(("실적 발표", " / ".join(parts)))
+        out.append({"date": ds, "label": f"{WD[d.weekday()]}요일 ({d.month}/{d.day})", "lines": lines})
+    week = [x for x in P + I if x["day"] == "week"]
+    if week:
+        out.append({"date": "week", "label": "이번 주 중 (요일 미정)", "lines": [("정치·산업", " / ".join(_short(x.get("ko") or x["title"]) for x in week))]})
+    return out
+
+
+def _short(t, n=48):
+    t = re.sub(r"\s+", " ", t).strip()
+    return t if len(t) <= n else t[:n - 1] + "…"
+
+
 def card_row(x):
     e = html.escape
     star = "<span class='star'>** </span>" if x["star"] else ""
@@ -281,18 +384,14 @@ def build(out_dir, json_out=None):
     cards = day_cards(M, E, P, I, mon)
     e = html.escape
     body = "<h2>주간 전략</h2><ul>" + "".join(f"<li>{e(t)}</li>" for t in S) + "</ul>"
-    body += ("<h2>요일별 일정 <span class='k'>한국 시간 기준 · 📊 매크로 🏛 정치 💻 산업·기업 💰 실적 · "
-             "<span class='star'>**</span> = 중요</span></h2>")
-    for c in cards:
-        body += f"<div class='card'><div class='ch'>{e(c['label'])}</div><table>"
-        for x in c["main"]:
-            body += card_row(x)
-        if not c["main"]:
-            body += "<tr><td class='none'>주요 일정 없음</td></tr>"
-        body += "</table>"
-        if c["more"]:
-            body += ("<div class='more'>그 밖에: " + " · ".join(f"{e(x['time'])} {e(x['text'])}" for x in c["more"]) + "</div>")
-        body += "</div>"
+    cal = calendar(M, E, P, I, mon)
+    body += "<h2>주간 주요 일정 <span class='k'>미국 날짜 기준 · <span class='star'>**</span> = 중요</span></h2>"
+    for c in cal:
+        body += f"<div class='day'>• {e(c['label'])}</div>"
+        for cat, text in c["lines"]:
+            body += f"<p class='ln'>@ {e(cat)}: {e(text).replace('** ', '<span class=star>**</span> ')}</p>"
+        if not c["lines"]:
+            body += "<p class='ln none'>주요 일정 없음</p>"
     title = f"주간 전략 · {mon.month}/{mon.day}~{fri.month}/{fri.day}"
     sub = f"{now:%Y-%m-%d %H:%M} KST 작성 · 시각은 한국 시간 · 자료: Forex Factory, TreasuryDirect, Nasdaq 실적 캘린더, 구글 뉴스, 미니 블벅 랩"
     doc = (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'><style>{CSS}</style></head><body>"
@@ -305,7 +404,7 @@ def build(out_dir, json_out=None):
     if json_out:
         os.makedirs(os.path.dirname(json_out) or ".", exist_ok=True)
         json.dump({"at": now.isoformat(timespec="minutes"), "mon": mon.isoformat(), "fri": fri.isoformat(), "macro": M, "earnings": E,
-                   "politics": P, "industry": I, "strategy": S, "env": env, "cards": cards}, open(json_out, "w", encoding="utf-8"), ensure_ascii=False)
+                   "politics": P, "industry": I, "strategy": S, "env": env, "cards": cards, "calendar": cal}, open(json_out, "w", encoding="utf-8"), ensure_ascii=False)
     print(f"[weekly] {title} · 매크로 {len(M)}(**{sum(m['star'] for m in M)}) · 실적 {len(E)} · 정치 {len(P)} · 산업 {len(I)}")
 
 

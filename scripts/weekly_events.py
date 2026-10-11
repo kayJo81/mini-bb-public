@@ -24,7 +24,8 @@ POL_K = re.compile(r"election|summit|talks|meeting|meets|vote|speech|speak|addre
 IND_K = re.compile(r"conference|summit|keynote|launch|unveil|event|investor day|analyst day|expo|developer|showcase|forum|"
                    r"symposium|\bipo\b|reveal|demo|hackathon|\bai day\b", re.I)
 NOISE = re.compile(r"^(why|how|what is|who is|when is)\b|\?$|road work|recall|obituar|high school|football|soccer|basketball|"
-                   r"\bweek \d+\b|standings|weather|horoscope|lottery|church|festival|concert|game day", re.I)
+                   r"\bweek \d+\b|standings|weather|horoscope|lottery|church|festival|concert|game day|\bsing|singer|cricket|"
+                   r"medal|olympi|asian games|award|wedding|birthday|anniversary|speakers? join|to miss", re.I)
 
 
 # 정치: 주요 국가·기구·인물이 들어간 일정만 (지역 이사회·파업·지방 청문회 제외)
