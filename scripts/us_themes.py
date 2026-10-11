@@ -174,7 +174,9 @@ def main():
     while last.weekday() >= 5:
         last -= timedelta(days=1)
     since = datetime(last.year, last.month, last.day, 16, 0, tzinfo=ET).timestamp() - 30 * 3600
-    with ThreadPoolExecutor(6) as pool:
+    if os.environ.get("FINVIZ_DUMP"):
+        print(f"[us_themes] Finviz 수집분 재사용 {ns.finviz_preload(os.environ['FINVIZ_DUMP'])}종목")
+    with ThreadPoolExecutor(3) as pool:
         news = dict(zip(need, pool.map(lambda s: [n for n in ns.fetch_finviz(s) if n["published"] >= since], need)))
 
     def cluster(ms, up):

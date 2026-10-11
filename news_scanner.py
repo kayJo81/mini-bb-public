@@ -965,6 +965,33 @@ FV_ROW = re.compile(r'<td width="130" align="right">\s*([^<]+?)\s*</td>.*?class=
 _fv_cache, _fv_lock = {}, threading.Lock()
 
 
+def finviz_dump(path):
+    """이번 실행에서 받은 Finviz 종목 뉴스를 파일로 (같은 실행의 다른 단계 — 미국 테마 — 가 다시 요청하지 않도록)"""
+    with _fv_lock:
+        data = {k: v for k, v in _fv_cache.items() if v}
+    try:
+        old = json.load(open(path, encoding="utf-8"))
+    except Exception:
+        old = {}
+    old.update(data)
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    json.dump(old, open(path, "w", encoding="utf-8"), ensure_ascii=False)
+
+
+def finviz_preload(path, max_age=900):
+    """finviz_dump 로 남긴 결과(15분 이내 파일)를 캐시에 올려 둔다"""
+    try:
+        if time.time() - os.path.getmtime(path) > max_age:
+            return 0
+        data = json.load(open(path, encoding="utf-8"))
+    except Exception:
+        return 0
+    with _fv_lock:
+        for k, v in data.items():
+            _fv_cache.setdefault(k, v)
+    return len(data)
+
+
 def fetch_finviz(sym):
     """Finviz 종목 페이지 뉴스 표 (최근 100건, 시각은 미국 동부). 한 번 실행 안에서는 종목당 한 번만 요청."""
     with _fv_lock:
@@ -972,7 +999,15 @@ def fetch_finviz(sym):
             return _fv_cache[sym]
     out = []
     try:
-        h = requests.get(f"https://finviz.com/quote.ashx?t={sym}&p=d", headers=BROWSER_HDR, timeout=20).text
+        h = ""
+        for i in range(3):   # 너무 몰아 요청하면 429 → 잠깐 쉬고 다시
+            r = requests.get(f"https://finviz.com/quote.ashx?t={sym}&p=d", headers=BROWSER_HDR, timeout=20)
+            if r.status_code == 200:
+                h = r.text
+                break
+            time.sleep(3 * (i + 1))
+        if not h:
+            print(f"[scanner/finviz] {sym}: HTTP {r.status_code}")
         et, day = ZoneInfo("America/New_York"), None
         for when, url, title, src in FV_ROW.findall(h[h.find('id="news-table"'):]):
             parts = when.split()
@@ -1097,6 +1132,8 @@ def build_briefing(start, end, mode, finnhub_token):
         print(f"[scanner] feeds: FinancialJuice {len(fj.result())}, 월스트리트견문 {len(ws.result())}, "
               f"동방재부 {len(em.result())}, RSS {len(rss_items)}건/{len(RSS_FEEDS)}곳")
         topics = list(topic_pool.map(lambda t: scan_topic(t, start, end, finnhub_token, fetch_pool, feed_items), TOPICS))
+    if os.environ.get("FINVIZ_DUMP"):
+        finviz_dump(os.environ["FINVIZ_DUMP"])
     stats = {"VERIFIED": 0, "SINGLE": 0, "UNVERIFIED": 0, "opinion": 0, "rumor": 0, "total": 0}
     for t in topics:
         for s in t["stories"]:
