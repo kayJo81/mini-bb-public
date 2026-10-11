@@ -232,9 +232,9 @@ def day_cards(M, E, P, I, mon):
         for x in L:
             kd = "week" if x["day"] == "week" else date.fromisoformat(x["day"])
             more = f" 외 {x['n'] - 1}곳" if x["n"] > 1 else ""
-            sub = (f"Techmeme 행사 캘린더 · {x['place']}" if x.get("tm") else f"{x['src']}{more} 보도")
+            sub = (f"{x['src']}" + (f" · {x['place']}" if x.get("place") else "") if x.get("tm") else f"{x['src']}{more} 보도")
             add(kd, {"sort": "99", "time": "일정", "cat": cat, "icon": icon, "star": x["n"] >= 8,
-                     "text": (x.get("ko") or x["title"]) + x.get("suffix", ""), "sub": (x["title"] + " · " if x.get("ko") else "") + sub,
+                     "text": _label(x), "sub": (x["title"] + " · " if x.get("ko") else "") + sub,
                      "url": x["url"], "more": False})
     out = []
     for i in range(6):   # 월~토 (토요일은 미국 금요일 밤 일정이 한국 새벽으로 넘어올 때만)
@@ -265,7 +265,7 @@ VARIANT = re.compile(r"\b(?:m/m|y/y|q/q)\b|월별|연간|전월비|전월 대비
                      r"코어|핵심|근원|헤드라인", re.I)
 
 
-def calendar(M, E, P, I, mon):
+def calendar(M, E, P, I, mon, X=()):
     """요일별 한 줄 요약 캘린더 (미국 날짜 기준): 요일마다 @매크로 / @정치 / @산업 및 기업 / @실적 발표
     · 항목은 ' / ' 로 잇고 중요(**) 일정을 앞에 · 중앙은행 인사 발언은 은행별로 이름을 묶고, 단기 국채 입찰도 한 줄로"""
     days = [mon + timedelta(days=i) for i in range(5)]
@@ -326,8 +326,7 @@ def calendar(M, E, P, I, mon):
         for L, cat in ((P, "정치"), (I, "산업 및 기업")):
             xs = sorted([x for x in L if x["day"] == ds], key=lambda x: -x["n"])
             if xs:
-                lines.append((cat, " / ".join(("** " if x["n"] >= 8 else "") + _short(x.get("ko") or x["title"]) + x.get("suffix", "")
-                                              for x in xs)))
+                lines.append((cat, " / ".join(("** " if x["n"] >= 8 else "") + _label(x) for x in xs)))
         es = [x for x in E if x["day"] == ds]
         if es:
             parts = []
@@ -337,11 +336,27 @@ def calendar(M, E, P, I, mon):
                     st = any(x["star"] for x in xs)
                     parts.append(("** " if st else "") + "·".join(x["sym"] for x in xs) + " " + when.replace(" ", ""))
             lines.append(("실적 발표", " / ".join(parts)))
+        # 랩에서 직접 넣은 매크로·정치·실적 일정은 해당 줄 끝에 붙임 (없으면 새 줄)
+        for x in [x for x in X if x["day"] == ds]:
+            t = ("** " if x["n"] >= 8 else "") + _label(x)
+            i = next((i for i, (c, _) in enumerate(lines) if c == x["cat"]), None)
+            if i is None:
+                lines.append((x["cat"], t))
+            else:
+                lines[i] = (x["cat"], lines[i][1] + " / " + t)
+        order = {"매크로": 0, "정치": 1, "산업 및 기업": 2, "실적 발표": 3}
+        lines.sort(key=lambda l: order.get(l[0], 9))
         out.append({"date": ds, "label": f"{WD[d.weekday()]}요일 ({d.month}/{d.day})", "lines": lines})
     week = [x for x in P + I if x["day"] == "week"]
     if week:
         out.append({"date": "week", "label": "이번 주 중 (요일 미정)", "lines": [("정치·산업", " / ".join(_short(x.get("ko") or x["title"]) for x in week))]})
     return out
+
+
+def _label(x):
+    """일정 한 줄: [CEO(회사)] 이름 개막(~끝) [연설·참가 기업]"""
+    t = x.get("prefix", "") + _short(x.get("ko") or x["title"]) + x.get("suffix", "")
+    return t + (f" [{x['who']}]" if x.get("who") else "")
 
 
 def _short(t, n=48):
@@ -377,20 +392,35 @@ def build(out_dir, json_out=None):
         names = [n for _, g in GROUPS for _, n in g if len(n) > 3]
     except Exception:
         pass
-    from weekly_events import techmeme_events
-    TM = techmeme_events(mon, fri, extra_names=names)
-    # Techmeme 행사 캘린더를 먼저, 같은 날 같은 주체의 뉴스 일정은 중복이라 뺌
-    tmk = {(x["day"], x["key"].lower()) for x in TM}
-    I = TM + [x for x in dated_events(mon, fri, "ind", extra_names=names) if (x["day"], x["key"].lower()) not in tmk]
-    KO = translate_all([m["title"] for m in M] + [x["title"] for x in P + I])
+    import weekly_events as we
+    # 산업 일정: ① 주요 행사 목록(+ 랩에서 '매년 반복'으로 넣은 행사) ② Techmeme ③ 직접 입력 ④ CEO 연설 ⑤ 날짜가 나온 뉴스
+    store_path = os.environ.get("WEEKLY_STORE", "")
+    store = we.load_store(store_path) if store_path else {}
+    manual = we.manual_events()
+    MAN = we.manual_for_week(manual, mon, fri)
+    EV = we.merge_events(we.curated_events(mon, fri, store, extra=we.recur_curated(manual)),
+                         we.techmeme_events(mon, fri, extra_names=names))
+    EV = we.merge_events([x for x in MAN if x["cat"] == "산업 및 기업"], EV)
+    we.speakers([x for x in EV if not x.get("manual")])
+    if store_path:
+        json.dump(store, open(store_path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    # 행사·직접 입력과 같은 날 같은 주체의 뉴스·CEO 일정은 중복이라 뺌
+    evk = {(x["day"], x["key"].lower()) for x in EV}
+    EX = [x for x in we.exec_events(mon, fri) if (x["day"], x["key"].lower()) not in evk]
+    evk |= {(x["day"], x["key"].lower()) for x in EX}
+    I = EV + EX + [x for x in dated_events(mon, fri, "ind", extra_names=names) if (x["day"], x["key"].lower()) not in evk]
+    P = P + [x for x in MAN if x["cat"] == "정치"]
+    X = [x for x in MAN if x["cat"] not in ("산업 및 기업", "정치")]
+    KO = translate_all([m["title"] for m in M] + [x["title"] for x in P + I if not x.get("ko")])
     for x in M + P + I:
-        x["ko"] = KO.get(x["title"])
+        if not x.get("ko"):
+            x["ko"] = KO.get(x["title"])
     env = env_snapshot()
     S = strategy(M, E, env)
     cards = day_cards(M, E, P, I, mon)
     e = html.escape
     body = "<h2>주간 전략</h2><ul>" + "".join(f"<li>{e(t)}</li>" for t in S) + "</ul>"
-    cal = calendar(M, E, P, I, mon)
+    cal = calendar(M, E, P, I, mon, X)
     body += "<h2>주간 주요 일정 <span class='k'>미국 날짜 기준 · <span class='star'>**</span> = 중요</span></h2>"
     for c in cal:
         body += f"<div class='day'>• {e(c['label'])}</div>"
@@ -399,7 +429,7 @@ def build(out_dir, json_out=None):
         if not c["lines"]:
             body += "<p class='ln none'>주요 일정 없음</p>"
     title = f"주간 전략 · {mon.month}/{mon.day}~{fri.month}/{fri.day}"
-    sub = f"{now:%Y-%m-%d %H:%M} KST 작성 · 시각은 한국 시간 · 자료: Forex Factory, TreasuryDirect, Nasdaq 실적 캘린더, Techmeme 행사 캘린더, 구글 뉴스, 미니 블벅 랩"
+    sub = f"{now:%Y-%m-%d %H:%M} KST 작성 · 시각은 한국 시간 · 자료: Forex Factory, TreasuryDirect, Nasdaq 실적 캘린더, 주요 행사 목록, Techmeme 행사 캘린더, 구글 뉴스, 랩 직접 입력, 미니 블벅 랩"
     doc = (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'><style>{CSS}</style></head><body>"
            f"<h1>{e(title)}</h1><div class='sub'>{e(sub)}</div>{body}</body></html>")
     os.makedirs(out_dir, exist_ok=True)
@@ -410,7 +440,8 @@ def build(out_dir, json_out=None):
     if json_out:
         os.makedirs(os.path.dirname(json_out) or ".", exist_ok=True)
         json.dump({"at": now.isoformat(timespec="minutes"), "mon": mon.isoformat(), "fri": fri.isoformat(), "macro": M, "earnings": E,
-                   "politics": P, "industry": I, "strategy": S, "env": env, "cards": cards, "calendar": cal}, open(json_out, "w", encoding="utf-8"), ensure_ascii=False)
+                   "politics": P, "industry": I, "strategy": S, "env": env, "cards": cards, "calendar": cal,
+                   "manual_ids": [x["mid"] for x in MAN]}, open(json_out, "w", encoding="utf-8"), ensure_ascii=False)
     print(f"[weekly] {title} · 매크로 {len(M)}(**{sum(m['star'] for m in M)}) · 실적 {len(E)} · 정치 {len(P)} · 산업 {len(I)}")
 
 

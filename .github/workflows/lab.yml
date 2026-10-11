@@ -1,7 +1,7 @@
 # 미니 블벅 랩 — 종목 뉴스 집계·가격 저장(lab-data 브랜치) → 신호 검증 → Cloudflare Pages(mini-bblab) 배포
 #  · 매일 07:00 KST(화~토, 미국 장 마감 뒤) scheduler/ 가 days=4 로 실행
 #  · 처음 한 번은 days=365 로 수동 실행해 1년치 채우기 (Finnhub 무료 한도 때문에 약 1시간)
-# 필요한 저장소 Secrets: FINNHUB_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+# 필요한 저장소 Secrets: FINNHUB_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, 선택 LAB_EDIT_KEY(주간 전략 일정 직접 입력용 편집 키)
 name: lab
 
 on:
@@ -85,6 +85,24 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          LAB_EDIT_KEY: ${{ secrets.LAB_EDIT_KEY }}
         run: |
           npx --yes wrangler@3 pages project create "$CF_PROJECT" --production-branch=main 2>/dev/null || true
-          npx --yes wrangler@3 pages deploy public_lab --project-name="$CF_PROJECT" --branch=main --commit-dirty=true
+          # 랩 전용 배포 폴더: 함수(lab/functions: 주간 전략 직접 입력 api/events) + KV 연결
+          mkdir -p labsite && cp -r lab/functions labsite/functions
+          printf 'name = "%s"\npages_build_output_dir = "../public_lab"\ncompatibility_date = "2024-09-01"\n' "$CF_PROJECT" > labsite/wrangler.toml
+          find_id() { npx --yes wrangler@3 kv namespace list 2>/dev/null | python3 scripts/kv_id.py MBB_LAB_EVENTS; }
+          ID=$(find_id)
+          if [ -z "$ID" ]; then npx --yes wrangler@3 kv namespace create MBB_LAB_EVENTS >/dev/null || true; ID=$(find_id); fi
+          if [ -n "$ID" ]; then
+            printf '\n[[kv_namespaces]]\nbinding = "EVENTS"\nid = "%s"\n' "$ID" >> labsite/wrangler.toml
+          else
+            echo "::warning::KV 를 만들지 못해 직접 입력 일정 없이 배포합니다"
+          fi
+          cd labsite
+          if [ -n "$LAB_EDIT_KEY" ]; then
+            printf '%s' "$LAB_EDIT_KEY" | npx --yes wrangler@3 pages secret put LAB_EDIT_KEY --project-name="$CF_PROJECT" >/dev/null || echo "::warning::편집 키를 넣지 못했어요"
+          else
+            echo "::warning::GitHub Secrets 에 LAB_EDIT_KEY 가 없어 랩 일정 입력은 읽기 전용입니다"
+          fi
+          npx --yes wrangler@3 pages deploy ../public_lab --project-name="$CF_PROJECT" --branch=main --commit-dirty=true

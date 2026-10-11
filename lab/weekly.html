@@ -23,18 +23,46 @@ h2{font-size:16px;margin:0 0 8px}.tabs{display:flex;gap:6px;flex-wrap:wrap;margi
 .star{color:#dc2626;font-weight:800}
 .ln{margin:4px 0 4px 2px;line-height:1.6;font-size:14px}.k{font-size:11.5px;color:var(--sub)}
 ul{margin:0;padding-left:18px}li{margin:5px 0}.none{color:#9ca3af}
+.mine{color:#7c3aed;font-weight:600}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:6px 0 8px}
+.form label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--sub);min-width:0}
+.form input,.form select{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--bd);border-radius:8px;background:#fff;color:var(--ink);min-width:0;width:100%}
+.form .wide{grid-column:1/-1}.chk{flex-direction:row!important;align-items:center;gap:6px!important;font-size:13px!important;color:var(--ink)!important}
+.chk input{width:auto}
+.btn{font:inherit;font-weight:700;font-size:13.5px;padding:8px 14px;border-radius:9px;border:0;background:#111827;color:#fff;cursor:pointer}
+.btn.sm{padding:3px 9px;font-size:12px;background:#fff;color:#dc2626;border:1px solid #fecaca}
+.mrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:.5px solid #f1f2f4;font-size:13.5px}
+.msg{font-size:12.5px;margin-left:8px}
+@media (max-width:520px){.form{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header><div><h1>미니 블벅 <b>랩</b> · 주간 전략</h1><div class="hsub" id="sub">불러오는 중…</div></div><a class="link" href="./">← 랩 메인</a></header>
 <div id="app"><div class="card hsub">불러오는 중…</div></div>
+<div class="card" id="add">
+  <h2>✍️ 놓친 일정 추가 <span class="k">다음 일요일 주간 전략 PDF에도 들어가요 · 매년 반복이면 내년 같은 주에도 자동</span></h2>
+  <div class="form">
+    <label>날짜(미국)<input type="date" id="fDate"></label>
+    <label>끝나는 날 (선택)<input type="date" id="fEnd"></label>
+    <label>분류<select id="fCat"><option>산업 및 기업</option><option>매크로</option><option>정치</option><option>실적 발표</option></select></label>
+    <label class="wide">내용<input id="fText" maxlength="120" placeholder="예: OCP 글로벌 서밋 개막 (젠슨 황 키노트)"></label>
+    <label class="wide">영문 이름 (선택 · 내년에 날짜를 자동으로 찾을 때 씀)<input id="fEn" maxlength="120" placeholder="예: OCP Global Summit"></label>
+    <label class="chk"><input type="checkbox" id="fStar"> ** 중요</label>
+    <label class="chk"><input type="checkbox" id="fRecur"> 매년 반복</label>
+    <label class="wide">편집 키 (한 번 넣으면 이 브라우저에 기억)<input type="password" id="fKey" autocomplete="off"></label>
+  </div>
+  <button class="btn" id="fSave">추가</button><span class="msg" id="fMsg"></span>
+  <div id="mList" style="margin-top:10px"></div>
+</div>
 </div>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const WD='월화수목금토일';
 const URL_='https://raw.githubusercontent.com/kayJo81/mini-bb-public/lab-data/weekly.json';
-let D=null,cat='all';
+let D=null,cat='all',MAN=[];
+const API='/api/events';
+const store={get:k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
 // 날짜 'YYYY-MM-DD' → '10/12 (월)' (시간대 영향 없이)
 const lbl=d=>{const [y,m,dd]=d.split('-').map(Number);const w=new Date(Date.UTC(y,m-1,dd)).getUTCDay();return `${m}/${dd} (${WD[(w+6)%7]})`;};
 const CATS=[['all','전체'],['매크로','📊 매크로'],['정치','🏛 정치'],['산업','💻 산업·기업'],['실적','💰 실적']];
@@ -47,13 +75,49 @@ function render(){
   const hl=t=>esc(t).replace(/\*\* /g,'<span class="star">**</span> ');
   let h=`<div class="card"><h2>📌 주간 전략</h2><ul>${D.strategy.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`;
   h+=`<div class="card"><h2>📅 주간 주요 일정 <span class="k">미국 날짜 기준 · <span class="star">**</span> = 중요</span></h2>`;
+  const used=new Set(D.manual_ids||[]);
   for(const c of (D.calendar||[])){
-    h+=`<div class="day">• ${esc(c.label)}</div>`+(c.lines.length?c.lines.map(([cat,t])=>`<p class="ln"><b>@ ${esc(cat)}:</b> ${hl(t)}</p>`).join(''):'<p class="ln none">주요 일정 없음</p>');
+    // 주간 전략을 만든 뒤에 직접 넣은 일정은 화면에서 바로 합쳐 보여 줌 (보라색)
+    const add=MAN.filter(m=>!used.has(m.id)&&c.date!=='week'&&m.date<=c.date&&(m.end||m.date)>=c.date&&(m.date===c.date||c.date===D.mon));
+    const lines=c.lines.map(([cat,t])=>[cat,hl(t)]);
+    for(const m of add){
+      const t=`<span class="mine">${m.star?'<span class="star">**</span> ':''}${esc(m.text)}${m.end?` (~${+m.end.slice(5,7)}/${+m.end.slice(8)})`:''} ✍️</span>`;
+      const i=lines.findIndex(l=>l[0]===m.cat);
+      if(i<0)lines.push([m.cat,t]);else lines[i][1]+=' / '+t;
+    }
+    const O={'매크로':0,'정치':1,'산업 및 기업':2,'실적 발표':3};lines.sort((a,b)=>(O[a[0]]??9)-(O[b[0]]??9));
+    h+=`<div class="day">• ${esc(c.label)}</div>`+(lines.length?lines.map(([cat,t])=>`<p class="ln"><b>@ ${esc(cat)}:</b> ${t}</p>`).join(''):'<p class="ln none">주요 일정 없음</p>');
   }
   h+='</div>';
   document.getElementById('app').innerHTML=h;
 }
 document.addEventListener('click',e=>{const t=e.target.closest('.tab');if(t){cat=t.dataset.k;render();}});
+function listMan(){
+  const today=new Date(Date.now()-5*3600e3).toISOString().slice(0,10);
+  const L=MAN.filter(m=>(m.end||m.date)>=today||m.recur);
+  document.getElementById('mList').innerHTML=L.length?'<div class="k" style="margin-bottom:4px">직접 넣은 일정</div>'+L.map(m=>
+    `<div class="mrow"><span>${esc(m.date.slice(5).replace('-','/'))}${m.end?'~'+esc(m.end.slice(5).replace('-','/')):''} · <b>${esc(m.cat)}</b> · ${m.star?'<span class="star">**</span> ':''}${esc(m.text)}${m.recur?' <span class="k">(매년)</span>':''}</span><button class="btn sm" data-del="${esc(m.id)}">삭제</button></div>`).join(''):'';
+}
+function loadMan(){
+  return fetch(API+'?t='+Date.now()).then(r=>r.json()).then(d=>{MAN=d.events||[];
+    if(!d.editable)document.getElementById('fMsg').textContent='편집 키가 아직 설정되지 않아 저장할 수 없어요 (GitHub Secrets 에 LAB_EDIT_KEY)';
+    listMan();if(D&&D.calendar)render();}).catch(()=>{});
+}
+const msg=(t,ok)=>{const e=document.getElementById('fMsg');e.textContent=t;e.style.color=ok?'#059669':'#dc2626';};
+document.getElementById('fKey').value=store.get('labEditKey');
+document.getElementById('fSave').onclick=()=>{
+  const v=id=>document.getElementById(id);
+  const key=v('fKey').value.trim();store.set('labEditKey',key);
+  const b={date:v('fDate').value,end:v('fEnd').value,cat:v('fCat').value,text:v('fText').value.trim(),en:v('fEn').value.trim(),star:v('fStar').checked,recur:v('fRecur').checked};
+  if(!b.date||!b.text)return msg('날짜와 내용을 넣어 주세요');
+  fetch(API,{method:'POST',headers:{'content-type':'application/json','x-edit-key':key},body:JSON.stringify(b)})
+    .then(r=>r.json()).then(d=>{if(d.error)return msg(d.error);msg('추가했어요',true);v('fText').value='';v('fEn').value='';v('fEnd').value='';loadMan();})
+    .catch(()=>msg('저장하지 못했어요'));
+};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-del]');if(!b||!confirm('이 일정을 지울까요?'))return;
+  fetch(API+'?id='+encodeURIComponent(b.dataset.del),{method:'DELETE',headers:{'x-edit-key':document.getElementById('fKey').value.trim()}})
+    .then(r=>r.json()).then(d=>{if(d.error)return msg(d.error);msg('지웠어요',true);loadMan();});});
+loadMan();
 fetch(URL_+'?t='+Date.now()).then(r=>r.json()).then(d=>{D=d;
   document.getElementById('sub').textContent=`${lbl(d.mon)} ~ ${lbl(d.fri)} · ${d.at.replace('T',' ')} 작성 · 매주 일요일 20:00 KST 갱신`;
   if(!d.calendar){document.getElementById('app').innerHTML='<div class="card hsub">새 형식으로 다시 만드는 중이에요. 잠시 뒤 새로고침해 주세요.</div>';return;}

@@ -1,5 +1,6 @@
 # 주간 전략 PDF (이번 주 매크로·정치·산업·실적 일정 + 주간 전략) → 메일 + 랩 '주간 전략' 칸
 #  · 매주 일요일 20:00 KST scheduler/ 가 실행 (수동 실행도 가능)
+#  · 미리 찾아 둔 행사 날짜(events_ahead.json)를 lab-data 에서 읽고 다시 저장 → 그 주에 기사가 없어도 빠지지 않음
 # 필요한 저장소 Secrets: GMAIL_USER, GMAIL_APP_PASSWORD, 선택 MAIL_TO
 name: weekly
 
@@ -23,17 +24,23 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk >/dev/null
           pip install -q -r requirements.txt playwright
           python -m playwright install --with-deps chromium >/dev/null
-      - name: Build weekly PDF
-        run: python scripts/weekly_pdf.py --out reports_weekly --json reports_weekly/weekly.json
-      # 랩 '주간 전략' 칸: lab-data 브랜치의 weekly.json 을 화면이 바로 읽음
-      - name: Save weekly.json (lab-data)
+      - name: Checkout lab-data
         continue-on-error: true
         env:
           REPO_URL: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
+        run: git clone --quiet --branch lab-data --single-branch --depth 1 "$REPO_URL" labdata
+      - name: Build weekly PDF
+        env:
+          WEEKLY_STORE: labdata/events_ahead.json
         run: |
-          git clone --quiet --branch lab-data --single-branch --depth 1 "$REPO_URL" labdata
+          mkdir -p labdata
+          python scripts/weekly_pdf.py --out reports_weekly --json reports_weekly/weekly.json
+      # 랩 '주간 전략' 칸: lab-data 브랜치의 weekly.json 을 화면이 바로 읽음
+      - name: Save weekly.json (lab-data)
+        continue-on-error: true
+        run: |
           cp reports_weekly/weekly.json labdata/weekly.json
-          cd labdata && git add weekly.json
+          cd labdata && git add weekly.json events_ahead.json
           git -c user.name="mini-bblab" -c user.email="actions@users.noreply.github.com" commit -qm "weekly $(date -u +%F)" || exit 0
           for i in 1 2 3; do
             git push -q origin lab-data && break
