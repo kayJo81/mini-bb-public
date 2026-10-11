@@ -165,6 +165,9 @@ td.t{width:72px;color:#6b7280;white-space:nowrap}td.w{width:78px;white-space:now
 .n{color:#6b7280;font-size:8.5pt}a{color:inherit;text-decoration:none}
 ul{margin:4px 0 0 16px;padding:0}li{margin:3px 0}
 .none{color:#9ca3af}
+.card{border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px 8px;margin:0 0 10px;break-inside:avoid}
+.ch{font-weight:800;font-size:11.5pt;color:#1d4ed8;margin:2px 0 4px}
+.more{font-size:8pt;color:#6b7280;margin-top:5px;line-height:1.45}
 """
 
 
@@ -172,6 +175,81 @@ def fcprev(m):
     if not (m["fc"] or m["prev"]):
         return ""
     return f" <span class='n'>예상 {html.escape(m['fc'] or '–')} · 이전 {html.escape(m['prev'] or '–')}</span>"
+
+
+ICON = {"지표": "📊", "중앙은행": "🏦", "국채 입찰": "💵", "만기": "📑"}
+
+
+def day_cards(M, E, P, I, mon):
+    """요일 카드: 한국 시간 날짜별로 매크로·정치·산업·실적을 시간 순으로 합침.
+    ** 중요 일정을 위로, 중요하지 않은 중앙은행 인사 발언·단기 국채 입찰은 '그 밖에'로 접음"""
+    cards = {}
+
+    def add(d, item):
+        cards.setdefault(d, []).append(item)
+    # 같은 시각·같은 나라 지표는 한 줄로 (예: CPI 월별·연간·코어)
+    merged = {}
+    for m in M:
+        k = (m["ts"], m["who"], m["kind"])
+        if k in merged and m["kind"] == "지표":
+            g = merged[k]
+            g["title"] += " / " + m["title"]
+            g["ko"] = (g.get("ko") or g["title"]) + " · " + (m.get("ko") or m["title"])
+            g["star"] = g["star"] or m["star"]
+            if m["fc"] or m["prev"]:
+                g["fc"] = (g["fc"] + " / " if g["fc"] else "") + (m["fc"] or "–")
+                g["prev"] = (g["prev"] + " / " if g["prev"] else "") + (m["prev"] or "–")
+        else:
+            merged[k] = dict(m)
+    for m in merged.values():
+        t = datetime.fromtimestamp(m["ts"], KST)
+        text = f"{m['who'].split(' ', 1)[-1]} · {m.get('ko') or m['title']}"
+        sub = f"예상 {m['fc'] or '–'} · 이전 {m['prev'] or '–'}" if (m["fc"] or m["prev"]) else ""
+        add(t.date(), {"sort": t.strftime("%H:%M"), "time": t.strftime("%H:%M"), "cat": "매크로", "icon": ICON.get(m["kind"], "📊"),
+                       "star": m["star"], "text": text, "sub": sub, "url": "",
+                       "more": m["kind"] in ("중앙은행", "국채 입찰") and not m["star"]})
+    # 실적: 같은 날 같은 시간대(장 전/장 마감 후)는 한 줄로 — 장 전 = 그날 밤, 장 마감 후 = 다음 날 새벽 (한국 시간)
+    groups = {}
+    for x in E:
+        groups.setdefault((x["day"], x["when"]), []).append(x)
+    for (day, when), xs in groups.items():
+        d = date.fromisoformat(day)
+        if when == "장 마감 후":
+            kd, tm, srt = d + timedelta(days=1), "05:00경", "05:00"
+        elif when == "장 전":
+            kd, tm, srt = d, "21:00경", "21:00"
+        else:
+            kd, tm, srt = d, "시간 미정", "23:59"
+        xs.sort(key=lambda x: -x["cap"])
+        add(kd, {"sort": srt, "time": tm, "cat": "실적", "icon": "💰", "star": any(x["star"] for x in xs),
+                 "text": f"실적 ({when}) · " + ", ".join(("**" if x["star"] else "") + x["sym"] for x in xs),
+                 "sub": ", ".join(x["name"] for x in xs[:6]) + (f" 외 {len(xs) - 6}" if len(xs) > 6 else ""), "url": "", "more": False})
+    for L, cat, icon in ((P, "정치", "🏛"), (I, "산업", "💻")):
+        for x in L:
+            kd = "week" if x["day"] == "week" else date.fromisoformat(x["day"])
+            more = f" 외 {x['n'] - 1}곳" if x["n"] > 1 else ""
+            add(kd, {"sort": "99", "time": "일정", "cat": cat, "icon": icon, "star": x["n"] >= 8,
+                     "text": x.get("ko") or x["title"], "sub": (x["title"] + " · " if x.get("ko") else "") + f"{x['src']}{more} 보도",
+                     "url": x["url"], "more": False})
+    out = []
+    for i in range(6):   # 월~토 (토요일은 미국 금요일 밤 일정이 한국 새벽으로 넘어올 때만)
+        d = mon + timedelta(days=i)
+        items = sorted(cards.get(d, []), key=lambda x: (not x["star"], x["sort"]))
+        if i == 5 and not items:
+            continue
+        out.append({"date": d.isoformat(), "label": f"{d.month}/{d.day} ({WD[d.weekday()]})" + (" 새벽" if i == 5 else ""),
+                    "main": [x for x in items if not x["more"]], "more": sorted([x for x in items if x["more"]], key=lambda x: x["sort"])})
+    if cards.get("week"):
+        out.append({"date": "week", "label": "이번 주 중 (요일 미정)", "main": cards["week"], "more": []})
+    return out
+
+
+def card_row(x):
+    e = html.escape
+    star = "<span class='star'>** </span>" if x["star"] else ""
+    text = f"<a href='{e(x['url'])}'>{e(x['text'])}</a>" if x.get("url") else e(x["text"])
+    sub = f"<div class='n'>{e(x['sub'])}</div>" if x.get("sub") else ""
+    return f"<tr><td class='t'>{e(x['time'])}</td><td>{star}{x['icon']} {text}{sub}</td></tr>"
 
 
 def build(out_dir, json_out=None):
@@ -200,46 +278,21 @@ def build(out_dir, json_out=None):
         x["ko"] = KO.get(x["title"])
     env = env_snapshot()
     S = strategy(M, E, env)
+    cards = day_cards(M, E, P, I, mon)
     e = html.escape
-    days = [mon + timedelta(days=i) for i in range(5)]
-    body = ""
-    body += "<h2>1. 매크로 <span class='k'>미국·유럽·일본 지표 · 중앙은행 · 미 국채 입찰 · 파생 만기 · <span class='star'>**</span> = 중요</span></h2>"
-    for d in days:
-        rows = [m for m in M if m["day"] == d.isoformat()]
-        body += f"<h3>{d.month}/{d.day} ({WD[d.weekday()]})</h3>"
-        body += "<table>" + ("".join(
-            f"<tr><td class='t'>{m['kst']}</td><td class='w'>{e(m['who'])}</td><td>{'<span class=star>** </span>' if m['star'] else ''}{e(m.get('ko') or m['title'])}"
-            f" <span class='k'>{e(m['kind'])}</span>{fcprev(m)}</td></tr>"
-            for m in rows) or "<tr><td class='none'>주요 일정 없음</td></tr>") + "</table>"
-    def by_day(L):
-        h = ""
-        for d in days + ["week"]:
-            rows = [x for x in L if x["day"] == (d if d == "week" else d.isoformat())]
-            if d == "week":
-                if not rows:
-                    continue
-                h += "<h3>이번 주 중 (요일 미정)</h3><table>"
-            else:
-                h += f"<h3>{d.month}/{d.day} ({WD[d.weekday()]})</h3><table>"
-            if not rows:
-                h += "<tr><td class='none'>확인된 일정 없음</td></tr>"
-            for x in rows:
-                org = f"<div class='n'>{e(x['title'])}</div>" if x.get("ko") else ""
-                more = f" 외 {x['n'] - 1}곳" if x["n"] > 1 else ""
-                h += (f"<tr><td><a href='{e(x['url'])}'>{e(x.get('ko') or x['title'])}</a>{org}"
-                      f"<span class='n'>{e(x['src'])}{more} 보도</span></td></tr>")
-            h += "</table>"
-        return h
-    body += "<h2>2. 정치 <span class='k'>이번 주 날짜가 명시된 보도 기준 (선거·정상회담·연설·청문회 등)</span></h2>" + by_day(P)
-    body += "<h2>3. 산업 및 기업 <span class='k'>이번 주 날짜가 명시된 보도 기준 (기술 행사·컨퍼런스·제품 발표·투자자의 날 등)</span></h2>" + by_day(I)
-    body += "<h2>4. 실적 발표 <span class='k'>시가총액 200억$ 이상 + 추적 종목 · <span class='star'>**</span> = 시총 2천억$ 이상·추적 종목</span></h2>"
-    for d in days:
-        rows = [x for x in E if x["day"] == d.isoformat()]
-        body += f"<h3>{d.month}/{d.day} ({WD[d.weekday()]})</h3><table>" + ("".join(
-            f"<tr><td class='t'>{e(x['when'])}</td><td class='w'>{'<span class=star>**</span> ' if x['star'] else ''}<b>{e(x['sym'])}</b></td>"
-            f"<td>{e(x['name'])} <span class='n'>· 시총 {x['cap'] / 1e9:,.0f}B$ · EPS 예상 {e(x['eps'] or '–')}</span></td></tr>" for x in rows)
-            or "<tr><td class='none'>해당 없음</td></tr>") + "</table>"
-    body += "<h2>5. 주간 전략</h2><ul>" + "".join(f"<li>{e(t)}</li>" for t in S) + "</ul>"
+    body = "<h2>주간 전략</h2><ul>" + "".join(f"<li>{e(t)}</li>" for t in S) + "</ul>"
+    body += ("<h2>요일별 일정 <span class='k'>한국 시간 기준 · 📊 매크로 🏛 정치 💻 산업·기업 💰 실적 · "
+             "<span class='star'>**</span> = 중요</span></h2>")
+    for c in cards:
+        body += f"<div class='card'><div class='ch'>{e(c['label'])}</div><table>"
+        for x in c["main"]:
+            body += card_row(x)
+        if not c["main"]:
+            body += "<tr><td class='none'>주요 일정 없음</td></tr>"
+        body += "</table>"
+        if c["more"]:
+            body += ("<div class='more'>그 밖에: " + " · ".join(f"{e(x['time'])} {e(x['text'])}" for x in c["more"]) + "</div>")
+        body += "</div>"
     title = f"주간 전략 · {mon.month}/{mon.day}~{fri.month}/{fri.day}"
     sub = f"{now:%Y-%m-%d %H:%M} KST 작성 · 시각은 한국 시간 · 자료: Forex Factory, TreasuryDirect, Nasdaq 실적 캘린더, 구글 뉴스, 미니 블벅 랩"
     doc = (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'><style>{CSS}</style></head><body>"
@@ -252,7 +305,7 @@ def build(out_dir, json_out=None):
     if json_out:
         os.makedirs(os.path.dirname(json_out) or ".", exist_ok=True)
         json.dump({"at": now.isoformat(timespec="minutes"), "mon": mon.isoformat(), "fri": fri.isoformat(), "macro": M, "earnings": E,
-                   "politics": P, "industry": I, "strategy": S, "env": env}, open(json_out, "w", encoding="utf-8"), ensure_ascii=False)
+                   "politics": P, "industry": I, "strategy": S, "env": env, "cards": cards}, open(json_out, "w", encoding="utf-8"), ensure_ascii=False)
     print(f"[weekly] {title} · 매크로 {len(M)}(**{sum(m['star'] for m in M)}) · 실적 {len(E)} · 정치 {len(P)} · 산업 {len(I)}")
 
 
