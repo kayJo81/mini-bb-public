@@ -967,8 +967,9 @@ _fv_cache, _fv_lock = {}, threading.Lock()
 
 def finviz_dump(path):
     """이번 실행에서 받은 Finviz 종목 뉴스를 파일로 (같은 실행의 다른 단계 — 미국 테마 — 가 다시 요청하지 않도록)"""
+    keys = ("headline", "summary", "source", "domain", "url", "published", "via", "edition")
     with _fv_lock:
-        data = {k: v for k, v in _fv_cache.items() if v}
+        data = {k: [{f: x.get(f) for f in keys} for x in v] for k, v in _fv_cache.items() if v}
     try:
         old = json.load(open(path, encoding="utf-8"))
     except Exception:
@@ -996,7 +997,7 @@ def fetch_finviz(sym):
     """Finviz 종목 페이지 뉴스 표 (최근 100건, 시각은 미국 동부). 한 번 실행 안에서는 종목당 한 번만 요청."""
     with _fv_lock:
         if sym in _fv_cache:
-            return _fv_cache[sym]
+            return [dict(x) for x in _fv_cache[sym]]
     out = []
     try:
         h = ""
@@ -1026,7 +1027,7 @@ def fetch_finviz(sym):
         print(f"[scanner/finviz] {sym}: {ex}")
     with _fv_lock:
         _fv_cache[sym] = out
-    return out
+    return [dict(x) for x in out]   # 사본 — 뒤 단계가 기사에 표시를 붙여도 캐시는 그대로
 
 
 EASTMONEY_URL = ("https://np-listapi.eastmoney.com/comm/web/getFastNewsList?client=web&biz=web_724&fastColumn=102"
@@ -1133,7 +1134,10 @@ def build_briefing(start, end, mode, finnhub_token):
               f"동방재부 {len(em.result())}, RSS {len(rss_items)}건/{len(RSS_FEEDS)}곳")
         topics = list(topic_pool.map(lambda t: scan_topic(t, start, end, finnhub_token, fetch_pool, feed_items), TOPICS))
     if os.environ.get("FINVIZ_DUMP"):
-        finviz_dump(os.environ["FINVIZ_DUMP"])
+        try:   # 보조 기능 — 실패해도 수집은 계속
+            finviz_dump(os.environ["FINVIZ_DUMP"])
+        except Exception as ex:
+            print(f"[scanner/finviz] dump: {ex}")
     stats = {"VERIFIED": 0, "SINGLE": 0, "UNVERIFIED": 0, "opinion": 0, "rumor": 0, "total": 0}
     for t in topics:
         for s in t["stories"]:
