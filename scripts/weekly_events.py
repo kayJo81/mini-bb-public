@@ -6,6 +6,7 @@
   · 일정 단어(선거·회담·연설·청문회 / 컨퍼런스·키노트·제품 발표·투자자의 날 …)가 제목에 있어야 하고,
     설명형('Why …?')·지역 잡음·스포츠는 제외, 신뢰 등급 있는 매체만
   · 같은 일정을 다룬 기사는 하나로 묶고 보도 매체 수를 표시
+  · 산업 일정은 Techmeme 행사 캘린더(techmeme.com/events)를 먼저 넣고, 구글 뉴스로 보충
   · 번역: 미니 블벅터 번역 AI(/api/translate) → 구글 번역 → 원문
 """
 import re
@@ -81,6 +82,49 @@ def _day_in(t, x, mon, fri):
         if 0 <= (d - pub).days <= 9:
             return d
     return None
+
+
+def techmeme_events(mon, fri, extra_names=()):
+    """Techmeme 기술 행사 캘린더: 이번 주(월~금)에 열리거나 진행 중인 행사. 광고(featured)·실적 항목은 제외"""
+    import html as H
+    try:
+        r = requests.get("https://www.techmeme.com/events", headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
+        r.raise_for_status()
+    except Exception as ex:
+        print(f"[weekly] techmeme: {ex}")
+        return []
+    sat = fri + timedelta(days=1)
+    words = [w.strip().lower() for w in IND_MAJOR + list(extra_names)]
+    out = []
+    for cls, href, when, name, place in re.findall(
+            r'<div class="([^"]*)"><div class="rhov"><a href="([^"]+)"><div>([^<]+)</div><div>(.*?)</div><div>(.*?)</div></a>', r.text):
+        if "featured" in cls:
+            continue
+        name = re.sub(r"\s+", " ", H.unescape(re.sub(r"<[^>]+>", "", name)).replace("HYBRID:", "")).strip()
+        if not name or name.lower().startswith("earnings:"):
+            continue
+        m = re.match(r"([A-Z][a-z]{2}) (\d+)(?:-(?:([A-Z][a-z]{2}) )?(\d+))?$", when.strip())
+        if not m or m.group(1).lower() not in MONTHS:
+            continue
+        def mk(mo, d):
+            y = mon.year + (1 if MONTHS[mo.lower()] < mon.month - 6 else -1 if MONTHS[mo.lower()] > mon.month + 6 else 0)
+            return date(y, MONTHS[mo.lower()], int(d))
+        try:
+            s0 = mk(m.group(1), m.group(2))
+            s1 = mk(m.group(3) or m.group(1), m.group(4)) if m.group(4) else s0
+        except ValueError:
+            continue
+        if s1 < mon or s0 >= sat:
+            continue
+        day = max(s0, mon)
+        tag = (" 개막" if s0 >= mon else " 진행 중") if s1 > s0 else ""
+        until = f"(~{s1.month}/{s1.day})" if s1 > s0 else ""
+        key = next((w for w in words if re.search(r"(?<![a-z])" + re.escape(w) + r"(?![a-z])", name.lower())), "")
+        out.append({"day": day.isoformat(), "title": name, "suffix": tag + until, "place": H.unescape(place).strip(),
+                    "src": "Techmeme", "url": "https://www.techmeme.com" + href, "n": 8 if key else 3,
+                    "ts": 0, "key": key or name, "tm": True})
+    print(f"[weekly] techmeme: 이번 주 행사 {len(out)}")
+    return out
 
 
 def dated_events(mon, fri, kind, per_day=6, extra_names=()):

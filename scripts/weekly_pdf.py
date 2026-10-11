@@ -232,8 +232,9 @@ def day_cards(M, E, P, I, mon):
         for x in L:
             kd = "week" if x["day"] == "week" else date.fromisoformat(x["day"])
             more = f" 외 {x['n'] - 1}곳" if x["n"] > 1 else ""
+            sub = (f"Techmeme 행사 캘린더 · {x['place']}" if x.get("tm") else f"{x['src']}{more} 보도")
             add(kd, {"sort": "99", "time": "일정", "cat": cat, "icon": icon, "star": x["n"] >= 8,
-                     "text": x.get("ko") or x["title"], "sub": (x["title"] + " · " if x.get("ko") else "") + f"{x['src']}{more} 보도",
+                     "text": (x.get("ko") or x["title"]) + x.get("suffix", ""), "sub": (x["title"] + " · " if x.get("ko") else "") + sub,
                      "url": x["url"], "more": False})
     out = []
     for i in range(6):   # 월~토 (토요일은 미국 금요일 밤 일정이 한국 새벽으로 넘어올 때만)
@@ -325,7 +326,8 @@ def calendar(M, E, P, I, mon):
         for L, cat in ((P, "정치"), (I, "산업 및 기업")):
             xs = sorted([x for x in L if x["day"] == ds], key=lambda x: -x["n"])
             if xs:
-                lines.append((cat, " / ".join(("** " if x["n"] >= 8 else "") + _short(x.get("ko") or x["title"]) for x in xs)))
+                lines.append((cat, " / ".join(("** " if x["n"] >= 8 else "") + _short(x.get("ko") or x["title"]) + x.get("suffix", "")
+                                              for x in xs)))
         es = [x for x in E if x["day"] == ds]
         if es:
             parts = []
@@ -375,7 +377,11 @@ def build(out_dir, json_out=None):
         names = [n for _, g in GROUPS for _, n in g if len(n) > 3]
     except Exception:
         pass
-    I = dated_events(mon, fri, "ind", extra_names=names)
+    from weekly_events import techmeme_events
+    TM = techmeme_events(mon, fri, extra_names=names)
+    # Techmeme 행사 캘린더를 먼저, 같은 날 같은 주체의 뉴스 일정은 중복이라 뺌
+    tmk = {(x["day"], x["key"].lower()) for x in TM}
+    I = TM + [x for x in dated_events(mon, fri, "ind", extra_names=names) if (x["day"], x["key"].lower()) not in tmk]
     KO = translate_all([m["title"] for m in M] + [x["title"] for x in P + I])
     for x in M + P + I:
         x["ko"] = KO.get(x["title"])
@@ -393,7 +399,7 @@ def build(out_dir, json_out=None):
         if not c["lines"]:
             body += "<p class='ln none'>주요 일정 없음</p>"
     title = f"주간 전략 · {mon.month}/{mon.day}~{fri.month}/{fri.day}"
-    sub = f"{now:%Y-%m-%d %H:%M} KST 작성 · 시각은 한국 시간 · 자료: Forex Factory, TreasuryDirect, Nasdaq 실적 캘린더, 구글 뉴스, 미니 블벅 랩"
+    sub = f"{now:%Y-%m-%d %H:%M} KST 작성 · 시각은 한국 시간 · 자료: Forex Factory, TreasuryDirect, Nasdaq 실적 캘린더, Techmeme 행사 캘린더, 구글 뉴스, 미니 블벅 랩"
     doc = (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'><style>{CSS}</style></head><body>"
            f"<h1>{e(title)}</h1><div class='sub'>{e(sub)}</div>{body}</body></html>")
     os.makedirs(out_dir, exist_ok=True)
