@@ -156,25 +156,46 @@ def dated_events(mon, fri, kind, per_day=6, extra_names=()):
     return res
 
 
+def _nums(t):
+    return set(re.findall(r"\d+", t))
+
+
+def _ok(src, ko):
+    """번역이 다른 문장과 뒤섞이지 않았는지: 원문의 숫자(날짜·금액)가 번역에 그대로 있어야 함"""
+    return bool(ko) and _nums(src) <= _nums(ko)
+
+
+def _ai(batch):
+    try:
+        r = requests.post("https://mini-bbterminal.pages.dev/api/translate", json={"texts": batch}, timeout=90).json()
+        return r.get("ko") or []
+    except Exception as ex:
+        print(f"[weekly] translate: {ex}")
+        return []
+
+
 def translate_all(texts):
+    """한국어 번역: 미니 블벅터 번역 AI(묶음 → 숫자가 안 맞으면 한 건씩) → 구글 번역 → 원문"""
     ko = {}
     todo = [t for t in dict.fromkeys(texts) if t]
-    for i in range(0, len(todo), 20):
-        b = todo[i:i + 20]
-        try:
-            r = requests.post("https://mini-bbterminal.pages.dev/api/translate", json={"texts": b}, timeout=90).json()
-            for t, k in zip(b, r.get("ko") or []):
-                if k:
-                    ko[t] = k
-        except Exception as ex:
-            print(f"[weekly] translate: {ex}")
+    for i in range(0, len(todo), 10):
+        b = todo[i:i + 10]
+        for t, k in zip(b, _ai(b)):
+            if _ok(t, k):
+                ko[t] = k
+    for t in [t for t in todo if t not in ko]:   # 묶음 번역이 어긋난 것은 한 건씩
+        k = (_ai([t]) or [None])[0]
+        if _ok(t, k):
+            ko[t] = k
     rest = [t for t in todo if t not in ko]
     if rest:
         try:
             from wscn_pdf import translate
             cache = {}
             translate(rest, cache)
-            ko.update({t: cache[t] for t in rest if cache.get(t)})
+            ko.update({t: cache[t] for t in rest if _ok(t, cache.get(t))})
         except Exception:
             pass
+    bad = len(todo) - len(ko)
+    print(f"[weekly] 번역 {len(ko)}/{len(todo)}" + (f" (원문 유지 {bad})" if bad else ""))
     return ko
