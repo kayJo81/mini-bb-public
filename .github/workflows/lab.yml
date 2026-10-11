@@ -67,6 +67,7 @@ jobs:
           cp lab/site.html public_lab/index.html
           cp lab/site.html public_lab/sim.html
           cp lab/env.html public_lab/env.html
+          cp lab/weekly.html public_lab/weekly.html
 
       - name: Save data
         if: always()

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>미니 블벅 랩 · 주간 전략</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--bd:#e5e7eb;--sub:#6b7280;--ink:#111827;--acc:#2563eb;--r:14px;--sh:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);--mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box}html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.55 Inter,'Apple SD Gothic Neo','Noto Sans KR',sans-serif}
+a{color:inherit}.wrap{max-width:980px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+h1{font-size:20px;margin:0}h1 b{color:var(--acc)}.hsub{font-size:12px;color:var(--sub)}
+.link{font-size:12px;font-weight:600;text-decoration:none;background:#fff;color:#111827;border:.5px solid var(--bd);padding:7px 12px;border-radius:9px}
+.card{background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:14px 16px;margin-bottom:12px;min-width:0}
+h2{font-size:16px;margin:0 0 8px}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tab{padding:7px 13px;border-radius:999px;border:1px solid var(--bd);background:#fff;font-weight:700;cursor:pointer;font-size:13.5px}
+.tab.on{background:#111827;color:#fff;border-color:#111827}
+.day{font-weight:800;color:#1d4ed8;margin:12px 0 4px}
+.row{display:grid;grid-template-columns:92px 1fr;gap:8px;padding:5px 0;border-bottom:.5px solid #f1f2f4;font-size:13.5px}
+.row .t{color:var(--sub);font-family:var(--mono);font-size:12px}
+.star{color:#dc2626;font-weight:800}.k{font-size:11.5px;color:var(--sub)}
+ul{margin:0;padding-left:18px}li{margin:5px 0}.none{color:#9ca3af}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div><h1>미니 블벅 <b>랩</b> · 주간 전략</h1><div class="hsub" id="sub">불러오는 중…</div></div><a class="link" href="./">← 랩 메인</a></header>
+<div id="app"><div class="card hsub">불러오는 중…</div></div>
+</div>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const WD='월화수목금토일';
+const URL_='https://raw.githubusercontent.com/kayJo81/mini-bb-public/lab-data/weekly.json';
+let D=null,tab='all';
+function days(){const m=new Date(D.mon+'T00:00:00');return [...Array(5)].map((_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return d.toISOString().slice(0,10);});}
+const lbl=d=>{const x=new Date(d+'T00:00:00');return `${x.getMonth()+1}/${x.getDate()} (${WD[(x.getDay()+6)%7]})`;};
+function render(){
+  const W=days();let h='';
+  h+=`<div class="card"><h2>5. 주간 전략</h2><ul>${D.strategy.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`;
+  h+=`<div class="tabs">${[['all','전체'],['macro','1. 매크로'],['pol','2. 정치'],['ind','3. 산업·기업'],['earn','4. 실적']].map(([k,n])=>`<span class="tab ${tab===k?'on':''}" data-k="${k}">${n}</span>`).join('')}</div>`;
+  if(tab==='all'||tab==='macro'){h+=`<div class="card"><h2>1. 매크로 <span class="k">미국·유럽·일본 지표 · 중앙은행 · 미 국채 입찰 · 파생 만기 · <span class="star">**</span> = 중요</span></h2>`;
+    for(const d of W){const R=D.macro.filter(m=>m.day===d);h+=`<div class="day">${lbl(d)}</div>`+(R.length?R.map(m=>`<div class="row"><span class="t">${esc(m.kst.slice(6))} KST</span><span>${m.star?'<span class="star">** </span>':''}${esc(m.who)} · ${esc(m.title)} <span class="k">${esc(m.kind)}${m.fc||m.prev?` · 예상 ${esc(m.fc||'–')} · 이전 ${esc(m.prev||'–')}`:''}</span></span></div>`).join(''):'<div class="none">주요 일정 없음</div>');}
+    h+='</div>';}
+  const news=(L,t)=>`<div class="card"><h2>${t}</h2><ul>${L.length?L.map(x=>`<li><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a> <span class="k">· ${esc(x.src)}</span></li>`).join(''):'<li class="none">없음</li>'}</ul></div>`;
+  if(tab==='all'||tab==='pol')h+=news(D.politics,'2. 정치 <span class="k">이번 주 정치 일정 관련 보도</span>');
+  if(tab==='all'||tab==='ind')h+=news(D.industry,'3. 산업 및 기업 <span class="k">기술 산업 행사·IB 컨퍼런스·기업 행사 관련 보도</span>');
+  if(tab==='all'||tab==='earn'){h+=`<div class="card"><h2>4. 실적 발표 <span class="k">시총 200억$ 이상 + 추적 종목 · <span class="star">**</span> = 시총 2천억$ 이상·추적 종목</span></h2>`;
+    for(const d of W){const R=D.earnings.filter(x=>x.day===d);h+=`<div class="day">${lbl(d)}</div>`+(R.length?R.map(x=>`<div class="row"><span class="t">${esc(x.when)}</span><span>${x.star?'<span class="star">** </span>':''}<b>${esc(x.sym)}</b> ${esc(x.name)} <span class="k">· 시총 ${Math.round(x.cap/1e9).toLocaleString()}B$ · EPS 예상 ${esc(x.eps||'–')}</span></span></div>`).join(''):'<div class="none">해당 없음</div>');}
+    h+='</div>';}
+  document.getElementById('app').innerHTML=h;
+}
+document.addEventListener('click',e=>{const t=e.target.closest('.tab');if(t){tab=t.dataset.k;render();}});
+fetch(URL_+'?t='+Date.now()).then(r=>r.json()).then(d=>{D=d;document.getElementById('sub').textContent=`${lbl(d.mon)} ~ ${lbl(d.fri)} · ${d.at.replace('T',' ')} 작성 · 매주 일요일 20:00 KST 갱신`;render();})
+  .catch(()=>{document.getElementById('app').innerHTML='<div class="card hsub">아직 주간 전략이 없어요. 일요일 20:00(KST)에 만들어져요.</div>';});
+</script>
+</body>
+</html>

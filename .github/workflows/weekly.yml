@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # 랩 화면용 weekly.json 을 lab-data 브랜치에 저장
 
 jobs:
   build:
@@ -25,6 +25,18 @@ jobs:
           python -m playwright install --with-deps chromium >/dev/null
       - name: Build weekly PDF
         run: python scripts/weekly_pdf.py --out reports_weekly --json reports_weekly/weekly.json
+      # 랩 '주간 전략' 칸: lab-data 브랜치의 weekly.json 을 화면이 바로 읽음
+      - name: Save weekly.json (lab-data)
+        continue-on-error: true
+        env:
+          REPO_URL: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
+        run: |
+          git clone --quiet --branch lab-data --single-branch --depth 1 "$REPO_URL" labdata
+          cp reports_weekly/weekly.json labdata/weekly.json
+          cd labdata && git add weekly.json
+          git -c user.name="mini-bblab" -c user.email="actions@users.noreply.github.com" commit -qm "weekly $(date -u +%F)" || exit 0
+          git push -q origin lab-data
+
       - uses: actions/upload-artifact@v4
         with:
           name: weekly-pdf

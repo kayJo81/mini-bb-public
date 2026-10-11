@@ -117,6 +117,8 @@ function render(d){
   if(SIM){document.getElementById('app').innerHTML=P?paperCard(P):'<div class="card empty">가상 매매 데이터를 불러오지 못했어요.</div>';return;}
   h+=`<a class="card" href="sim" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
     <span><b>🧪 가상 매매 시뮬레이션</b><br><span class="hsub">${P?`${esc(P.status)} · 평가액 $${Math.round(P.equity).toLocaleString()} (${pct(P.ret)}) · QQQ ${pct(P.bench_ret)}`:'신호를 실제로 따라 했다면?'}</span></span><span class="link">보기 →</span></a>`;
+  h+=`<a class="card" href="weekly" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
+    <span><b>📅 주간 전략</b><br><span class="hsub" id="wkSub">이번 주 매크로·정치·산업·실적 일정(요일별) + 주간 전략 · 매주 일요일 20:00 갱신</span></span><span class="link">보기 →</span></a>`;
   h+=`<a class="card" href="env" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
     <span><b>🌡️ 시장 환경 기록</b><br><span class="hsub" id="envSub">옵션 수급·VIX 구조·금리·공매도·예측시장 — 국면별 전략 검증용으로 매일 저장</span></span><span class="link">보기 →</span></a>`;
 
