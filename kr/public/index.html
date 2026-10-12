@@ -118,6 +118,22 @@ tr.st{cursor:pointer}tr.st:hover td{background:#f9fafb}
 .news a{text-decoration:none}.news a:hover{color:var(--acc)}
 .tm{font-family:var(--mono);font-size:10px;color:var(--sub);margin-right:5px}
 .empty{color:var(--sub);font-size:13px;padding:14px 4px}
+.flow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+@media(max-width:640px){.flow{gap:6px}}
+.fc{background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:9px 11px 6px;min-width:0}
+.fh{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-weight:800;font-size:14px}
+.fh span{font-size:11px;font-weight:500;color:var(--sub);white-space:nowrap}
+.fr{display:grid;grid-template-columns:auto 1fr;gap:6px;align-items:center;font-size:13px;padding:2px 0}
+.fr b{font-family:var(--mono);text-align:right;white-space:nowrap}
+.fr.sub{font-size:12px;color:#4b5563;padding-left:10px}.fr.sub b{font-weight:600}
+.fbar{height:3px;border-radius:2px;margin-top:1px;grid-column:1/-1;background:#f3f4f6;position:relative;overflow:hidden}
+.fbar i{position:absolute;top:0;bottom:0}
+.fsvg{display:block;width:100%;height:34px;margin-top:4px}
+.fleg{display:flex;gap:8px;font-size:10.5px;color:var(--sub);margin-top:1px;flex-wrap:wrap}
+.fleg i{display:inline-block;width:8px;height:2px;vertical-align:middle;margin-right:3px}
+.fdet{font-size:11.5px;color:var(--sub);margin-top:3px;cursor:pointer}
+.fdet summary{list-style:none}.fdet summary::-webkit-details-marker{display:none}
+.fdet div{display:flex;justify-content:space-between;font-family:var(--mono);padding:1px 0}
 footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
 </style>
 </head>
@@ -131,6 +147,7 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
   <a class="btn" href="https://mini-bbterminal.pages.dev">🇺🇸 미국 증시</a>
 </div>
 <div class="wrap">
+  <div class="flow" id="flow" hidden></div>
   <div class="secs" id="secs">
     <button class="sec" data-sec="theme"><div class="t">🔥 장중 테마</div><div class="s" id="secTheme">불러오는 중…</div></button>
     <button class="sec" data-sec="산업"><div class="t">🏭 산업</div><div class="s" data-cnt="산업">뉴스</div></button>
@@ -152,7 +169,7 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
   <div class="tabs" style="margin-top:14px"><input id="q" placeholder="🔎 다른 테마 찾기 (예: 반도체, 원자력)"></div>
   <div id="qlist"></div>
   </div>
-  <footer>테마: 네이버 증권 테마 분류·시세 (최대 1분 지연, 장중 30초마다 갱신) · 뉴스: 구글 뉴스 한국판 직전 24시간, 15분마다 수집 · 투자 권유 아님</footer>
+  <footer>수급: 다음 금융 투자자별 순매수(억 원, 장중 30초마다 · 순수기관 = 기관계 − 금융투자) · 테마: 네이버 증권 테마 분류·시세 (최대 1분 지연, 장중 30초마다 갱신) · 뉴스: 구글 뉴스 한국판 직전 24시간, 15분마다 수집 · 투자 권유 아님</footer>
 </div>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -173,7 +190,37 @@ function rankHistory(groups){
   return {move:no=>{const p=prev.get(no);return p==null?null:p-order.indexOf(no);},mins:Math.round((now-base.t)/60e3)};
 }
 
+// 투자자별 수급 (개인 / 외국인 / 기관계 = 순수기관 + 금융투자), 억 원
+const FC={ind:'#f59e0b',frn:'#10b981',inst:'#8b5cf6'};
+function flowSvg(S){
+  if(!S||S.length<2)return '';
+  const all=S.flatMap(r=>r.slice(1)),mx=Math.max(1,...all.map(Math.abs)),n=S.length;
+  const y=v=>(17-v/mx*15).toFixed(1),line=(k,c)=>`<polyline points="${S.map((r,i)=>`${(i/(n-1)*100).toFixed(1)},${y(r[k])}`).join(' ')}" fill="none" stroke="${c}" stroke-width="1.6" vector-effect="non-scaling-stroke"/>`;
+  return `<svg class="fsvg" viewBox="0 0 100 34" preserveAspectRatio="none"><line x1="0" x2="100" y1="17" y2="17" stroke="#e5e7eb" stroke-width="1" vector-effect="non-scaling-stroke"/>${line(1,FC.ind)}${line(2,FC.frn)}${line(3,FC.inst)}</svg>`;
+}
+async function loadFlow(){
+  try{
+    const d=await (await fetch('api/flow',{cache:'no-store'})).json();if(d.error)return;
+    const f=v=>v==null?'–':(v>0?'+':'')+v.toLocaleString(),c=v=>v>0?'up':v<0?'dn':'';
+    const card=(name,x)=>{
+      const mx=Math.max(1,...[x.ind,x.frn,x.inst].map(v=>Math.abs(v||0)));
+      const bar=(v,col)=>`<div class="fbar"><i style="background:${col};${v>=0?'left:50%':'right:50%'};width:${Math.abs(v||0)/mx*50}%"></i></div>`;
+      const row=(l,v,col,sub)=>`<div class="fr${sub?' sub':''}"><span>${l}</span><b class="${c(v)}">${f(v)}</b>${col?bar(v,col):''}</div>`;
+      const det=Object.entries(x.detail||{}).map(([k,v])=>`<div><span>${k}</span><span class="${c(v)}">${f(v)}</span></div>`).join('')+
+        `<div><span>기타법인</span><span class="${c(x.corp)}">${f(x.corp)}</span></div>`;
+      return `<div class="fc"><div class="fh">${name}<span>${x.at.slice(5,10).replace('-','/')} ${x.at.slice(11,16)} · 억 원</span></div>
+        ${row('개인',x.ind,FC.ind)}${row('외국인',x.frn,FC.frn)}${row('기관계',x.inst,FC.inst)}${row('ㄴ 순수기관',x.pure,'',1)}${row('ㄴ 금융투자',x.fin,'',1)}
+        ${flowSvg(x.series)}<div class="fleg"><span><i style="background:${FC.ind}"></i>개인</span><span><i style="background:${FC.frn}"></i>외국인</span><span><i style="background:${FC.inst}"></i>기관</span></div>
+        <details class="fdet"><summary>▸ 기관 세부</summary>${det}</details></div>`;
+    };
+    const el=document.getElementById('flow'),open=[...el.querySelectorAll('details')].map(x=>x.open);
+    el.innerHTML=card('코스피',d.KOSPI)+card('코스닥',d.KOSDAQ);
+    el.querySelectorAll('details').forEach((x,i)=>x.open=!!open[i]);
+    el.hidden=false;
+  }catch(e){}
+}
 async function load(){
+  loadFlow();
   try{
     const r=await fetch('api/themes',{cache:'no-store'});const d=await r.json();
     if(d.error)throw new Error(d.error);
