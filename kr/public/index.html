@@ -352,7 +352,7 @@ const ALIAS={'원전':'원자력','2차전지':'2차전지','배터리':'2차전
 document.getElementById('q').oninput=e=>{const v=e.target.value.trim();st.q=ALIAS[v.toLowerCase()]||v;render();};
 // ── 섹션: 장중 테마 / 한국 증시 뉴스 ──
 const VL={VERIFIED:'검증됨',SINGLE:'단독보도',UNVERIFIED:'미확인'};
-const ns={cat:'ALL',data:null,at:0};
+const ns={sel:new Set(),data:null,at:0};   // sel: 고른 카테고리(토픽 id·'G:그룹') 여러 개, 비면 전체
 let sec='theme';try{sec=localStorage.getItem('kr_sec')||'theme';}catch(e){}
 if(!['theme','산업','매크로','정치·정책','map'].includes(sec))sec='theme';
 function setSec(v){
@@ -360,7 +360,7 @@ function setSec(v){
   document.querySelectorAll('.sec').forEach(b=>b.classList.toggle('on',b.dataset.sec===v));
   document.getElementById('themeView').hidden=v!=='theme';document.getElementById('newsView').hidden=v==='theme'||v==='map';
   document.getElementById('mapView').hidden=v!=='map';
-  ns.cat='ALL';
+  ns.sel.clear();
   if(v==='map'){loadMap();return;}
   if(v!=='theme'){if(Date.now()-ns.at>60e3)loadNews();else renderNews();}
 }
@@ -378,16 +378,17 @@ function renderNews(){
   const T=d.topics.filter(t=>t.section===sec),tot=T.reduce((a,t)=>a+t.count,0);
   // 미국판처럼: 그룹(색 점·점선 테두리, 누르면 그룹 전체) 아래 세부 카테고리 버튼
   const GC={'K 테크':'#2563eb','K 조방원':'#059669','K 바이오':'#db2777','K 모빌리티':'#0891b2','K 금융':'#ca8a04','K 정책':'#7c3aed'};
-  const pill=(t,gc)=>`<button type="button" class="ni ${ns.cat===t.id?'on':''} ${t.count?'':'empty'}" style="--gc:${gc}" data-c="${t.id}"><span>${esc(t.name)}</span><span class="c">${t.count}</span></button>`;
+  const isOn=t=>ns.sel.has(t.id)||ns.sel.has('G:'+(t.group||''));
+  const pill=(t,gc)=>`<button type="button" class="ni ${isOn(t)?'on':''} ${t.count?'':'empty'}" style="--gc:${gc}" data-c="${t.id}"><span>${esc(t.name)}</span><span class="c">${t.count}</span></button>`;
   const groups=[];for(const t of T){const k=t.group||'';let g=groups.find(x=>x.k===k);if(!g)groups.push(g={k,ts:[]});g.ts.push(t);}
   document.getElementById('ncats').innerHTML=
-    `<div class="nav-h"><span class="nav-t">${esc(sec)} 카테고리</span><span class="nav-hint">👆 눌러서 골라 보기</span></div>`+
-    `<div class="pills"><button type="button" class="ni all ${ns.cat==='ALL'?'on':''}" data-c="ALL"><span>전체</span><span class="c">${tot}</span></button></div>`+
-    groups.map(g=>{const gc=GC[g.k]||'#2563eb',on=ns.cat==='G:'+g.k;
+    `<div class="nav-h"><span class="nav-t">${esc(sec)} 카테고리</span><span class="nav-hint">👆 여러 개 골라 보기</span></div>`+
+    `<div class="pills"><button type="button" class="ni all ${ns.sel.size?'':'on'}" data-c="ALL"><span>전체</span><span class="c">${tot}</span></button></div>`+
+    groups.map(g=>{const gc=GC[g.k]||'#2563eb',on=ns.sel.has('G:'+g.k);
       return (g.k?`<div><button type="button" class="ng ${on?'on':''}" style="--gc:${gc}" data-c="G:${esc(g.k)}">${esc(g.k)}<span class="c">${g.ts.reduce((a,t)=>a+t.count,0)}</span><span class="gh">${on?'✓ 선택됨':'그룹 전체 보기'}</span></button></div>`:'<div class="ngap"></div>')+
         `<div class="pills">${g.ts.map(t=>pill(t,gc)).join('')}</div>`;}).join('');
   const seen=new Set(),items=[];
-  for(const t of T){if(ns.cat!=='ALL'&&ns.cat!==t.id&&ns.cat!=='G:'+t.group)continue;
+  for(const t of T){if(ns.sel.size&&!isOn(t))continue;
     for(const x of t.stories){if(x.is_opinion||seen.has(x.headline))continue;seen.add(x.headline);items.push([x,t.name]);}}
   items.sort((a,b)=>b[0].first_seen-a[0].first_seen);
   document.getElementById('nlist').innerHTML=items.length?items.map(([x,cat])=>{
@@ -397,7 +398,14 @@ function renderNews(){
       ${x.sources.length>1?`<details><summary>보도 ${x.sources.length}건 보기</summary>${x.sources.map(s=>`<div><span class="tm">${esc(s.time_kst.slice(6))}</span><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.headline)}</a> · ${esc(s.name)}</div>`).join('')}</details>`:`<div class="hsub" style="margin-top:3px">${esc(x.sources[0].name)}</div>`}</div>`;}).join('')
     :'<div class="empty">해당 카테고리 뉴스가 없어요.</div>';
 }
-document.getElementById('ncats').addEventListener('click',e=>{const c=e.target.closest('[data-c]');if(c){ns.cat=c.dataset.c;renderNews();}});
+// 카테고리 여러 개 고르기: 누르면 켜고/끄기, '전체'는 모두 해제 (그룹을 켜면 그 안의 개별 카테고리는 그룹에 포함)
+document.getElementById('ncats').addEventListener('click',e=>{const c=e.target.closest('[data-c]');if(!c)return;const k=c.dataset.c,T=(ns.data||{}).topics||[];
+  if(k==='ALL')ns.sel.clear();
+  else{const tp=T.find(t=>t.id===k),g=tp&&'G:'+(tp.group||'');
+    if(tp&&ns.sel.has(g)){ns.sel.delete(g);T.filter(t=>t.group===tp.group&&t.id!==k&&t.section===tp.section).forEach(t=>ns.sel.add(t.id));}
+    else if(ns.sel.has(k))ns.sel.delete(k);
+    else{ns.sel.add(k);if(k.startsWith('G:'))T.filter(t=>'G:'+t.group===k).forEach(t=>ns.sel.delete(t.id));}}
+  renderNews();});
 document.querySelectorAll('.sec').forEach(b=>b.onclick=()=>setSec(b.dataset.sec));
 // ── 맵: 업종별 시가총액 타일 (squarified treemap) ──
 const mp={m:'KOSPI',data:{},sel:null,timer:null};

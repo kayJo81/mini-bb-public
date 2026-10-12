@@ -282,7 +282,7 @@ const GROUP_COLOR={'기술주 실적':'#db2777','모빌리티 & 에너지':'#059
   '로컬 매크로':'#0891b2','중앙은행':'#4f46e5','지정학':'#dc2626'};
 const SECTIONS=[['시장','나스닥·S&P 급변 구간과 그때 나온 뉴스','#0f766e'],['산업','실적·모빌리티·메가테크·AI·암호화폐','#2563eb'],['매크로','미국·아시아·유럽 / 연준·ECB·BOJ','#0891b2'],['지정학','미국 중간선거·정계 / 이란 & 중동','#dc2626']];
 const WINDOW_H=12;   // 마지막 수집 시각 기준 직전 12시간
-let st={section:'산업',topic:'ALL',verdict:'ALL',region:'ALL',hideOp:true,q:'',ko:true,sort:'time'};
+let st={section:'산업',sel:new Set(),verdict:'ALL',region:'ALL',hideOp:true,q:'',ko:true,sort:'time'};
 let raw=null,data=null,pollT=null;
 const STATIC=!!window.MBB_STATIC;   // 정적 배포(Cloudflare Pages): briefings/*.json 을 직접 읽음
 
@@ -408,42 +408,46 @@ function render(){
   document.body.classList.toggle('theme',thOn);tv.hidden=!thOn;
   if(thOn){const f=document.getElementById('themesFrame');if(!f.src)f.src='themes?embed=1';return;}
   const topics=data.topics.filter(t=>secOf(t)===st.section);
-  // st.topic: 'ALL' | 토픽 id | 'G:그룹명'(그룹 전체)
-  const selGroup=st.topic.startsWith('G:')?st.topic.slice(2):null;
-  if(st.topic!=='ALL'&&!(selGroup?topics.some(t=>t.group===selGroup):topics.some(t=>t.id===st.topic)))st.topic='ALL';
+  // st.sel: 고른 카테고리(토픽 id · 'G:그룹명') 여러 개 — 비어 있으면 전체
+  for(const k of [...st.sel])if(!(k.startsWith('G:')?topics.some(t=>t.group===k.slice(2)):topics.some(t=>t.id===k)))st.sel.delete(k);
   const groupCount={};for(const t of topics)groupCount[t.group]=(groupCount[t.group]||0)+t.stories.filter(passes).length;
+  const all=!st.sel.size;
 
   let nav='',grp=null,total=0;
   for(const t of topics){
     const n=t.stories.filter(passes).length;total+=n;
     const gc=GROUP_COLOR[t.group]||'#2563eb';
-    if(t.group!==grp){const gon=st.topic==='G:'+t.group;
+    if(t.group!==grp){const gon=st.sel.has('G:'+t.group);
       nav+=(grp===null?'':'</div>')+`<div class="ng-wrap"><button type="button" class="ng ${gon?'on':''}" style="--gc:${gc}" data-t="G:${esc(t.group)}" aria-pressed="${gon}">${esc(t.group)}<span class="c">${groupCount[t.group]}</span><span class="gh">${gon?'✓ 선택됨':'그룹 전체 보기'}</span></button></div><div class="pills">`;grp=t.group;}
-    nav+=`<button type="button" class="ni ${st.topic===t.id?'on':''} ${n?'':'empty'}" style="--gc:${gc}" data-t="${t.id}" aria-pressed="${st.topic===t.id}"><span>${esc(t.name)}</span><span class="c">${n}</span></button>`;
+    const on=st.sel.has(t.id)||st.sel.has('G:'+t.group);
+    nav+=`<button type="button" class="ni ${on?'on':''} ${n?'':'empty'}" style="--gc:${gc}" data-t="${t.id}" aria-pressed="${on}"><span>${esc(t.name)}</span><span class="c">${n}</span></button>`;
   }
   document.getElementById('nav').innerHTML=
-    `<div class="nav-h"><span class="nav-t">${esc(st.section)} 카테고리</span><span class="nav-hint">👆 눌러서 골라 보기</span></div>`+
-    `<div class="pills"><button type="button" class="ni all ${st.topic==='ALL'?'on':''}" data-t="ALL" aria-pressed="${st.topic==='ALL'}"><span>전체</span><span class="c">${total}</span></button></div>`+
+    `<div class="nav-h"><span class="nav-t">${esc(st.section)} 카테고리</span><span class="nav-hint">👆 여러 개 골라 보기</span></div>`+
+    `<div class="pills"><button type="button" class="ni all ${all?'on':''}" data-t="ALL" aria-pressed="${all}"><span>전체</span><span class="c">${total}</span></button></div>`+
     nav+'</div>';
 
-  const sel=st.topic.startsWith('G:')?{name:st.topic.slice(2)+' (그룹 전체)'}:topics.find(t=>t.id===st.topic);
-  let html=sel?`<div class="selbar">선택한 카테고리: <b>${esc(sel.name)}</b><button type="button" id="clearSel">✕ 전체 보기</button></div>`:'';
-  // 그룹 전체 / 전체(최신순): 해당 카테고리 뉴스를 하나로 합쳐 시간순(같은 기사는 한 번만, 카테고리 이름을 태그로)
-  const merged=selGroup||(st.topic==='ALL'&&st.sort==='time');
+  // 고른 카테고리 → 해당 토픽들
+  const picked=all?topics:topics.filter(t=>st.sel.has(t.id)||st.sel.has('G:'+t.group));
+  const names=[...st.sel].map(k=>k.startsWith('G:')?k.slice(2)+' (그룹 전체)':(topics.find(t=>t.id===k)||{}).name).filter(Boolean);
+  let html=all?'':`<div class="selbar">선택한 카테고리 ${names.length}개: <b>${names.map(esc).join(' · ')}</b><button type="button" id="clearSel">✕ 전체 보기</button></div>`;
+  // 여러 카테고리·그룹·전체(최신순): 하나로 합쳐 정렬 (같은 기사는 한 번만, 카테고리 이름을 태그로)
+  const single=picked.length===1&&!all;
+  const merged=!single&&(!all||st.sort==='time');
   if(merged){
     const seen=new Set(),list=[];
-    for(const t of topics){if(selGroup&&t.group!==selGroup)continue;
-      for(const x of t.stories.filter(passes)){if(seen.has(x.headline))continue;seen.add(x.headline);list.push([x,t.name]);}}
+    for(const t of picked)for(const x of t.stories.filter(passes)){if(seen.has(x.headline))continue;seen.add(x.headline);list.push([x,t.name]);}
     if(st.sort==='time')list.sort((a,b)=>b[0].first_seen-a[0].first_seen);
-    html+=`<div class="sec"><div class="sec-h">${esc(selGroup||st.section+' 전체')} <span class="g">${selGroup?'그룹 전체 · ':'최신순 · '}${list.length}건</span></div>`+
+    const title=all?st.section+' 전체':names.length===1?names[0]:`${names.length}개 카테고리`;
+    html+=`<div class="sec"><div class="sec-h">${esc(title)} <span class="g">${st.sort==='time'?'최신순':'검증순'} · ${list.length}건</span></div>`+
       (list.length?list.map(([x,n])=>card(x,n)).join(''):'<div class="empty">조건에 맞는 뉴스가 없습니다</div>')+'</div>';
   }
-  for(const t of topics){
-    if(merged||(st.topic!=='ALL'&&st.topic!==t.id))continue;
+  for(const t of picked){
+    if(merged)continue;
     const list=t.stories.filter(passes);
     // 최신순: 첫 보도(가장 빠른 기사) 시각 기준 (검증순은 수집 단계의 기본 순서: 검증 등급 → 출처 수)
     if(st.sort==='time')list.sort((a,b)=>b.first_seen-a.first_seen);
-    if(!list.length&&st.topic==='ALL')continue;
+    if(!list.length&&all)continue;
     html+=`<div class="sec"><div class="sec-h">${esc(t.name)} <span class="g">${esc(t.group)} · ${list.length}건</span></div>`;
     html+=list.length?list.map(x=>card(x)).join(''):`<div class="empty">${t.id==='earnings'?'최근 12시간 안에 발표된 기술주 실적이 없습니다 (실적이 나오면 여기에 표시됩니다)':'조건에 맞는 뉴스가 없습니다'}</div>`;
     html+='</div>';
@@ -523,10 +527,16 @@ addEventListener('message',e=>{if(e.data&&e.data.mbbThemesHeight){document.getEl
 fetch('briefings/us_themes.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{const t=(d.themes||[])[0];if(!t)return;
   THEME_TOP=`1위 ${t.name} ${t.chg>0?'+':''}${t.chg.toFixed(2)}%`;const el=document.getElementById('themeTop');if(el)el.textContent=THEME_TOP;}).catch(()=>{});
 document.getElementById('secTabs').onclick=e=>{const b=e.target.closest('button.stab2');if(!b)return;
-  st.section=b.dataset.sec;st.topic='ALL';save();render();};
-document.getElementById('nav').onclick=e=>{const n=e.target.closest('.ni,.ng');if(!n)return;st.topic=n.dataset.t;render();
-  document.getElementById('list').scrollIntoView({behavior:'smooth',block:'start'});};
-document.getElementById('list').onclick=e=>{if(e.target.id==='clearSel'){st.topic='ALL';render();return;}if(e.target.classList.contains('more'))e.target.nextElementSibling.classList.toggle('open');};
+  st.section=b.dataset.sec;st.sel.clear();save();render();};
+// 카테고리는 여러 개 고를 수 있음: 누르면 켜고/끄기, '전체'는 모두 해제 (그룹을 켜면 그 안의 개별 카테고리는 그룹에 포함)
+document.getElementById('nav').onclick=e=>{const n=e.target.closest('.ni,.ng');if(!n)return;const k=n.dataset.t;
+  if(k==='ALL')st.sel.clear();
+  else{const tp=data.topics.find(t=>t.id===k);
+    if(tp&&st.sel.has('G:'+tp.group)){st.sel.delete('G:'+tp.group);data.topics.filter(t=>t.group===tp.group&&t.id!==k).forEach(t=>st.sel.add(t.id));}
+    else if(st.sel.has(k))st.sel.delete(k);
+    else{st.sel.add(k);if(k.startsWith('G:'))data.topics.filter(t=>t.group===k.slice(2)).forEach(t=>st.sel.delete(t.id));}}
+  render();};
+document.getElementById('list').onclick=e=>{if(e.target.id==='clearSel'){st.sel.clear();render();return;}if(e.target.classList.contains('more'))e.target.nextElementSibling.classList.toggle('open');};
 
 if(STATIC){document.getElementById('dashLink').remove();document.querySelector('.brand').href='./';}
 document.getElementById('hideOp').classList.toggle('on',st.hideOp);
