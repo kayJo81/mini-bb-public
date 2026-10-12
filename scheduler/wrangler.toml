@@ -5,7 +5,7 @@ workers_dev = false
 
 # 15분 간격 (매시 07·22·37·52분 — 05:30 KST 메일 실행과 겹치지 않게)
 # + 20:30 UTC(05:30 KST, 서머타임) / 21:30 UTC(06:30 KST, 겨울): 일일 PDF 메일 — 미국 장 마감 30분 뒤 (index.js REPORT_CRON_* 과 같아야 함)
-# + 22:00 UTC 화~토(07:00 KST): 미니 블벅 랩 (index.js LAB_CRON 과 같아야 함)
+# + 22:00 UTC 월~금(= 07:00 KST 화~토, 요일은 UTC 기준): 미니 블벅 랩 (index.js LAB_CRON 과 같아야 함)
 # + 11:00 UTC 일(20:00 KST): 주간 전략 (index.js WEEKLY_CRON 과 같아야 함)
 [triggers]
-crons = ["7,22,37,52 * * * *", "30 20 * * *", "30 21 * * *", "0 22 * * TUE-SAT", "0 11 * * SUN"]
+crons = ["7,22,37,52 * * * *", "30 20 * * *", "30 21 * * *", "0 22 * * MON-FRI", "0 11 * * SUN"]

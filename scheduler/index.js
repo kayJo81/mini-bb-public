@@ -8,7 +8,7 @@ const WORKFLOW = "briefing.yml";
 // (종가 PDF가 들어가서 장 마감 뒤여야 함). 두 시각 중 맞지 않는 쪽은 평소 수집으로 실행
 const REPORT_CRON_EDT = "30 20 * * *";
 const REPORT_CRON_EST = "30 21 * * *";
-const LAB_CRON = "0 22 * * TUE-SAT";
+const LAB_CRON = "0 22 * * MON-FRI";   // UTC 월~금 22:00 = KST 화~토 07:00 (크론 요일은 UTC 기준)
 const WEEKLY_CRON = "0 11 * * SUN";        // 일요일 20:00 KST: 주간 전략 PDF·랩 주간 전략     // 화~토 07:00 KST(미국 장 마감 뒤): 미니 블벅 랩 갱신
 
 async function dispatch(env, report, workflow = WORKFLOW, inputs = null) {

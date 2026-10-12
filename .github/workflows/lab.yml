@@ -1,5 +1,5 @@
 # 미니 블벅 랩 — 종목 뉴스 집계·가격 저장(lab-data 브랜치) → 신호 검증 → Cloudflare Pages(mini-bblab) 배포
-#  · 매일 07:00 KST(화~토, 미국 장 마감 뒤) scheduler/ 가 days=4 로 실행
+#  · 매일 07:00 KST(화~토, 미국 장 마감 뒤) scheduler/ 가 days=4 로 실행 (크론은 UTC 월~금 22:00)
 #  · 처음 한 번은 days=365 로 수동 실행해 1년치 채우기 (Finnhub 무료 한도 때문에 약 1시간)
 # 필요한 저장소 Secrets: FINNHUB_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, 선택 LAB_EDIT_KEY(주간 전략 일정 직접 입력용 편집 키)
 name: lab
