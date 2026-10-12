@@ -45,6 +45,8 @@ EDITIONS = {
     "KR": {"hl": "ko", "gl": "KR", "ceid": "KR:ko"},       # 한국 증시용(kr_news.py)
 }
 HTTP_HDR = {"User-Agent": "Mozilla/5.0 (compatible; MiniBBTerminal/1.0)"}
+# 구글 뉴스 예비 경로 (functions/api/gnews.js): GitHub 서버가 막혔을 때 Cloudflare 를 거쳐 받음
+GNEWS_PROXY = os.environ.get("GNEWS_PROXY", "https://mini-bbterminal.pages.dev/api/gnews")
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -497,13 +499,20 @@ def fetch_gnews(query, edition, start, end):
     # after:/before: 는 날짜 단위(UTC) → 창을 포함하도록 넉넉히 잡고 로컬에서 시간 필터
     s = (start.astimezone(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
     e = (end.astimezone(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d")
-    url = GNEWS_URL.format(q=quote_plus(f"{query} after:{s} before:{e}"), **ed)
+    q = f"{query} after:{s} before:{e}"
+    url = GNEWS_URL.format(q=quote_plus(q), **ed)
+    root = None
     try:
         r = requests.get(url, timeout=15, headers=HTTP_HDR)
         root = ET.fromstring(r.content)
     except Exception as ex:
-        print(f"[scanner/gnews] {query!r} {edition}: {ex}")
-        return []
+        # GitHub Actions 서버가 구글에 막히면(XML 대신 안내 페이지) 미니 블벅터 서버(Cloudflare)를 거쳐 다시
+        try:
+            r = requests.get(GNEWS_PROXY, params={"q": q, **ed}, timeout=20, headers=HTTP_HDR)
+            root = ET.fromstring(r.content)
+        except Exception as ex2:
+            print(f"[scanner/gnews] {query!r} {edition}: {ex} / 예비 경로: {ex2}")
+            return []
     out = []
     for item in root.findall(".//item"):
         src_el = item.find("source")
