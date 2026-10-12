@@ -10,10 +10,33 @@
  },
  "start": "2026-10-09",
  "signal_days": [
-  "2026-10-09"
+  "2026-10-09",
+  "2026-10-12"
  ],
  "seen": [],
  "pending": [
+  {
+   "sym": "TSM",
+   "dir": "롱",
+   "b": "pos_dn",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-12",
+   "edge": 0.75,
+   "z": 2.54,
+   "head": "SpaceX’s Terafab Probably Won’t Deliver Very High Profits, Despite Taiwan Semiconductor’s Limited Role"
+  },
+  {
+   "sym": "IREN",
+   "dir": "롱",
+   "b": "pos_dn",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-12",
+   "edge": 0.75,
+   "z": 1.99,
+   "head": "Nvidia-Backed Neoclouds Face a Test as IREN, CoreWeave and Nebius Stocks Slide"
+  }
+ ],
+ "open": [
   {
    "sym": "LITE",
    "dir": "롱",
@@ -22,17 +45,29 @@
    "signal_date": "2026-10-09",
    "edge": 0.33,
    "z": 3.53,
-   "head": "Optics Stocks Rally on Sold-Out Optical Capacity Through Early 2029: Applied Optoelectronics and Lumentum Surge 7%, Coherent Climbs 5%"
+   "head": "Optics Stocks Rally on Sold-Out Optical Capacity Through Early 2029: Applied Optoelectronics and Lumentum Surge 7%, Coherent Climbs 5%",
+   "entry_date": "2026-10-12",
+   "entry": 1100.0,
+   "bench_entry": 749.64,
+   "size": 5000.0,
+   "now": 995.41,
+   "ret": -9.71,
+   "bench_ret": -0.68,
+   "asof": "2026-10-12"
   }
  ],
- "open": [],
  "closed": [],
- "cash": 100000.0,
+ "cash": 95000.0,
  "curve": [
   [
    "2026-10-09",
    100000.0,
    100000.0
+  ],
+  [
+   "2026-10-12",
+   99514.59,
+   99965.99
   ]
  ],
  "picks_log": [
@@ -42,6 +77,14 @@
     "LITE"
    ],
    "pool": 1
+  },
+  {
+   "date": "2026-10-12",
+   "chosen": [
+    "TSM",
+    "IREN"
+   ],
+   "pool": 2
   }
  ],
  "status": "진행 중"
