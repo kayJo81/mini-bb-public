@@ -53,6 +53,13 @@ input#q{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:.5px soli
 .mvl div{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:.5px solid #f1f2f4;font-size:13.5px}
 .mvl b{font-family:var(--mono)}
 .empty{color:var(--sub);text-align:center;padding:24px}
+.ext{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,80px),1fr));gap:5px}
+.xt{border:.5px solid var(--bd);border-radius:9px;padding:5px 7px;position:relative;min-width:0}
+.xt .k{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xt .k small{font-weight:500;color:var(--sub);font-size:10px}
+.xt .v{font-family:var(--mono);font-size:11.5px;color:#374151}.xt .c{font-family:var(--mono);font-weight:700;font-size:14px}
+.xt .x{position:absolute;top:3px;right:6px;border:0;background:none;color:#9ca3af;cursor:pointer;font-size:13px;padding:0}
+.xadd{display:flex;gap:6px;margin-top:8px}.xadd input{flex:1;min-width:0;padding:7px 10px;border-radius:9px;border:.5px solid var(--bd);font:inherit;font-size:14px}
+.xadd button{padding:7px 12px;border-radius:9px;border:.5px solid var(--bd);background:#fff;font-weight:700;cursor:pointer}
 .embed body{background:transparent}.embed .top{position:static;background:transparent;border:0;padding:4px 0 0}
 .embed .top .btn,.embed .brand small{display:none}.embed .wrap{padding:6px 0 10px;max-width:none}
 </style>
@@ -67,6 +74,13 @@ input#q{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:.5px soli
   <a class="btn" href="https://mini-bbterminal-kr.pages.dev">🇰🇷 한국 증시</a>
 </div>
 <div class="wrap">
+  <div id="extBox" hidden>
+    <div class="ihd"><span id="extTitle">🌙 장외 시세</span> <span class="hsub" id="extSub"></span></div>
+    <div class="card"><div class="ext" id="ext"></div>
+      <div class="xadd"><input id="extIn" placeholder="티커 추가 (예: PLTR, SMCI)" autocapitalize="characters"><button id="extAdd">추가</button></div>
+      <div class="hsub" style="margin-top:6px">로빈후드 24시간 시세(나이트 = Blue Ocean 체결가, 안 되면 토스증권 주간거래) · 등락 = 직전 정규장 종가 대비 · 30초마다 갱신</div>
+    </div>
+  </div>
   <div class="ihd">🔥 상승 상위 5 <span class="hsub">🧩 뉴스로 묶은 이슈 테마 + 📂 테마</span></div>
   <div id="up"><div class="empty">불러오는 중…</div></div>
   <div class="ihd">🧊 하락 상위 5</div>
@@ -188,7 +202,34 @@ async function load(){
   catch(e){document.getElementById('up').innerHTML=`<div class="card empty">불러오지 못했어요 (${esc(e.message)})</div>`;}
   try{renderOpt(await (await fetch('briefings/options_live.json',{cache:'no-store'})).json());}catch(e){}
 }
+// 장외 시세 (프리·애프터·나이트): 정규장 시간엔 숨김
+const EXT_BASE=['SPY','QQQ','DIA','IWM','NVDA','AAPL','MSFT','GOOGL','AMZN','META','TSLA','AVGO','TSM','AMD','MU','PLTR'];
+const SES={pre:['🌅 프리마켓','04:00~09:30 ET'],after:['🌆 애프터마켓','16:00~20:00 ET'],night:['🌙 나이트','20:00~04:00 ET'],closed:['💤 장 휴장','주말 · 마지막 장외 가격']};
+const ls={get:k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(e){return []}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let extMine=ls.get('extMine');
+async function loadExt(){
+  try{
+    const syms=[...EXT_BASE,...extMine.filter(x=>!EXT_BASE.includes(x))];
+    const X=await (await fetch('api/ext?s='+syms.join(','),{cache:'no-store'})).json();
+    const box=document.getElementById('extBox');
+    if(!X.quotes||!X.quotes.length||X.session==='regular'){box.hidden=true;postH();return;}
+    const [t,rng]=SES[X.session]||SES.closed;
+    document.getElementById('extTitle').textContent=t;
+    const ago=q=>{if(!q.time)return '';const m=Math.round((Date.now()-Date.parse(q.time))/60000);return m<1?'방금':m<60?m+'분 전':m<1440?Math.round(m/60)+'시간 전':'';};
+    const by=Object.fromEntries(X.quotes.map(q=>[q.s,q]));
+    document.getElementById('ext').innerHTML=syms.filter(s=>by[s]&&by[s].price).map(s=>{const q=by[s];
+      return `<div class="xt">${extMine.includes(s)&&!EXT_BASE.includes(s)?`<button class="x" data-xdel="${esc(s)}">✕</button>`:''}<div class="k">${esc(s)} <small>${ago(q)}</small></div>
+      <div class="c ${cls(q.chg)}">${pct(q.chg)}</div><div class="v">${q.price.toFixed(2)}</div></div>`;}).join('');
+    document.getElementById('extSub').textContent=`${rng} · 뉴욕 ${X.et.slice(5)}`;
+    box.hidden=false;postH();
+  }catch(e){}
+}
+document.getElementById('extAdd').onclick=()=>{const v=document.getElementById('extIn').value.toUpperCase().replace(/[^A-Z.,\- ]/g,'').split(/[ ,]+/).filter(Boolean);
+  extMine=[...new Set([...extMine,...v])].slice(0,30);ls.set('extMine',extMine);document.getElementById('extIn').value='';loadExt();};
+document.getElementById('extIn').onkeydown=e=>{if(e.key==='Enter')document.getElementById('extAdd').click();};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-xdel]');if(!b)return;extMine=extMine.filter(x=>x!==b.dataset.xdel);ls.set('extMine',extMine);loadExt();});
 load();setInterval(load,60e3);
+loadExt();setInterval(loadExt,30e3);
 </script>
 </body>
 </html>
