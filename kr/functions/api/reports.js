@@ -23,10 +23,30 @@ const TOPICS = [
   ["소비·기타", "소비재", /화장품|음식료|식품|음료|유통|소매|의류|섬유|미디어|엔터|방송|호텔|레저|여행|항공|면세|담배/i],
   ["소비·기타", "소재·산업재", /화학|석유|정유|철강|비철|금속|건설|건축|기계|운송|물류|종이|포장|시멘트/i],
 ];
-const classify = (...texts) => {
-  const t = texts.filter(Boolean).join(" ");
-  const hit = TOPICS.find(([, , re]) => re.test(t));
-  return hit ? { group: hit[0], topic: hit[1] } : { group: "소비·기타", topic: "기타" };
+// 네이버 업종(sectors.json) → [산업군, 카테고리]: 업종이 있으면 이것이 먼저 (단어 분류는 업종이 없을 때만)
+const T = { semi: ["K 테크", "반도체"], hw: ["K 테크", "소부장"], bat: ["K 테크", "배터리"], ai: ["K 테크", "AI·로봇"],
+  ship: ["K 조방원", "조선"], def: ["K 조방원", "방산"], pow: ["K 조방원", "원자력·전력"], bio: ["K 바이오", "바이오·제약"],
+  car: ["K 모빌리티", "자동차"], bank: ["K 금융", "금융지주·은행"], sec: ["K 금융", "증권"], ins: ["K 금융", "보험"],
+  con: ["소비·기타", "소비재"], ind: ["소비·기타", "소재·산업재"] };
+const SECTOR = {
+  "반도체와반도체장비": T.semi, "디스플레이장비및부품": T.hw, "디스플레이패널": T.hw, "전자장비와기기": T.hw, "전자제품": T.hw,
+  "컴퓨터와주변기기": T.hw, "통신장비": T.hw, "핸드셋": T.hw, "사무용전자제품": T.hw, "전기제품": T.bat,
+  "소프트웨어": T.ai, "IT서비스": T.ai, "양방향미디어와서비스": T.ai, "게임엔터테인먼트": T.ai,
+  "조선": T.ship, "해운사": T.ship, "우주항공과국방": T.def, "전기유틸리티": T.pow, "복합유틸리티": T.pow, "가스유틸리티": T.pow,
+  "전기장비": T.pow, "제약": T.bio, "생물공학": T.bio, "생명과학도구및서비스": T.bio, "건강관리기술": T.bio,
+  "건강관리업체및서비스": T.bio, "건강관리장비와용품": T.bio, "자동차": T.car, "자동차부품": T.car,
+  "은행": T.bank, "기타금융": T.bank, "카드": T.bank, "증권": T.sec, "창업투자": T.sec, "생명보험": T.ins, "손해보험": T.ins,
+  "화학": T.ind, "철강": T.ind, "비철금속": T.ind, "기계": T.ind, "건설": T.ind, "건축자재": T.ind, "건축제품": T.ind,
+  "항공화물운송과물류": T.ind, "도로와철도운송": T.ind, "운송인프라": T.ind, "석유와가스": T.ind, "에너지장비및서비스": T.ind,
+  "종이와목재": T.ind, "포장재": T.ind, "복합기업": T.ind, "무역회사와판매업체": T.ind, "상업서비스와공급품": T.ind,
+};
+const classify = (sector, ...texts) => {
+  if (SECTOR[sector]) return { group: SECTOR[sector][0], topic: SECTOR[sector][1] };
+  for (const t of [sector, texts.filter(Boolean).join(" ")]) {   // 산업분석 분류(반도체·자동차 …) → 제목·종목명
+    const hit = t && TOPICS.find(([, , re]) => re.test(t));
+    if (hit) return { group: hit[0], topic: hit[1] };
+  }
+  return { group: "소비·기타", topic: "기타" };
 };
 const slim = (r) => ({ id: r.researchId, title: r.title, broker: r.brokerName, date: r.writeDate, url: r.endUrl,
   views: Number(r.readCount) || 0, item: r.itemName || "", code: r.itemCode || "", cat: r.researchCategory });
