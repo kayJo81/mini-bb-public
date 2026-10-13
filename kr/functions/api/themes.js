@@ -4,8 +4,9 @@
 import { cached, naver, num, slimStock } from "../../lib/naver.js";
 import MEMBERS from "../../lib/theme_members.json";
 
-const DETAIL_TOP = 15;   // 상위·하위 각각 이만큼은 구성 종목까지
-const HOT = 5, HOT_MIN = 2, HOT_MAX = 12;   // ±5% 종목 2개 이상인 테마, 방향별 최대 12개까지 구성 종목을 받아 봄
+const DETAIL_TOP = 12;   // 상위·하위 각각 이만큼은 구성 종목까지
+const HOT = 5, HOT_MIN = 2, HOT_EXTRA = 10;   // ±5% 종목 2개 이상인 테마, 위 목록에 없는 것만 최대 10개 더
+// Cloudflare 무료 요청 한도(외부 요청 50개): 테마 목록 3 + 급등락 4 + 구성 종목 24 + 10 + 캐시 2 = 43
 
 export async function onRequestGet({ request }) {
   return cached(request, 40, async () => {
@@ -24,10 +25,15 @@ export async function onRequestGet({ request }) {
       if (!dir || /스팩|우$|우B$/.test(s.stockName || "")) continue;
       for (const no of MEMBERS.codes[s.itemCode] || []) cnt[dir].set(no, (cnt[dir].get(no) || 0) + 1);
     }
-    const hotNos = (dir) => [...cnt[dir].entries()].filter((x) => x[1] >= HOT_MIN).sort((a, b) => b[1] - a[1]).slice(0, HOT_MAX).map((x) => x[0]);
+    const hotNos = (dir) => [...cnt[dir].entries()].filter((x) => x[1] >= HOT_MIN).sort((a, b) => b[1] - a[1]).map((x) => x[0]);
     const hotUp = new Set(hotNos("up")), hotDn = new Set(hotNos("down"));
-    const want = [...new Set([...groups.slice(0, DETAIL_TOP), ...groups.slice(-DETAIL_TOP),
-      ...groups.filter((g) => hotUp.has(g.no) || hotDn.has(g.no))])];
+    const base = new Set([...groups.slice(0, DETAIL_TOP), ...groups.slice(-DETAIL_TOP)]);
+    // 급등·급락주가 많이 몰린 순으로 (두 방향 번갈아) 위 목록에 없는 테마만 추가
+    const extra = [], byNo = new Map(groups.map((g) => [g.no, g]));
+    const ups = [...hotUp], dns = [...hotDn];
+    for (let i = 0; extra.length < HOT_EXTRA && (i < ups.length || i < dns.length); i++)
+      for (const no of [ups[i], dns[i]]) if (no != null && extra.length < HOT_EXTRA && !base.has(byNo.get(no)) && byNo.get(no)) extra.push(byNo.get(no));
+    const want = [...base, ...new Set(extra)];
     const details = await Promise.all(want.map((g) =>
       naver(`/api/stocks/theme/${g.no}?page=1&pageSize=60`).then((d) => [g.no, d]).catch(() => [g.no, null])));
     const map = Object.fromEntries(details);
