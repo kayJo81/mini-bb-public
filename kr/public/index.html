@@ -135,6 +135,17 @@ tr.st{cursor:pointer}tr.st:hover td{background:#f9fafb}
 .fdet summary{list-style:none}.fdet summary::-webkit-details-marker{display:none}
 .fdet div{display:flex;justify-content:space-between;font-family:var(--mono);padding:1px 0}
 footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
+/* 📊 주요 지표 (환율·달러지수·비트코인·금·금리) */
+.mx{background:#fff;border:.5px solid #e5e7eb;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);padding:10px 12px;margin:0 0 12px}
+.mx-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:800;font-size:15px;margin-bottom:6px}
+.mx-h span{font-size:11px;font-weight:500;color:#6b7280}
+.mx-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+@media(min-width:760px){.mx-g{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.mx-t{border:.5px solid #eef0f3;border-radius:9px;padding:5px 6px;min-width:0;background:#fafbfc}
+.mx-n{font-size:11.5px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mx-p{font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:-.02em;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mx-c{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mx-c.u{color:#dc2626}.mx-c.d{color:#2563eb}.mx-c.f{color:#6b7280}
 </style>
 </head>
 <body>
@@ -147,6 +158,7 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
   <a class="btn" href="https://mini-bbterminal.pages.dev">🇺🇸 미국 증시</a>
 </div>
 <div class="wrap">
+  <div class="mx" id="mx" hidden><div class="mx-h">📊 주요 지표 <span id="mxAt"></span></div><div class="mx-g" id="mxG"></div></div>
   <div class="flow" id="flow" hidden></div>
   <div class="secs" id="secs">
     <button class="sec" data-sec="theme"><div class="t">🔥 장중 테마</div><div class="s" id="secTheme">불러오는 중…</div></button>
@@ -493,6 +505,20 @@ setSec(sec);
 if(sec!=='map')['KOSPI','KOSDAQ'].forEach(m=>fetch('api/map?m='+m).then(r=>r.json()).then(x=>{if(!x.error){mp.data[m]=x;mapSummary();}}).catch(()=>{}));
 loadNews();
 load();
+// 📊 주요 지표: 환율·달러지수·비트코인·금·금리 (api/macro, 30초마다)
+async function loadMacro(){
+  try{
+    const d=await (await fetch('api/macro',{cache:'no-store'})).json();if(!d.items)return;
+    const f=(v,n)=>v==null?'–':Number(v).toLocaleString('en-US',{minimumFractionDigits:n,maximumFractionDigits:n});
+    document.getElementById('mxG').innerHTML=d.items.map(x=>{const c=x.chg==null?'f':x.chg>0?'u':x.chg<0?'d':'f',s=x.chg>0?'+':'';
+      return `<div class="mx-t" title="${x.sym}"><div class="mx-n">${x.name}</div><div class="mx-p">${f(x.price,x.d)}${x.unit&&x.price!=null?'<small style="font-size:10px">%</small>':''}</div>`+
+        // 등락: 금리는 bp(0.01%p) 변화, 나머지는 % (자세한 값은 길게 누르면/마우스를 올리면)
+        `<div class="mx-c ${c}" title="${x.chg==null?'':s+f(x.chg,x.d)} (${x.pct==null?'':s+f(x.pct,2)}%)">${x.unit?(x.chg==null?'':s+f(x.chg*100,1)+'bp'):(x.pct==null?'':s+f(x.pct,2)+'%')}</div></div>`;}).join('');
+    document.getElementById('mxAt').textContent=new Date(d.at).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})+' 기준 · 30초마다';
+    document.getElementById('mx').hidden=false;
+  }catch(e){}
+}
+loadMacro();setInterval(loadMacro,30e3);
 </script>
 </body>
 </html>
