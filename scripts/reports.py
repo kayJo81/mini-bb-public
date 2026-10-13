@@ -142,6 +142,40 @@ def cnbc_calls(days=3):
     return out
 
 
+RD_VERB = (r"(?:upgrades|downgrades|initiates|reiterates|names|resumes|reinstates|raises|lowers|cuts|adds|removes|starts|assumes|"
+           r"double upgrades|double downgrades)")
+RD_HEAD = re.compile(r"(?:(?<=” )|(?<=\.\" )|(?<=: ))([A-Z][\w&.'\-]*(?: [A-Z&][\w&.'\-]*){0,4}) " + RD_VERB + r" ")
+RD_SAY = re.compile(r"\s(?=(?:[A-Z][\w&.\-]*(?:\s[A-Z][\w&.\-]*){0,3}|The firm|The bank|Analysts?)\s"
+                    r"(?:said|sees|says|raised|lowered|cut|thinks|expects|noted|believes|likes|is|wrote|added)\b)")
+
+
+def roundup_summary(url):
+    """CNBC '오늘의 주요 애널리스트 콜' 본문 → [(의견, 한 줄 이유)] (CNBC 페이지는 자동 접속을 막아 jina.ai 읽기 서비스로 받음)"""
+    import requests
+    try:
+        t = requests.get("https://r.jina.ai/" + url, timeout=40, headers={"Accept": "text/plain"}).text
+    except Exception as ex:
+        print(f"[reports] 정리 기사 본문: {ex}")
+        return []
+    i = t.find("biggest calls on Wall Street:")
+    if i < 0:
+        return []
+    body = t[i + len("biggest calls on Wall Street:"):]
+    e = re.search(r"Got a confidential news tip|Subscribe to CNBC PRO|Related Tags|More In |Read more", body)
+    body = ": " + (body[:e.start()] if e else body).lstrip()
+    heads = list(RD_HEAD.finditer(body)) or list(re.finditer(r"^ ([A-Z][\w&.'\-]*(?: [A-Z&][\w&.'\-]*){0,4}) " + RD_VERB + r" ", body))
+    out = []
+    for k, m in enumerate(heads):
+        seg = body[m.start():heads[k + 1].start() if k + 1 < len(heads) else len(body)].strip()
+        sm = RD_SAY.search(seg, len(m.group(0)) - 1)
+        head = seg[:sm.start()].strip() if sm else seg[:120]
+        rest = seg[sm.start():].strip() if sm else ""
+        w = re.match(r"(.+?[.!?])”?(?:\s|$)", rest)
+        why = (w.group(1) if w else rest[:160]).replace("“", "").replace("”", "").strip()
+        out.append({"head": head[:140], "why": why[:200]})
+    return out[:25]
+
+
 def investing_calls():
     """Investing.com 애널리스트 평가 RSS"""
     return ns.fetch_rss("Investing.com", "https://www.investing.com/rss/news_1061.rss", "investing.com")
@@ -212,13 +246,23 @@ def main():
     ap.add_argument("--cache", default=".cache/reports_ko.json")
     a = ap.parse_args()
     M, N, RD = macro_calls(a.live)
+    try:
+        _sum_cache = json.load(open(a.cache, encoding="utf-8")).get("__sum__", {})
+    except Exception:
+        _sum_cache = {}
+    for r in RD[:2]:   # 최근 정리 기사 2개만 본문 요약 (한 번 요약한 기사는 캐시)
+        if "cnbc.com" in r["url"]:
+            r["items"] = _sum_cache.get(r["url"]) or roundup_summary(r["url"])
+            if r["items"]:
+                _sum_cache[r["url"]] = r["items"]
     C = company_reports(a.ratings)
     # 번역 (지난 번역은 캐시에서)
     try:
         cache = json.load(open(a.cache, encoding="utf-8"))
     except Exception:
         cache = {}
-    todo = [m["title"] for m in M + N + RD if m["title"] not in cache]
+    texts = [m["title"] for m in M + N + RD] + [x[k] for r in RD for x in r.get("items", []) for k in ("head", "why") if x.get(k)]
+    todo = [t for t in texts if t not in cache]
     if todo:
         try:
             from weekly_events import translate_all
@@ -227,6 +271,10 @@ def main():
             print(f"[reports] 번역: {ex}")
     for m in M + N + RD:
         m["ko"] = cache.get(m["title"], "")
+    for r in RD:
+        for x in r.get("items", []):
+            x["head_ko"], x["why_ko"] = cache.get(x["head"], ""), cache.get(x.get("why", ""), "")
+    cache["__sum__"] = dict(list(_sum_cache.items())[-20:])
     os.makedirs(os.path.dirname(a.cache) or ".", exist_ok=True)
     json.dump(cache, open(a.cache, "w", encoding="utf-8"), ensure_ascii=False)
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)

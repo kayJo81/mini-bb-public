@@ -103,6 +103,7 @@ body.rep .filters,body.rep .main{display:none}
 .rp-a{font-size:11px;font-weight:700;border-radius:5px;padding:1px 5px;white-space:nowrap}
 .rp-a.up{background:#fee2e2;color:#b91c1c}.rp-a.dn{background:#dbeafe;color:#1d4ed8}.rp-a.nw{background:#fef3c7;color:#92400e}.rp-a.eq{background:#f3f4f6;color:#374151}
 .rp-g{font-weight:800;font-size:14px;margin:10px 0 2px}
+.rp-sum{margin:2px 0 4px;padding-left:18px;font-size:13.5px;line-height:1.5}.rp-sum li{margin:4px 0}.rp-sum b{font-weight:700}
 #themesView iframe{width:100%;border:0;display:block;min-height:600px;background:transparent}
 .stab2{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--bd);
        background:#fff;cursor:pointer;text-align:left;font-family:inherit;box-shadow:var(--sh);transition:border-color .12s,transform .12s,box-shadow .12s}
@@ -635,7 +636,10 @@ function renderReports(){
   let h=`<div class="rp-card"><div class="rp-h">📑 리포트 <span>${new Date(REP.at).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} 갱신 · 👆 여러 개 골라 보기</span></div><div class="pills">`+
     `<button type="button" class="ni all ${rsel.size?'':'on'}" data-r="ALL"><span>전체</span></button>`+
     keys.map(([k,n,c])=>`<button type="button" class="ni ${rsel.has(k)?'on':''} ${c?'':'empty'}" data-r="${esc(k)}"><span>${esc(n)}</span><span class="c">${c}</span></button>`).join('')+'</div></div>';
-  if(!rsel.size&&(REP.roundups||[]).length)h+=`<div class="rp-card"><div class="rp-h">📋 오늘의 주요 애널리스트 콜 <span>CNBC 정리 기사</span></div>${REP.roundups.map(x=>ibItem(x)).join('')}</div>`;
+  if(!rsel.size&&(REP.roundups||[]).length)h+=`<div class="rp-card"><div class="rp-h">📋 오늘의 주요 애널리스트 콜 <span>CNBC 정리 기사 · 항목별 요약</span></div>`+
+    REP.roundups.map(x=>ibItem(x)+((x.items||[]).length?`<ul class="rp-sum">${x.items.map(it=>{const hd=it.head_ko||it.head,f=hd.split(/[,，]/)[0].trim();let w=(it.why_ko||it.why||'').trim();
+      if(f&&w.startsWith(f))w=w.slice(f.length).replace(/^[,，:\s]+/,'');   // 이유 앞의 같은 증권사 이름은 빼고
+      return `<li><b>${esc(hd)}</b>${w?` — ${esc(w)}`:''}</li>`;}).join('')}</ul>`:'')).join('')+'</div>';
   if(on('M'))h+=ibBox(REP.macro||[],false);
   for(const g of groups){if(!on('G:'+g))continue;
     const rs=R.filter(x=>x.group===g),cs=C.filter(x=>x.group===g);
