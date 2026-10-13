@@ -259,10 +259,14 @@ function render(){
   const rankOf=new Map(G.map((g,i)=>[g.no,i+1]));
   // 상승·하락 상위 5: 뉴스로 묶은 이슈 테마 + 이슈 테마로 설명되지 않는 네이버 테마를 등락률 크기순으로
   const covered=g=>[...(g.leaders||[]),...(g.laggards||[])].some(x=>iss.byCode.has(x.code));
-  const pickTop=(issues,themes,up)=>[
-      ...issues.map(i=>({kind:'issue',i,chg:i.avg})),
-      ...themes.filter(g=>(up?g.chg>0:g.chg<0)&&!covered(g)).slice(0,10).map(g=>({kind:'theme',g,chg:g.chg}))]
-    .sort((a,b)=>Math.abs(b.chg)-Math.abs(a.chg)).slice(0,5);
+  // + 급등주가 몰린 테마: 평균은 낮아도 ±5% 종목이 2개 이상이면 (상위 3종목 평균의 절반을 순위 점수로)
+  const pickTop=(issues,themes,up)=>{
+    const c=[...issues.map(i=>({kind:'issue',i,chg:i.avg})),
+      ...themes.filter(g=>(up?g.chg>0:g.chg<0)&&!covered(g)).slice(0,10).map(g=>({kind:'theme',g,chg:g.chg}))];
+    for(const g of themes){const h=up?g.heat:g.chill;if(h==null||covered(g))continue;
+      const x=c.find(x=>x.kind==='theme'&&x.g===g),sc=h/2;
+      if(x){if(Math.abs(sc)>Math.abs(x.chg))x.chg=sc;}else c.push({kind:'theme',g,chg:sc});}
+    return c.sort((a,b)=>Math.abs(b.chg)-Math.abs(a.chg)).slice(0,5);};
   const topUp=pickTop(iss.up,G,true),topDn=pickTop(iss.dn,[...G].reverse(),false);
   const row=(x,r)=>x.kind==='issue'?issueCard(x.i,r):card(x.g,r);
   document.getElementById('list').innerHTML=
@@ -299,7 +303,9 @@ function paintWhy(g){
 function card(g,rank){
   const mv=st.rh?st.rh.move(g.no):null;
   const mvs=mv?`<span class="mv ${mv>0?'up':'dn'}">${mv>0?'▲':'▼'}${Math.abs(mv)}</span>`:'';
-  const hot=mv!=null&&mv>=8&&rank<=20?'<span class="new">🚀 급부상</span>':'';
+  const hot=(mv!=null&&mv>=8&&rank<=20?'<span class="new">🚀 급부상</span>':'')+
+    (g.hot?` <span class="new" title="테마 평균은 ${pct(g.chg)}지만 +5% 넘은 종목이 ${g.hot}개 (상위 3종목 평균 ${pct(g.heat)})">🔥 급등주 ${g.hot}개 · 상위 ${pct(g.heat)}</span>`:'')+
+    (g.cold?` <span class="new" style="background:#dbeafe;color:#1e40af">🧊 급락주 ${g.cold}개 · 하위 ${pct(g.chill)}</span>`:'');
   const ratio=g.total?Math.round(g.rise/g.total*100):0;
   const chips=(g.leaders||[]).map(s=>`<span class="chip">${esc(s.name)} <b class="${cls(s.chg)}">${pct(s.chg)}</b></span>`).join('');
   return `<div class="th" id="t${g.no}"><div class="th-h" data-no="${g.no}">
