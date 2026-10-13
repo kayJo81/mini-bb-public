@@ -613,12 +613,13 @@ loadMacro();setInterval(loadMacro,30e3);
 
 // ── 📑 리포트: IB 매크로·전략 보도 + 산업별 투자의견·목표가 (briefings/reports.json, 15분마다) ──
 var REP=null;const rsel=new Set();
-const ACT={Upgrade:['상향','up'],Downgrade:['하향','dn'],Initiated:['신규','nw'],Resumed:['재개','nw'],Reiterated:['유지','eq'],Maintained:['유지','eq']};
+const ACT={Upgrade:['상향','up'],Downgrade:['하향','dn'],Initiated:['신규','nw'],Resumed:['재개','nw'],Reiterated:['유지','eq'],Maintained:['유지','eq'],
+  'Target Raised':['목표가↑','up'],'Target Lowered':['목표가↓','dn'],'Target Set':['목표가','eq']};
 function repAgo(ts){const m=Math.round((Date.now()/1e3-ts)/60);return m<60?m+'분 전':m<1440?Math.round(m/60)+'시간 전':Math.round(m/1440)+'일 전';}
 function ibItem(x,tag){
   const t=x.ko||x.title;
   return `<div class="rp-i">${x.firm?`<span class="rp-f">${esc(x.firm)}</span>`:''}${tag?`<span class="rp-f" style="background:#f5f3ff;color:#6d28d9">${esc(tag)}</span>`:''}<a href="${safeUrl(x.url)}" target="_blank" rel="noopener">${esc(t)}</a>`+
-    `${x.ko&&x.ko!==x.title?`<div class="rp-o">${esc(x.title)}</div>`:''}<div class="rp-m">${esc(x.src||'')} · ${repAgo(x.ts)}</div></div>`;
+    `${x.ko&&x.ko!==x.title?`<div class="rp-o">${esc(x.title)}</div>`:''}<div class="rp-m">${esc(x.src||'')}${(x.also||[]).length?` 외 ${x.also.length}곳 (${esc(x.also.slice(0,3).join('·'))})`:''} · ${repAgo(x.ts)}</div></div>`;
 }
 function ibBox(list,more){
   return `<div class="rp-card"><div class="rp-h">🏦 IB 매크로·전략 리포트 <span>골드만·모건스탠리·JP모건·BofA·씨티 등 전망 보도 · 직전 72시간${more?' · 전체는 📑 리포트':''}</span></div>`+
@@ -634,15 +635,16 @@ function renderReports(){
   let h=`<div class="rp-card"><div class="rp-h">📑 리포트 <span>${new Date(REP.at).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} 갱신 · 👆 여러 개 골라 보기</span></div><div class="pills">`+
     `<button type="button" class="ni all ${rsel.size?'':'on'}" data-r="ALL"><span>전체</span></button>`+
     keys.map(([k,n,c])=>`<button type="button" class="ni ${rsel.has(k)?'on':''} ${c?'':'empty'}" data-r="${esc(k)}"><span>${esc(n)}</span><span class="c">${c}</span></button>`).join('')+'</div></div>';
+  if(!rsel.size&&(REP.roundups||[]).length)h+=`<div class="rp-card"><div class="rp-h">📋 오늘의 주요 애널리스트 콜 <span>CNBC 정리 기사</span></div>${REP.roundups.map(x=>ibItem(x)).join('')}</div>`;
   if(on('M'))h+=ibBox(REP.macro||[],false);
   for(const g of groups){if(!on('G:'+g))continue;
     const rs=R.filter(x=>x.group===g),cs=C.filter(x=>x.group===g);
-    h+=`<div class="rp-card"><div class="rp-h">🏢 ${esc(g)} <span>투자의견·목표가 (Finviz 최근 60일) + IB 보도</span></div>`;
+    h+=`<div class="rp-card"><div class="rp-h">🏢 ${esc(g)} <span>투자의견·목표가 (Finviz 최근 60일 · MarketBeat 오늘) + 증권사 의견 보도 (CNBC·Investing.com·TipRanks 등)</span></div>`;
     for(const t of [...new Set([...rs,...cs].map(x=>x.topic))]){
       const tr=rs.filter(x=>x.topic===t),tc=cs.filter(x=>x.topic===t);
       h+=`<div class="rp-g">${esc(t)}</div>`;
       if(tr.length)h+='<table class="rp-t">'+tr.slice(0,12).map(r=>{const a=ACT[r.action]||[r.action,'eq'];
-        return `<tr><td class="n">${r.date.slice(5).replace('-','/')}</td><td><b>${esc(r.sym)}</b> <span class="rp-a ${a[1]}">${esc(a[0])}</span> ${esc(r.firm)}</td><td>${esc(r.rating)}</td><td class="n">${esc(r.pt)}</td></tr>`;}).join('')+'</table>';
+        return `<tr><td class="n">${r.date.slice(5).replace('-','/')}</td><td><b>${esc(r.sym)}</b> <span class="rp-a ${a[1]}">${esc(a[0])}</span> ${esc(r.firm)}</td><td>${esc(r.rating)}</td><td class="n">${esc(r.pt)}${r.src?`<div class="rp-m">${esc(r.src)}</div>`:''}</td></tr>`;}).join('')+'</table>';
       h+=tc.map(x=>ibItem(x,'보도')).join('');
     }
     h+='</div>';}
