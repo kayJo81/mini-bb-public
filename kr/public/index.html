@@ -22,8 +22,8 @@ a{color:inherit}
 .wrap{max-width:980px;margin:0 auto;padding:12px 16px 40px}
 .secs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
 @media(max-width:640px){.secs{grid-template-columns:1fr 1fr}}
-.secs{grid-template-columns:repeat(5,1fr)}
-@media(max-width:640px){.secs{grid-template-columns:1fr 1fr}.sec.map{grid-column:1/-1}}
+.secs{grid-template-columns:repeat(6,1fr)}
+@media(max-width:640px){.secs{grid-template-columns:1fr 1fr}}
 /* 맵 (핀비즈 맵처럼: 크기 = 시가총액, 색 = 등락률 — 한국식 빨강 상승·파랑 하락) */
 .mbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
 .mtab{padding:7px 14px;border-radius:999px;border:1px solid var(--bd);background:#fff;font-weight:800;font-size:14px;cursor:pointer}
@@ -136,6 +136,16 @@ tr.st{cursor:pointer}tr.st:hover td{background:#f9fafb}
 .fdet div{display:flex;justify-content:space-between;font-family:var(--mono);padding:1px 0}
 .hotbox{background:#fff;border:.5px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:4px 12px}.hb{padding:8px 0;border-bottom:.5px dashed var(--bd)}.hb:last-child{border-bottom:0}
 .hb1{font-size:14.5px}.hb .chips{margin-top:4px}
+/* 📑 리포트 */
+.rp-card{background:#fff;border:.5px solid var(--bd);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);padding:12px 14px;margin:0 0 12px}
+.rp-h{font-weight:800;font-size:16px;margin-bottom:6px;display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.rp-h span{font-size:11.5px;font-weight:500;color:var(--sub)}
+.rp-g{font-weight:800;font-size:14px;margin:10px 0 2px}
+.rp-i{padding:7px 0;border-top:.5px dashed var(--bd);font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+.rp-i a{text-decoration:none;color:inherit}.rp-i a:hover{color:var(--acc)}
+.rp-m{font-size:11.5px;color:var(--sub);margin-top:2px}
+.rp-f{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px;background:#ecfeff;color:#0e7490;margin-right:5px}
+.rp-s{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px;background:#f5f3ff;color:#6d28d9;margin-right:5px}
 footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
 /* 📊 주요 지표 (환율·달러지수·비트코인·금·금리) */
 .mx{background:#fff;border:.5px solid #e5e7eb;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);padding:10px 12px;margin:0 0 12px}
@@ -168,6 +178,7 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
     <button class="sec" data-sec="매크로"><div class="t">🌐 매크로</div><div class="s" data-cnt="매크로">뉴스</div></button>
     <button class="sec" data-sec="정치·정책"><div class="t">🏛️ 정치·정책</div><div class="s" data-cnt="정치·정책">뉴스</div></button>
     <button class="sec map" data-sec="map"><div class="t">🗺️ 맵</div><div class="s" id="secMap">코스피·코스닥 한눈에</div></button>
+    <button class="sec" data-sec="report"><div class="t">📑 리포트</div><div class="s" id="secRep">증권사 매크로·산업·기업</div></button>
   </div>
   <div id="mapView" hidden>
     <div class="mbar"><button class="mtab" data-m="KOSPI">코스피</button><button class="mtab" data-m="KOSDAQ">코스닥</button>
@@ -176,6 +187,7 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
     <div class="mlegend" id="mleg"></div>
     <div class="minfo hsub" id="minfo">시가총액 상위 200종목 · 업종별 · 타일 크기 = 시가총액, 색 = 등락률 · 타일을 누르면 자세히</div>
   </div>
+  <div id="repView" hidden></div>
   <div id="newsView" hidden><div class="ncats" id="ncats"></div><div id="nlist"><div class="empty">불러오는 중…</div></div></div>
   <div id="themeView">
   <div id="sum"></div>
@@ -386,7 +398,9 @@ function setSec(v){
   document.querySelectorAll('.sec').forEach(b=>b.classList.toggle('on',b.dataset.sec===v));
   document.getElementById('themeView').hidden=v!=='theme';document.getElementById('newsView').hidden=v==='theme'||v==='map';
   document.getElementById('mapView').hidden=v!=='map';
+  document.getElementById('repView').hidden=v!=='report';if(v==='report')document.getElementById('newsView').hidden=true;
   ns.sel.clear();
+  if(v==='report'){loadRep();return;}
   if(v==='map'){loadMap();return;}
   if(v!=='theme'){if(Date.now()-ns.at>60e3)loadNews();else renderNews();}
 }
@@ -417,12 +431,13 @@ function renderNews(){
   for(const t of T){if(ns.sel.size&&!isOn(t))continue;
     for(const x of t.stories){if(x.is_opinion||seen.has(x.headline))continue;seen.add(x.headline);items.push([x,t.name]);}}
   items.sort((a,b)=>b[0].first_seen-a[0].first_seen);
-  document.getElementById('nlist').innerHTML=items.length?items.map(([x,cat])=>{
+  const repTop=sec==='매크로'&&rp.data?repBox('🏦 증권사 매크로 리포트',rp.data.macro.slice(0,6),'경제분석·투자전략·채권·시황 · 전체는 📑 리포트'):'';
+  document.getElementById('nlist').innerHTML=repTop+(items.length?items.map(([x,cat])=>{
     const tm=x.first_seen_kst.replace('-','/');
     return `<div class="nw"><div class="nr1"><span class="tb">${esc(tm)}</span><span class="vb v-${x.verdict}">${VL[x.verdict]}</span><span class="tg">${esc(cat)}</span><span class="hsub">출처 ${x.n_sources}</span></div>
       <a class="nh" href="${safeUrl(x.url)}" target="_blank" rel="noopener">${esc(x.headline)}</a>
       ${x.sources.length>1?`<details><summary>보도 ${x.sources.length}건 보기</summary>${x.sources.map(s=>`<div><span class="tm">${esc(s.time_kst.slice(6))}</span><a href="${safeUrl(s.url)}" target="_blank" rel="noopener">${esc(s.headline)}</a> · ${esc(s.name)}</div>`).join('')}</details>`:`<div class="hsub" style="margin-top:3px">${esc(x.sources[0].name)}</div>`}</div>`;}).join('')
-    :'<div class="empty">해당 카테고리 뉴스가 없어요.</div>';
+    :'<div class="empty">해당 카테고리 뉴스가 없어요.</div>');
 }
 // 카테고리 여러 개 고르기: 누르면 켜고/끄기, '전체'는 모두 해제 (그룹을 켜면 그 안의 개별 카테고리는 그룹에 포함)
 document.getElementById('ncats').addEventListener('click',e=>{const c=e.target.closest('[data-c]');if(!c)return;const k=c.dataset.c,T=(ns.data||{}).topics||[];
@@ -513,7 +528,45 @@ document.querySelectorAll('.mtab').forEach(b=>b.onclick=()=>{mp.m=b.dataset.m;mp
 let rzT;addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(()=>{if(sec==='map')renderMap();},200);});
 setInterval(()=>{if(sec!=='theme'&&sec!=='map')loadNews();},5*60e3);
 document.getElementById('rbtn').onclick=()=>{load();if(sec==='map')loadMap();else if(sec!=='theme')loadNews();};
-setSec(sec);
+// ── 📑 리포트: 네이버 증권 리서치 (증권사 매크로·산업·기업 리포트, 10분 캐시) ──
+const rp={data:null,at:0,sel:new Set()};
+const REP_GROUPS=['K 테크','K 조방원','K 바이오','K 모빌리티','K 금융','소비·기타'];
+function repItem(x,showSector){
+  return `<div class="rp-i"><span class="rp-f">${esc(x.broker)}</span>${x.item?`<b>${esc(x.item)}</b> `:''}${showSector&&x.topic?`<span class="rp-s">${esc(x.topic)}</span>`:''}`+
+    `<a href="${safeUrl(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a><div class="rp-m">${esc(x.cat)} · ${esc(x.date.slice(5).replace('-','/'))} · 조회 ${x.views.toLocaleString()}</div></div>`;
+}
+function repBox(title,list,sub){
+  return `<div class="rp-card"><div class="rp-h">${title} <span>${sub||''}</span></div>${list.length?list.map(x=>repItem(x)).join(''):'<div class="rp-m">리포트가 없어요</div>'}</div>`;
+}
+async function loadRep(){
+  if(!rp.data||Date.now()-rp.at>300e3){
+    try{const d=await (await fetch('api/reports',{cache:'no-store'})).json();if(!d.error){rp.data=d;rp.at=Date.now();}}catch(e){}
+  }
+  if(sec==='report')renderRep();else if(sec==='매크로')renderNews();
+  if(rp.data)document.getElementById('secRep').innerHTML=`<b>${rp.data.macro.length+rp.data.industry.length+rp.data.company.length}</b>건 · 증권사 리포트`;
+}
+function renderRep(){
+  const v=document.getElementById('repView'),d=rp.data;
+  if(!d){v.innerHTML='<div class="rp-card">불러오는 중…</div>';return;}
+  const IC=[...d.industry,...d.company];
+  const keys=[['M','🏦 매크로·전략',d.macro.length],...REP_GROUPS.map(g=>['G:'+g,g,IC.filter(x=>x.group===g).length])];
+  const on=k=>!rp.sel.size||rp.sel.has(k);
+  let h=`<div class="rp-card"><div class="rp-h">📑 증권사 리포트 <span>네이버 증권 리서치 · 👆 여러 개 골라 보기 · 제목을 누르면 리포트(PDF)</span></div><div class="pills">`+
+    `<button type="button" class="ni all ${rp.sel.size?'':'on'}" data-rp="ALL"><span>전체</span></button>`+
+    keys.map(([k,n,c])=>`<button type="button" class="ni ${rp.sel.has(k)?'on':''} ${c?'':'empty'}" data-rp="${esc(k)}"><span>${esc(n)}</span><span class="c">${c}</span></button>`).join('')+'</div></div>';
+  if(on('M'))h+=repBox('🏦 매크로·전략',d.macro.slice(0,40),'경제분석·투자전략·채권분석·데일리 시황');
+  for(const g of REP_GROUPS){if(!on('G:'+g))continue;
+    const L=IC.filter(x=>x.group===g).sort((a,b)=>b.date.localeCompare(a.date)||b.views-a.views);if(!L.length)continue;
+    h+=`<div class="rp-card"><div class="rp-h">🏢 ${esc(g)} <span>산업분석 ${L.filter(x=>x.cat==='산업분석').length} · 종목분석 ${L.filter(x=>x.cat==='종목분석').length}</span></div>`;
+    for(const t of [...new Set(L.map(x=>x.topic))])h+=`<div class="rp-g">${esc(t)}</div>`+L.filter(x=>x.topic===t).slice(0,15).map(x=>repItem(x)).join('');
+    h+='</div>';}
+  v.innerHTML=h;
+}
+document.getElementById('repView').addEventListener('click',e=>{const b=e.target.closest('[data-rp]');if(!b)return;const k=b.dataset.rp;
+  if(k==='ALL')rp.sel.clear();else rp.sel.has(k)?rp.sel.delete(k):rp.sel.add(k);renderRep();});
+setInterval(()=>{if(sec==='report'||sec==='매크로')loadRep();},300e3);
+
+setSec(sec);if(sec!=='report')loadRep();
 if(sec!=='map')['KOSPI','KOSDAQ'].forEach(m=>fetch('api/map?m='+m).then(r=>r.json()).then(x=>{if(!x.error){mp.data[m]=x;mapSummary();}}).catch(()=>{}));
 loadNews();
 load();

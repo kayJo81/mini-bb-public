@@ -972,6 +972,31 @@ def fetch_rss(name, url, domain):
 FV_ROW = re.compile(r'<td width="130" align="right">\s*([^<]+?)\s*</td>.*?class="tab-link-news" href="([^"]+)"[^>]*>\s*(.*?)\s*</a>'
                     r'.*?<span>\(([^)]*)\)</span>', re.S)
 _fv_cache, _fv_lock = {}, threading.Lock()
+_fv_ratings = {}   # 종목 → Finviz 투자의견 표 (증권사·투자의견·목표가) — 뉴스와 같은 페이지라 추가 요청 없음
+FV_RATINGS = re.compile(r'<table[^>]*js-table-ratings[^>]*>(.*?)</table>', re.S)
+
+
+def _fv_parse_ratings(h):
+    m = FV_RATINGS.search(h or "")
+    out = []
+    for row in re.findall(r"<tr[^>]*>(.*?)</tr>", m.group(1) if m else "", re.S):
+        c = [re.sub(r"<[^>]+>|\s+", " ", x).replace("&rarr;", "→").replace("&amp;", "&").strip()
+             for x in re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)]
+        if len(c) >= 5:
+            try:
+                d = datetime.strptime(c[0], "%b-%d-%y").date().isoformat()
+            except ValueError:
+                continue
+            out.append({"date": d, "action": c[1], "firm": c[2], "rating": c[3], "pt": c[4]})
+    return out
+
+
+def ratings_dump(path):
+    """이번 실행에서 받은 종목별 투자의견 표를 파일로 (scripts/reports.py 가 리포트 화면용으로 정리)"""
+    with _fv_lock:
+        data = {k: v for k, v in _fv_ratings.items() if v}
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    json.dump(data, open(path, "w", encoding="utf-8"), ensure_ascii=False)
 
 
 def finviz_dump(path):
@@ -1018,6 +1043,9 @@ def fetch_finviz(sym):
             time.sleep(3 * (i + 1))
         if not h:
             print(f"[scanner/finviz] {sym}: HTTP {r.status_code}")
+        else:
+            with _fv_lock:
+                _fv_ratings[sym] = _fv_parse_ratings(h)
         et, day = ZoneInfo("America/New_York"), None
         for when, url, title, src in FV_ROW.findall(h[h.find('id="news-table"'):]):
             parts = when.split()
@@ -1145,6 +1173,8 @@ def build_briefing(start, end, mode, finnhub_token):
     if os.environ.get("FINVIZ_DUMP"):
         try:   # 보조 기능 — 실패해도 수집은 계속
             finviz_dump(os.environ["FINVIZ_DUMP"])
+            if os.environ.get("RATINGS_DUMP"):
+                ratings_dump(os.environ["RATINGS_DUMP"])
         except Exception as ex:
             print(f"[scanner/finviz] dump: {ex}")
     stats = {"VERIFIED": 0, "SINGLE": 0, "UNVERIFIED": 0, "opinion": 0, "rumor": 0, "total": 0}

@@ -53,6 +53,7 @@ jobs:
           FINNHUB_MIN_INTERVAL: "0.25"   # 15분에 한 번 몰아 호출 (59회 < 분당 60회 한도)
           FJ_DUMP: .cache/fj_latest.json
           FINVIZ_DUMP: .cache/finviz.json
+          RATINGS_DUMP: .cache/finviz_ratings.json
         run: python scripts/build_static.py --out public
 
       # 번역 캐시: 실행마다 새 키로 저장하고, 가장 최근 것을 불러와 새 문장만 번역
@@ -81,6 +82,16 @@ jobs:
       - name: Translate headlines (한국어)
         continue-on-error: true
         run: python scripts/translate_ko.py public/briefings/live.json --cache .cache/ko.json
+
+      # 📑 리포트: IB 매크로·전략 보도 + 종목 투자의견(Finviz 투자의견 표·IB 보도) → briefings/reports.json
+      - uses: actions/cache@v4
+        with:
+          path: .cache/ko_reports.json
+          key: korep-${{ github.run_id }}
+          restore-keys: korep-
+      - name: Reports
+        continue-on-error: true
+        run: python scripts/reports.py --live public/briefings/live.json --ratings .cache/finviz_ratings.json --out public/briefings/reports.json --cache .cache/ko_reports.json
 
       # 미국 당일 테마 (themes.html) — 테마 등락·이슈 테마·이유
       - name: US themes
