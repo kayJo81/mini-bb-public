@@ -3,7 +3,7 @@
 
   · IB 매크로·전략: 골드만·모건스탠리·JP모건·BofA·씨티·UBS·바클레이즈·도이체 등 글로벌 투자은행의
     경제·금리·환율·증시 전망을 다룬 보도 (구글 뉴스 검색 + 이번 수집 기사·FinancialJuice 속보에서 골라냄, 직전 72시간)
-  · 기업 리포트(투자의견·목표가): 뉴스 카테고리별 추적 종목의 Finviz 투자의견 표 (최근 60일) + IB 이름이 든 종목 투자의견 보도 — 산업군별로
+  · 기업 리포트(투자의견·목표가): 뉴스 카테고리별 추적 종목의 Finviz 투자의견 표 (최근 2주) + IB 이름이 든 종목 투자의견 보도 — 산업군별로
   · 제목은 한국어 번역 (미니 블벅터 번역 AI → 구글 → 원문)
 
   python scripts/reports.py --live public/briefings/live.json --ratings .cache/finviz_ratings.json --out public/briefings/reports.json
@@ -177,7 +177,7 @@ def marketbeat_ratings():
     return out
 
 
-def company_reports(ratings_path, days=60):
+def company_reports(ratings_path, days=14):
     try:
         R = json.load(open(ratings_path, encoding="utf-8"))
     except Exception as ex:

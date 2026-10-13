@@ -639,7 +639,7 @@ function renderReports(){
   if(on('M'))h+=ibBox(REP.macro||[],false);
   for(const g of groups){if(!on('G:'+g))continue;
     const rs=R.filter(x=>x.group===g),cs=C.filter(x=>x.group===g);
-    h+=`<div class="rp-card"><div class="rp-h">🏢 ${esc(g)} <span>투자의견·목표가 (Finviz 최근 60일 · MarketBeat 오늘) + 증권사 의견 보도 (CNBC·Investing.com·TipRanks 등)</span></div>`;
+    h+=`<div class="rp-card"><div class="rp-h">🏢 ${esc(g)} <span>투자의견·목표가 (최근 2주 · Finviz·MarketBeat) + 증권사 의견 보도 (CNBC·Investing.com·TipRanks 등)</span></div>`;
     for(const t of [...new Set([...rs,...cs].map(x=>x.topic))]){
       const tr=rs.filter(x=>x.topic===t),tc=cs.filter(x=>x.topic===t);
       h+=`<div class="rp-g">${esc(t)}</div>`;

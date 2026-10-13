@@ -57,13 +57,17 @@ async function list(category, pages = 1) {
   return all.flat();
 }
 
+const RECENT_DAYS = 14;   // 최근 2주 리포트만
+
 export async function onRequestGet({ request }) {
   return cached(request, 600, async () => {
+    const since = new Date(Date.now() + 9 * 3600e3 - RECENT_DAYS * 86400e3).toISOString().slice(0, 10);
+    const recent = (r) => (r.writeDate || "") >= since;
     const [eco, inv, deb, daily, ind, com] = await Promise.all([list("economy"), list("invest"), list("debenture"),
       list("daily"), list("industry"), list("company", 2)]);
-    const macro = [...eco, ...inv, ...deb, ...daily].map(slim).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
-    const industry = ind.map((r) => ({ ...slim(r), sector: r.category !== "기타" ? r.category : "", ...classify(r.category !== "기타" ? r.category : "", r.title) }));
-    const company = com.map((r) => {
+    const macro = [...eco, ...inv, ...deb, ...daily].filter(recent).map(slim).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    const industry = ind.filter(recent).map((r) => ({ ...slim(r), sector: r.category !== "기타" ? r.category : "", ...classify(r.category !== "기타" ? r.category : "", r.title) }));
+    const company = com.filter(recent).map((r) => {
       const k = SECTORS.codes[r.itemCode], sector = k === undefined ? "" : SECTORS.names[k];
       return { ...slim(r), sector, ...classify(sector, r.itemName, r.title) };
     });
