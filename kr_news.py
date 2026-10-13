@@ -1,5 +1,5 @@
 """
-미니 블벅터 KR — 한국 증시 뉴스 (구글 뉴스 한국판, 직전 24시간, 15분마다 briefing.yml 에서 실행)
+미니 블벅터 KR — 한국 증시 뉴스 (구글 뉴스 한국판 + 국내 언론사 RSS, 직전 24시간, 15분마다 briefing.yml 에서 실행)
 
   python kr_news.py --out public/briefings/kr_news.json
 
@@ -9,6 +9,7 @@
   · 화면(mini-bbterminal-kr)의 /api/krnews 가 이 파일을 가져다 보여준다
 """
 import argparse
+import html
 import json
 import os
 import re
@@ -83,12 +84,44 @@ KR_TOPICS = [
 
 SECTION = {"market": "매크로", "macro": "매크로", "policy": "정치·정책"}   # 나머지는 '산업'
 
+# 국내 언론사 RSS: 구글 뉴스가 막혀도 비지 않도록 기본으로 함께 받아 카테고리 단어로 나눔
+KR_FEEDS = [
+    ("연합뉴스", "https://www.yna.co.kr/rss/economy.xml", "yna.co.kr"),
+    ("연합뉴스", "https://www.yna.co.kr/rss/industry.xml", "yna.co.kr"),
+    ("연합뉴스", "https://www.yna.co.kr/rss/market.xml", "yna.co.kr"),
+    ("한국경제", "https://www.hankyung.com/feed/finance", "hankyung.com"),
+    ("한국경제", "https://www.hankyung.com/feed/economy", "hankyung.com"),
+    ("한국경제", "https://www.hankyung.com/feed/it", "hankyung.com"),
+    ("매일경제", "https://www.mk.co.kr/rss/50200011/", "mk.co.kr"),
+    ("매일경제", "https://www.mk.co.kr/rss/30100041/", "mk.co.kr"),
+    ("매일경제", "https://www.mk.co.kr/rss/50300009/", "mk.co.kr"),
+    ("조선비즈", "https://biz.chosun.com/arc/outboundfeeds/rss/?outputType=xml", "biz.chosun.com"),
+    ("뉴시스", "https://www.newsis.com/RSS/economy.xml", "newsis.com"),
+    ("뉴시스", "https://www.newsis.com/RSS/industry.xml", "newsis.com"),
+    ("서울경제", "https://www.sedaily.com/rss/finance", "sedaily.com"),
+    ("아시아경제", "https://www.asiae.co.kr/rss/stock.htm", "asiae.co.kr"),
+    ("전자신문", "https://rss.etnews.com/Section901.xml", "etnews.com"),
+    ("아이뉴스24", "https://www.inews24.com/rss/news_it.xml", "inews24.com"),
+    ("이데일리", "http://rss.edaily.co.kr/stock_news.xml", "edaily.co.kr"),
+]
+
+
+# 언론사 RSS 기사는 검색어로 고른 기사가 아니라서, 뜻이 넓은 단어(화재·매입·증권 등)가 섞이지 않게 더 좁은 단어로 분류
+FEED_STRICT = {
+    "insurance": r"보험사|보험주|생명보험|손해보험|생보|손보|킥스|삼성생명|삼성화재|한화생명|db손해|현대해상|동양생명|미래에셋생명",
+    "valueup": r"밸류업|자사주|주주환원|배당 확대|배당금|기업가치 제고|주식 소각",
+    "securities": r"증권사|증권주|거래대금|브로커리지|미래에셋증권|키움증권|한국금융지주|nh투자증권|삼성증권|한국투자증권|증권업",
+    "market": r"코스피|코스닥|외국인 순매|기관 순매|순매수|순매도|증시|특징주|상한가|하한가",
+    "policy": r"금융위|금감원|금융감독원|세법|세제|대통령|국회|법안|공정위|기재부|산업부|정부 예산",
+}
+HANGUL = re.compile(r"[가-힣]")
+
 
 def topics():
     out = []
     for tid, group, name, queries, kw in KR_TOPICS:
         out.append({"id": tid, "section": SECTION.get(tid, "산업"), "group": group, "name": name, "queries": [(q, "KR") for q in queries],
-                    "tickers": [], "_kw": re.compile(kw, re.I), "_feed": None, "_must": None, "_exclude": None})
+                    "tickers": [], "_kw": re.compile(kw, re.I), "_feed": re.compile(FEED_STRICT.get(tid, kw), re.I), "_must": None, "_exclude": None})
     return out
 
 
@@ -100,7 +133,15 @@ def main():
     start = end - timedelta(hours=HOURS)
     T = topics()
     with ThreadPoolExecutor(max_workers=6) as fetch_pool, ThreadPoolExecutor(max_workers=len(T)) as topic_pool:
-        res = list(topic_pool.map(lambda t: ns.scan_topic(t, start, end, "", fetch_pool), T))
+        feeds = []
+        for f in [fetch_pool.submit(ns.fetch_rss, *x) for x in KR_FEEDS]:
+            feeds += f.result()
+        feeds = [x for x in feeds if HANGUL.search(x["headline"])]   # 한국어 기사만 (연합 일본어판 등 제외)
+        for x in feeds:
+            x["edition"] = "KR"
+            x["headline"] = html.unescape(html.unescape(x["headline"]))
+        print(f"[kr_news] 국내 언론사 RSS {len(feeds)}건/{len(KR_FEEDS)}곳")
+        res = list(topic_pool.map(lambda t: ns.scan_topic(t, start, end, "", fetch_pool, feeds), T))
     tail = re.compile(r"\s+[-|]\s+[^-|]{1,25}$")   # 제목 끝 '- 머니투데이' 같은 언론사 표기
     for t in res:   # 화면에 필요 없는 필드 정리
         for s in t["stories"]:

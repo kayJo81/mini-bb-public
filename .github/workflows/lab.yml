@@ -68,6 +68,7 @@ jobs:
           cp lab/site.html public_lab/sim.html
           cp lab/env.html public_lab/env.html
           cp lab/weekly.html public_lab/weekly.html
+          printf '/*\n  X-Frame-Options: SAMEORIGIN\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n' > public_lab/_headers
 
       - name: Save data
         if: always()

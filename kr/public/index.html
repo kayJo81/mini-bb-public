@@ -173,6 +173,8 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
 </div>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// 링크는 http·https 주소만 (javascript: 같은 주소가 섞여 들어와도 실행되지 않게)
+const safeUrl=u=>/^https?:\/\//i.test(String(u??'').trim())?esc(u):'#';
 const pct=v=>v==null?'–':`${v>0?'+':''}${v.toFixed(2)}%`;
 const cls=v=>v>0?'up':v<0?'dn':'';
 const eok=v=>v==null?'–':v>=100?`${Math.round(v/100).toLocaleString()}억`:`${v}백만`;
@@ -277,8 +279,8 @@ function paintWhy(g){
   const el=document.querySelector(`[data-why="${g.no}"]`),w=why.get(g.no);if(!el||!w)return;
   const d=w.d,tm=d.ts?new Date(d.ts).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}):'';
   const up=g.chg>=0;
-  if(d.kind==='reason')el.innerHTML=`💡 <b>${up?'강세':'약세'} 이유</b> <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a> <span class="src">· ${d.stock?esc(d.stock)+' 관련 · ':''}${esc(d.office||'')} ${tm}</span>`;
-  else if(d.kind==='related')el.innerHTML=`📰 <b>관련 뉴스</b> <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a> <span class="src">· ${esc(d.stock||'')} · ${esc(d.office||'')} ${tm}</span>`;
+  if(d.kind==='reason')el.innerHTML=`💡 <b>${up?'강세':'약세'} 이유</b> <a href="${safeUrl(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a> <span class="src">· ${d.stock?esc(d.stock)+' 관련 · ':''}${esc(d.office||'')} ${tm}</span>`;
+  else if(d.kind==='related')el.innerHTML=`📰 <b>관련 뉴스</b> <a href="${safeUrl(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a> <span class="src">· ${esc(d.stock||'')} · ${esc(d.office||'')} ${tm}</span>`;
   else el.innerHTML=`📌 <b>테마 개요</b> ${esc(d.desc||'')}${d.info?`<br><span class="src">${esc(d.stock)}: ${esc(d.info)}…</span>`:''}`;
   el.classList.toggle('alt',d.kind!=='reason');el.hidden=!(d.title||d.desc||d.info);
 }
@@ -314,7 +316,7 @@ function issueCard(i,rank){
   return `<div class="th iss"><div class="th-h" style="cursor:default"><span class="rk">${rank}</span>
     <div style="min-width:0"><div class="nm">🧩 ${esc(i.name)} <span class="hsub">이슈 테마 · ${i.stocks.length}종목</span></div>
     <div class="chips">${i.stocks.slice(0,8).map(s=>`<span class="chip">${esc(s.name)} <b class="${cls(s.chg)}">${pct(s.chg)}</b></span>`).join('')}${i.stocks.length>8?`<span class="chip">외 ${i.stocks.length-8}</span>`:''}</div>
-    ${a?`<div class="why">💡 <b>${up?'강세':'약세'} 이유</b> <a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.title)}</a> <span class="src">· ${esc(a.office||'')} ${tm}</span></div>`:''}</div>
+    ${a?`<div class="why">💡 <b>${up?'강세':'약세'} 이유</b> <a href="${safeUrl(a.url)}" target="_blank" rel="noopener">${esc(a.title)}</a> <span class="src">· ${esc(a.office||'')} ${tm}</span></div>`:''}</div>
     <span class="chg ${cls(i.avg)}">${pct(i.avg)}</span></div></div>`;
 }
 function issueTag(g){
@@ -339,7 +341,7 @@ async function toggleStock(code,box){
   row.dataset.loaded=1;const ul=row.querySelector('.news');
   try{
     const n=await (await fetch(`api/news/${code}`)).json();
-    ul.innerHTML=n.length?n.map(x=>`<li><span class="tm">${x.t?`${x.t.slice(4,6)}/${x.t.slice(6,8)} ${x.t.slice(8,10)}:${x.t.slice(10,12)}`:''}</span><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a> <span class="hsub">· ${esc(x.office)}</span></li>`).join(''):'<li class="hsub">최근 뉴스 없음</li>';
+    ul.innerHTML=n.length?n.map(x=>`<li><span class="tm">${x.t?`${x.t.slice(4,6)}/${x.t.slice(6,8)} ${x.t.slice(8,10)}:${x.t.slice(10,12)}`:''}</span><a href="${safeUrl(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a> <span class="hsub">· ${esc(x.office)}</span></li>`).join(''):'<li class="hsub">최근 뉴스 없음</li>';
   }catch(e){ul.innerHTML='<li class="hsub">뉴스를 불러오지 못했어요</li>';}
 }
 const onListClick=e=>{
@@ -394,8 +396,8 @@ function renderNews(){
   document.getElementById('nlist').innerHTML=items.length?items.map(([x,cat])=>{
     const tm=x.first_seen_kst.replace('-','/');
     return `<div class="nw"><div class="nr1"><span class="tb">${esc(tm)}</span><span class="vb v-${x.verdict}">${VL[x.verdict]}</span><span class="tg">${esc(cat)}</span><span class="hsub">출처 ${x.n_sources}</span></div>
-      <a class="nh" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.headline)}</a>
-      ${x.sources.length>1?`<details><summary>보도 ${x.sources.length}건 보기</summary>${x.sources.map(s=>`<div><span class="tm">${esc(s.time_kst.slice(6))}</span><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.headline)}</a> · ${esc(s.name)}</div>`).join('')}</details>`:`<div class="hsub" style="margin-top:3px">${esc(x.sources[0].name)}</div>`}</div>`;}).join('')
+      <a class="nh" href="${safeUrl(x.url)}" target="_blank" rel="noopener">${esc(x.headline)}</a>
+      ${x.sources.length>1?`<details><summary>보도 ${x.sources.length}건 보기</summary>${x.sources.map(s=>`<div><span class="tm">${esc(s.time_kst.slice(6))}</span><a href="${safeUrl(s.url)}" target="_blank" rel="noopener">${esc(s.headline)}</a> · ${esc(s.name)}</div>`).join('')}</details>`:`<div class="hsub" style="margin-top:3px">${esc(x.sources[0].name)}</div>`}</div>`;}).join('')
     :'<div class="empty">해당 카테고리 뉴스가 없어요.</div>';
 }
 // 카테고리 여러 개 고르기: 누르면 켜고/끄기, '전체'는 모두 해제 (그룹을 켜면 그 안의 개별 카테고리는 그룹에 포함)

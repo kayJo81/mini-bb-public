@@ -101,6 +101,8 @@ function postH(){if(EMBED)parent.postMessage({mbbThemesHeight:document.documentE
 new ResizeObserver(postH).observe(document.documentElement);
 document.addEventListener('click',e=>{const a=e.target.closest('a[href]');if(EMBED&&a&&!a.target)a.target='_top';},true);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// 링크는 http·https 주소만 (javascript: 같은 주소가 섞여 들어와도 실행되지 않게)
+const safeUrl=u=>/^https?:\/\//i.test(String(u??'').trim())?esc(u):'#';
 const cls=v=>v>0?'up':v<0?'dn':'';
 const pct=v=>v==null?'–':(v>0?'+':'')+Number(v).toFixed(2)+'%';
 const capf=v=>!v?'':v>=1e12?(v/1e12).toFixed(2)+'조$':v>=1e9?(v/1e9).toFixed(1)+'B':(v/1e6).toFixed(0)+'M';
@@ -126,7 +128,7 @@ async function fillKo(){
 function why(w,up){
   if(!w)return '';
   const k=ko(w.title,w.ko);
-  return `<div class="why">💡 <b>${up?'강세':'약세'} 이유</b> <a href="${esc(w.url)}" target="_blank" rel="noopener">${esc(k||w.title)}</a>`+
+  return `<div class="why">💡 <b>${up?'강세':'약세'} 이유</b> <a href="${safeUrl(w.url)}" target="_blank" rel="noopener">${esc(k||w.title)}</a>`+
     `${k?`<span class="org">${esc(w.title)}</span>`:''} <span class="src">· ${esc(w.stock?w.stock+' · ':'')}${esc(w.src||'')} ${tmf(w.ts)}</span></div>`;
 }
 const chip=s=>`<span class="chip">${esc(s.s)} <b class="${cls(s.chg)}">${pct(s.chg)}</b></span>`;
@@ -147,7 +149,7 @@ function issueCard(i,rank){
   return `<div class="th iss"><div class="th-h" style="cursor:default"><span class="rk">${rank}</span><div style="min-width:0">
     <div class="nm">🧩 ${esc(a0&&i.name===a0.title?(ko(a0.title,a0.ko)||i.name):i.name)} <span class="hsub">이슈 테마 · ${i.stocks.length}종목</span></div>
     <div class="chips">${i.stocks.slice(0,8).map(chip).join('')}${i.stocks.length>8?`<span class="chip">외 ${i.stocks.length-8}</span>`:''}</div>
-    ${a?why({title:a.title,ko:a.ko,url:a.url,src:a.src,ts:a.ts},up):a0?`<div class="hsub" style="margin-top:4px">📰 <a href="${esc(a0.url)}" target="_blank" rel="noopener">${esc(a0.src)} · ${tmf(a0.ts)}</a>${ko(a0.title,a0.ko)?` · 원문: ${esc(a0.title)}`:''}</div>`:''}</div>
+    ${a?why({title:a.title,ko:a.ko,url:a.url,src:a.src,ts:a.ts},up):a0?`<div class="hsub" style="margin-top:4px">📰 <a href="${safeUrl(a0.url)}" target="_blank" rel="noopener">${esc(a0.src)} · ${tmf(a0.ts)}</a>${ko(a0.title,a0.ko)?` · 원문: ${esc(a0.title)}`:''}</div>`:''}</div>
     <span class="chg ${cls(i.chg)}">${pct(i.chg)}</span></div></div>`;
 }
 // 상승·하락 상위 5: 이슈 테마 + (이슈 종목으로 설명되지 않는) 테마를 등락률 크기순으로

@@ -57,7 +57,10 @@ def main():
         f.write(themes_html)
     # 랩(mini-bblab) 화면이 장중 옵션 수급 등을 가져갈 수 있게 briefings/ 는 다른 사이트에서도 읽기 허용
     with open(os.path.join(args.out, "_headers"), "w", encoding="utf-8") as f:
-        f.write("/briefings/*\n  Access-Control-Allow-Origin: *\n")
+        f.write("/briefings/*\n  Access-Control-Allow-Origin: *\n"
+                # 기본 보안 헤더: 다른 사이트가 이 화면을 몰래 틀 안에 넣지 못하게, 파일 형식 추측 금지, 주소 유출 최소화
+                "/*\n  X-Frame-Options: SAMEORIGIN\n  X-Content-Type-Options: nosniff\n"
+                "  Referrer-Policy: strict-origin-when-cross-origin\n")
     print(f"[build] {start:%m-%d %H:%M} ~ {end:%m-%d %H:%M} KST 수집 → {args.out}/")
 
 

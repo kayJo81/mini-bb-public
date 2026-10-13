@@ -290,6 +290,8 @@ try{const s=JSON.parse(localStorage.getItem('mbb')||'{}');st.hideOp=s.hideOp??tr
 const save=()=>{try{localStorage.setItem('mbb',JSON.stringify({hideOp:st.hideOp,ko:st.ko,sort:st.sort,section:st.section}));}catch(e){}};
 const fmt=d=>{const p=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d).map(x=>[x.type,x.value]));return `${p.month}-${p.day} ${p.hour}:${p.minute}`;};
 const esc=s=>(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// 링크는 http·https 주소만 (javascript: 같은 주소가 섞여 들어와도 실행되지 않게)
+const safeUrl=u=>/^https?:\/\//i.test(String(u??'').trim())?esc(u):'#';
 
 async function load(){
   clearTimeout(pollT);
@@ -354,7 +356,7 @@ function renderMoves(){
     <span class="${cls(i.change_pct)}">${pct(i.change_pct)}</span><small>정규장·전일비</small></div>`).join('');
   const evs=(m.events||[]).map(e=>{
     const news=e.news.length?e.news.map(n=>{const h=(st.ko&&tr.get(n.headline))||n.headline;
-      return `<div class="mv-n"><span class="tm">${hm(n.first_seen)}</span><a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(h)}</a> <span class="mv-src">· ${esc(n.source)}</span>${n.cited>=2?`<span class="mv-cite" title="이후 '주가가 ~로 하락/상승' 기사 중 이 뉴스를 원인으로 언급한 수">📰 원인 지목 ${n.cited}건</span>`:''}</div>`;}).join('')
+      return `<div class="mv-n"><span class="tm">${hm(n.first_seen)}</span><a href="${safeUrl(n.url)}" target="_blank" rel="noopener">${esc(h)}</a> <span class="mv-src">· ${esc(n.source)}</span>${n.cited>=2?`<span class="mv-cite" title="이후 '주가가 ~로 하락/상승' 기사 중 이 뉴스를 원인으로 언급한 수">📰 원인 지목 ${n.cited}건</span>`:''}</div>`;}).join('')
       :'<div class="mv-n" style="color:var(--sub)">같은 시간대에 뚜렷한 관련 뉴스를 찾지 못했습니다</div>';
     return `<div class="mv-ev"><div class="mv-row"><span class="mv-time">🕒 ${hm(e.start)}–${hm(e.end)}</span>
       <span class="mv-chg ${cls(e.nq_pct)}">나스닥 ${pct(e.nq_pct)}</span><span class="mv-chg ${cls(e.es_pct)}">S&amp;P ${pct(e.es_pct)}</span></div>
@@ -379,9 +381,9 @@ function renderMidterms(){
       <div class="el-m">${lead(a)} <span style="color:var(--sub)">· ${esc(a.updated||'')} 기준</span></div>
       ${(g.sources||[]).length?`<details><summary>집계 기관별 보기 (${g.sources.length})</summary><div class="el-src">${g.sources.map(x=>
         `<span>${esc(x.source)}</span><span>D ${f1(x.dem)} · R ${f1(x.rep)}</span><span style="color:${x.margin>0?'#2563eb':'#dc2626'}">${x.margin>0?'D+':'R+'}${f1(Math.abs(x.margin))}</span>`).join('')}</div></details>`:''}
-      <div class="mv-note" style="margin-top:5px">출처: <a href="${esc(g.url)}" target="_blank" rel="noopener">위키백과 여론조사 집계표</a></div>`;}
+      <div class="mv-note" style="margin-top:5px">출처: <a href="${safeUrl(g.url)}" target="_blank" rel="noopener">위키백과 여론조사 집계표</a></div>`;}
   const row=(n,v,u)=>v==null?`<div class="el-pr"><span>${n}</span><span class="el-fail">갱신 실패</span><span></span></div>`
-    :`<div class="el-pr"><a href="${esc(u||'#')}" target="_blank" rel="noopener">${n}</a><div class="el-pt"><i style="width:${v}%"></i></div><b style="color:${v>=50?'#2563eb':'#dc2626'}">${v.toFixed(0)}%</b></div>`;
+    :`<div class="el-pr"><a href="${safeUrl(u||'#')}" target="_blank" rel="noopener">${n}</a><div class="el-pt"><i style="width:${v}%"></i></div><b style="color:${v>=50?'#2563eb':'#dc2626'}">${v.toFixed(0)}%</b></div>`;
   const pm=k?`<div class="el-pm">${row('하원',k.house_dem,k.house_url)}${row('상원',k.senate_dem,k.senate_url)}</div>
       <div class="mv-note" style="margin-top:6px">파란 막대 = 민주당이 다수당이 될 확률 (나머지는 공화당) · 폴리마켓 베팅 가격 기준</div>`:fail;
   box.innerHTML=`<div class="mv-h"><span class="mv-t">🗳️ 2026 미국 중간선거 현황</span><span class="mv-note">선거일 11월 3일 · 수집 때마다 갱신</span></div>
@@ -489,8 +491,8 @@ function watchCards(){
 
 function card(s,cat){
   const sent={bullish:'▲',bearish:'▼',neutral:'■'}[s.sentiment];
-  const srcs=s.sources.slice(0,8).map(x=>`<a class="src t-${x.tier}" href="${esc(x.url)}" target="_blank" rel="noopener" title="${esc(x.headline)}">${esc(x.name)} · ${TL[x.tier]}</a>`).join('');
-  const det=s.sources.map(x=>`<div><span class="time">${x.time_kst}</span><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.headline)}</a> <span class="time">— ${esc(x.name)} (${esc(x.via)})</span></div>`).join('');
+  const srcs=s.sources.slice(0,8).map(x=>`<a class="src t-${x.tier}" href="${safeUrl(x.url)}" target="_blank" rel="noopener" title="${esc(x.headline)}">${esc(x.name)} · ${TL[x.tier]}</a>`).join('');
+  const det=s.sources.map(x=>`<div><span class="time">${x.time_kst}</span><a href="${safeUrl(x.url)}" target="_blank" rel="noopener">${esc(x.headline)}</a> <span class="time">— ${esc(x.name)} (${esc(x.via)})</span></div>`).join('');
   // 첫 보도 시각(가장 빠른 기사)을 크게, 이후 마지막 보도 시각은 작게
   const mins=Math.max(0,Math.round((Date.now()/1000-s.first_seen)/60));
   const ago=mins<60?`${mins}분 전`:`${Math.floor(mins/60)}시간 전`;
@@ -501,7 +503,7 @@ function card(s,cat){
       <span class="tag">출처 ${s.n_sources}</span>${s.regions.map(r=>`<span class="tag">${{EU:'유럽',CN:'중화권'}[r]||'미국'}</span>`).join('')}
       ${s.is_rumor?'<span class="tag rumor">소식통/루머</span>':''}${s.is_opinion?'<span class="tag op">의견</span>':''}
       <span class="time sent-${s.sentiment}">${sent}</span>${last}</div>
-    <a class="hl" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.headline)}</a><div class="orig"></div>
+    <a class="hl" href="${safeUrl(s.url)}" target="_blank" rel="noopener">${esc(s.headline)}</a><div class="orig"></div>
     ${s.summary?`<div class="sum" data-ko="${esc(s.summary_ko||'')}" data-orig="${esc(s.summary.slice(0,240))}${s.summary.length>240?'…':''}">${esc(st.ko&&s.summary_ko?s.summary_ko:s.summary.slice(0,240))}${!(st.ko&&s.summary_ko)&&s.summary.length>240?'…':''}</div>`:''}
     <div class="notes">${s.notes.map(esc).join(' · ')}</div>
     <div class="srcs">${srcs}</div>

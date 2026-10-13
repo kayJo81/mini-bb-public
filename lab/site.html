@@ -62,6 +62,8 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:10px 0 30px}
 </div>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// 링크는 http·https 주소만 (javascript: 같은 주소가 섞여 들어와도 실행되지 않게)
+const safeUrl=u=>/^https?:\/\//i.test(String(u??'').trim())?esc(u):'#';
 const pct=(v,d=2)=>v==null?'–':`${v>0?'+':''}${Number(v).toFixed(d)}%`;
 const cls=v=>v>0?'up':v<0?'dn':'';
 const BN={pos_up:'호재·당일 상승',pos_dn:'호재·당일 하락',neg_dn:'악재·당일 하락',neg_up:'악재·당일 상승'};
@@ -130,7 +132,7 @@ function render(d){
     return `<div class="cand"><div class="ch"><span class="sym">${esc(c.sym)}</span>${badge}<span class="tag ${ok?'ok':c.verdict==='근거 약함'?'mid':''}">${esc(c.verdict)}</span><span class="tag">${esc(BN[c.b])}</span><span class="hsub">${esc(c.date)}</span></div>
       <div class="kv"><span>기사 <b>${c.n}</b>건 (평소 ${c.avg??'–'})</span><span>급증 <b>z ${c.z}</b></span><span>호재 <b class="up">${c.pos}</b> · 악재 <b class="dn">${c.neg}</b></span><span>당일 <b class="${cls(c.react)}">${pct(c.react)}</b> (QQQ 대비)</span></div>
       <div class="kv"><span>과거 같은 신호 5일 뒤: <b class="${cls(c.h5&&c.h5.mean)}">${c.h5?pct(c.h5.mean):'–'}</b></span><span>적중 <b>${hitFor(c.h5,dir)}</b></span><span>표본 <b>${c.h5?c.h5.n:0}</b>건</span></div>
-      <ul class="heads">${(c.heads||[]).map(x=>`<li><span class="sc ${cls(x[4])}">${x[4]>0?'▲':x[4]<0?'▼':'■'}</span><a href="${esc(x[3])}" target="_blank" rel="noopener">${esc(x[1])}</a> <span class="hsub">· ${esc(x[2])}</span></li>`).join('')}</ul></div>`;}).join('')}</div>`
+      <ul class="heads">${(c.heads||[]).map(x=>`<li><span class="sc ${cls(x[4])}">${x[4]>0?'▲':x[4]<0?'▼':'■'}</span><a href="${safeUrl(x[3])}" target="_blank" rel="noopener">${esc(x[1])}</a> <span class="hsub">· ${esc(x[2])}</span></li>`).join('')}</ul></div>`;}).join('')}</div>`
     :'<div class="empty">최근 3거래일에 조건을 만족한 신호가 없어요.</div>';
   h+='</div>';
 

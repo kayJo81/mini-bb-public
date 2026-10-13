@@ -1,0 +1,5 @@
+# 기본 보안 헤더: 다른 사이트가 이 화면을 몰래 틀 안에 넣지 못하게, 파일 형식 추측 금지, 주소 유출 최소화
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

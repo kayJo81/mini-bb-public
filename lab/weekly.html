@@ -58,6 +58,8 @@ ul{margin:0;padding-left:18px}li{margin:5px 0}.none{color:#9ca3af}
 </div>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// 링크는 http·https 주소만 (javascript: 같은 주소가 섞여 들어와도 실행되지 않게)
+const safeUrl=u=>/^https?:\/\//i.test(String(u??'').trim())?esc(u):'#';
 const WD='월화수목금토일';
 const URL_='https://raw.githubusercontent.com/kayJo81/mini-bb-public/lab-data/weekly.json';
 let D=null,cat='all',MAN=[];
@@ -67,7 +69,7 @@ const store={get:k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}}
 const lbl=d=>{const [y,m,dd]=d.split('-').map(Number);const w=new Date(Date.UTC(y,m-1,dd)).getUTCDay();return `${m}/${dd} (${WD[(w+6)%7]})`;};
 const CATS=[['all','전체'],['매크로','📊 매크로'],['정치','🏛 정치'],['산업','💻 산업·기업'],['실적','💰 실적']];
 function row(x){
-  const t=x.url?`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.text)}</a>`:esc(x.text);
+  const t=x.url?`<a href="${safeUrl(x.url)}" target="_blank" rel="noopener">${esc(x.text)}</a>`:esc(x.text);
   return `<div class="row"><span class="t">${esc(x.time)}</span><span>${x.star?'<span class="star">** </span>':''}${x.icon} ${t}${x.sub?`<div class="k">${esc(x.sub)}</div>`:''}</span></div>`;
 }
 function render(){
