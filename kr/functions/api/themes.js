@@ -24,7 +24,7 @@ export async function onRequestGet({ request }) {
       const c = num(s.fluctuationsRatio), dir = c >= HOT ? "up" : c <= -HOT ? "down" : null;
       if (!dir || seen.has(s.itemCode) || /스팩|우$|우B$/.test(s.stockName || "")) continue;
       seen.add(s.itemCode);
-      for (const no of MEMBERS.codes[s.itemCode] || []) {
+      for (const no of new Set(MEMBERS.codes[s.itemCode] || [])) {
         if (!hit[dir].has(no)) hit[dir].set(no, []);
         hit[dir].get(no).push({ code: s.itemCode, name: s.stockName, chg: c });
       }

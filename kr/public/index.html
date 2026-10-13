@@ -300,9 +300,9 @@ function paintWhy(g){
   el.classList.toggle('alt',d.kind!=='reason');el.hidden=!(d.title||d.desc||d.info);
 }
 // 🚀 급등주가 몰린 테마: 테마 평균은 낮아도 +5% 넘은 종목이 2개 이상 (예: 남북경협 평균 −1.6%, 양지사 +13.8%·다스코 +7.9%)
-// 순서: 급등주 상위 3종목 평균 × √급등주 수 (많이·크게 오른 테마 먼저), 최대 10개
+// 순서: 두 번째로 많이 오른 종목 등락률 × √급등주 수 (한 종목만 튄 테마보다 여러 종목이 함께 오른 테마 먼저), 최대 10개
 function hotBox(G){
-  const H=G.filter(g=>g.hot).map(g=>({g,sc:g.heat*Math.sqrt(g.hot)})).sort((a,b)=>b.sc-a.sc).slice(0,10);
+  const H=G.filter(g=>g.hot&&(g.hotStocks||[]).length>1).map(g=>({g,sc:g.hotStocks[1].chg*Math.sqrt(g.hot)})).sort((a,b)=>b.sc-a.sc).slice(0,10);
   if(!H.length)return '';
   return `<div class="ihd" style="margin-top:14px">🚀 급등주가 몰린 테마 <span class="hsub">테마 평균과 상관없이 +5% 넘은 종목이 2개 이상</span></div><div class="card hotbox">`+
     H.map(({g})=>`<div class="hb"><div class="hb1"><b>${esc(g.name)}</b> <span class="hsub">급등주 ${g.hot}개 · 테마 평균 <span class="${cls(g.chg)}">${pct(g.chg)}</span></span></div>`+
