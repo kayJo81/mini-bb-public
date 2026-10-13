@@ -134,6 +134,8 @@ tr.st{cursor:pointer}tr.st:hover td{background:#f9fafb}
 .fdet{font-size:11.5px;color:var(--sub);margin-top:3px;cursor:pointer}
 .fdet summary{list-style:none}.fdet summary::-webkit-details-marker{display:none}
 .fdet div{display:flex;justify-content:space-between;font-family:var(--mono);padding:1px 0}
+.hotbox{background:#fff;border:.5px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:4px 12px}.hb{padding:8px 0;border-bottom:.5px dashed var(--bd)}.hb:last-child{border-bottom:0}
+.hb1{font-size:14.5px}.hb .chips{margin-top:4px}
 footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
 /* 📊 주요 지표 (환율·달러지수·비트코인·금·금리) */
 .mx{background:#fff;border:.5px solid #e5e7eb;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);padding:10px 12px;margin:0 0 12px}
@@ -259,18 +261,15 @@ function render(){
   const rankOf=new Map(G.map((g,i)=>[g.no,i+1]));
   // 상승·하락 상위 5: 뉴스로 묶은 이슈 테마 + 이슈 테마로 설명되지 않는 네이버 테마를 등락률 크기순으로
   const covered=g=>[...(g.leaders||[]),...(g.laggards||[])].some(x=>iss.byCode.has(x.code));
-  // + 급등주가 몰린 테마: 평균은 낮아도 ±5% 종목이 2개 이상이면 (상위 3종목 평균의 절반을 순위 점수로)
-  const pickTop=(issues,themes,up)=>{
-    const c=[...issues.map(i=>({kind:'issue',i,chg:i.avg})),
-      ...themes.filter(g=>(up?g.chg>0:g.chg<0)&&!covered(g)).slice(0,10).map(g=>({kind:'theme',g,chg:g.chg}))];
-    for(const g of themes){const h=up?g.heat:g.chill;if(h==null||covered(g))continue;
-      const x=c.find(x=>x.kind==='theme'&&x.g===g),sc=h/2;
-      if(x){if(Math.abs(sc)>Math.abs(x.chg))x.chg=sc;}else c.push({kind:'theme',g,chg:sc});}
-    return c.sort((a,b)=>Math.abs(b.chg)-Math.abs(a.chg)).slice(0,5);};
+  const pickTop=(issues,themes,up)=>[
+      ...issues.map(i=>({kind:'issue',i,chg:i.avg})),
+      ...themes.filter(g=>(up?g.chg>0:g.chg<0)&&!covered(g)).slice(0,10).map(g=>({kind:'theme',g,chg:g.chg}))]
+    .sort((a,b)=>Math.abs(b.chg)-Math.abs(a.chg)).slice(0,5);
   const topUp=pickTop(iss.up,G,true),topDn=pickTop(iss.dn,[...G].reverse(),false);
   const row=(x,r)=>x.kind==='issue'?issueCard(x.i,r):card(x.g,r);
   document.getElementById('list').innerHTML=
     `<div class="ihd">🔥 상승 상위 5 <span class="hsub">🧩 뉴스로 묶은 이슈 테마 + 📂 네이버 테마</span></div>`+(topUp.map((x,i)=>row(x,i+1)).join('')||'<div class="empty">오른 테마가 없어요.</div>')+
+    hotBox(G)+
     `<div class="ihd" style="margin-top:14px">🧊 하락 상위 5</div>`+(topDn.map((x,i)=>row(x,i+1)).join('')||'<div class="empty">내린 테마가 없어요.</div>');
   const ups=topUp.filter(x=>x.kind==='theme').map(x=>x.g),dns=topDn.filter(x=>x.kind==='theme').map(x=>x.g);
   const shown=new Set([...ups,...dns].map(g=>g.no));
@@ -300,12 +299,19 @@ function paintWhy(g){
   else el.innerHTML=`📌 <b>테마 개요</b> ${esc(d.desc||'')}${d.info?`<br><span class="src">${esc(d.stock)}: ${esc(d.info)}…</span>`:''}`;
   el.classList.toggle('alt',d.kind!=='reason');el.hidden=!(d.title||d.desc||d.info);
 }
+// 🚀 급등주가 몰린 테마: 테마 평균은 낮아도 +5% 넘은 종목이 2개 이상 (예: 남북경협 평균 −1.6%, 양지사 +13.8%·다스코 +7.9%)
+// 순서: 급등주 상위 3종목 평균 × √급등주 수 (많이·크게 오른 테마 먼저), 최대 10개
+function hotBox(G){
+  const H=G.filter(g=>g.hot).map(g=>({g,sc:g.heat*Math.sqrt(g.hot)})).sort((a,b)=>b.sc-a.sc).slice(0,10);
+  if(!H.length)return '';
+  return `<div class="ihd" style="margin-top:14px">🚀 급등주가 몰린 테마 <span class="hsub">테마 평균과 상관없이 +5% 넘은 종목이 2개 이상</span></div><div class="card hotbox">`+
+    H.map(({g})=>`<div class="hb"><div class="hb1"><b>${esc(g.name)}</b> <span class="hsub">급등주 ${g.hot}개 · 테마 평균 <span class="${cls(g.chg)}">${pct(g.chg)}</span></span></div>`+
+      `<div class="chips">${(g.hotStocks||[]).map(s=>`<span class="chip">${esc(s.name)} <b class="up">${pct(s.chg)}</b></span>`).join('')}</div></div>`).join('')+'</div>';
+}
 function card(g,rank){
   const mv=st.rh?st.rh.move(g.no):null;
   const mvs=mv?`<span class="mv ${mv>0?'up':'dn'}">${mv>0?'▲':'▼'}${Math.abs(mv)}</span>`:'';
-  const hot=(mv!=null&&mv>=8&&rank<=20?'<span class="new">🚀 급부상</span>':'')+
-    (g.hot?` <span class="new" title="테마 평균은 ${pct(g.chg)}지만 +5% 넘은 종목이 ${g.hot}개 (상위 3종목 평균 ${pct(g.heat)})">🔥 급등주 ${g.hot}개 · 상위 ${pct(g.heat)}</span>`:'')+
-    (g.cold?` <span class="new" style="background:#dbeafe;color:#1e40af">🧊 급락주 ${g.cold}개 · 하위 ${pct(g.chill)}</span>`:'');
+  const hot=mv!=null&&mv>=8&&rank<=20?'<span class="new">🚀 급부상</span>':'';
   const ratio=g.total?Math.round(g.rise/g.total*100):0;
   const chips=(g.leaders||[]).map(s=>`<span class="chip">${esc(s.name)} <b class="${cls(s.chg)}">${pct(s.chg)}</b></span>`).join('');
   return `<div class="th" id="t${g.no}"><div class="th-h" data-no="${g.no}">
