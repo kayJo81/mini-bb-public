@@ -69,6 +69,7 @@ jobs:
           cp lab/env.html public_lab/env.html
           cp lab/weekly.html public_lab/weekly.html
           cp lab/tesla.html public_lab/tesla.html
+          cp lab/macro.html public_lab/macro.html
           printf '/*\n  X-Frame-Options: SAMEORIGIN\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n' > public_lab/_headers
 
       # 🚗 테슬라: 분기 인도량·에너지 배치(SEC 공시)
@@ -77,6 +78,11 @@ jobs:
         run: |
           mkdir -p public_lab
           python lab/tesla_data.py --out public_lab/tesla_q.json
+
+      # 📈 물가 지표: CPI·PCE·PPI 항목별 월간 + PPI AI 비용 항목 (FRED, lab-data 에 누적)
+      - name: Macro data
+        continue-on-error: true
+        run: python lab/macro_data.py --out public_lab/macro.json
 
       - name: Save data
         if: always()

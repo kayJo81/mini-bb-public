@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>미니 블벅 랩 · 물가 지표</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--bd:#e5e7eb;--sub:#6b7280;--ink:#111827;--grid:#eef0f3;--acc:#2563eb;--r:14px;
+  --sh:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);--mono:'JetBrains Mono',monospace;
+  /* 계열 색 (고정 순서): 1 파랑 · 2 주황 · 3 청록 · 4 노랑 · 5 자홍 */
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--cmp:#9ca3af}
+*{box-sizing:border-box}html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,'Apple SD Gothic Neo','Noto Sans KR',sans-serif}
+a{color:inherit}.wrap{max-width:1080px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+h1{font-size:20px;margin:0}h1 b{color:var(--acc)}.hsub{font-size:12px;color:var(--sub)}
+.link{font-size:12px;font-weight:600;text-decoration:none;background:#fff;color:#111827;border:.5px solid var(--bd);padding:7px 12px;border-radius:9px;white-space:nowrap}
+.card{background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:14px 16px;margin-bottom:12px;min-width:0}
+h2{font-size:16px;margin:0 0 2px}.note{font-size:12px;color:var(--sub);margin:0 0 8px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin:4px 0 6px}
+.legend i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:4px;vertical-align:3px}
+.chart{position:relative}.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.tip{position:absolute;pointer-events:none;background:#111827;color:#fff;font-size:12px;line-height:1.45;padding:6px 9px;border-radius:8px;white-space:nowrap;
+  transform:translate(-50%,-100%);margin-top:-8px;opacity:0;transition:opacity .1s;z-index:3}
+.tip b{font-family:var(--mono)}
+.ax{font-size:10px;fill:var(--sub);font-family:var(--mono)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.tab{padding:7px 13px;border-radius:999px;border:1px solid var(--bd);background:#fff;font-weight:700;cursor:pointer;font-size:13px;font-family:inherit;color:var(--ink)}
+.tab.on{background:#111827;color:#fff;border-color:#111827}
+.seg{display:inline-flex;border:1px solid var(--bd);border-radius:9px;overflow:hidden;margin:2px 0 8px}
+.seg button{border:0;background:#fff;padding:5px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;color:var(--sub)}
+.seg button.on{background:#111827;color:#fff}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:6px 0 10px}
+.kpi{border:.5px solid var(--bd);border-radius:10px;padding:8px 10px}.kpi .k{font-size:11.5px;color:var(--sub);font-weight:600}
+.kpi .v{font-family:var(--mono);font-size:18px;font-weight:700}.kpi .d{font-size:11.5px;color:var(--sub)}
+.tbl{overflow-x:auto;margin-top:6px;-webkit-overflow-scrolling:touch}
+table{border-collapse:separate;border-spacing:2px;font-size:12px;width:100%}
+th,td{padding:4px 6px;text-align:right;white-space:nowrap;font-family:var(--mono);border-radius:4px}
+th{font-family:inherit;color:var(--sub);font-weight:600;font-size:11px}
+td.nm,th.nm{text-align:left;font-family:inherit;position:sticky;left:0;background:#fff;z-index:1}
+td.nm.l0{font-weight:700}td.nm.l1{padding-left:14px}td.nm.l2{padding-left:26px;color:#374151}
+td.c{position:relative;cursor:default}td.c.rv::after{content:'';position:absolute;top:2px;right:2px;width:4px;height:4px;border-radius:50%;background:#111827;opacity:.55}
+.scale{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--sub);margin-top:6px;flex-wrap:wrap}
+.scale span.b{display:inline-block;width:120px;height:8px;border-radius:4px;background:linear-gradient(90deg,#2a78d6,#f0efec,#e34948)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.mini{border:.5px solid var(--bd);border-radius:10px;padding:8px 10px 4px}
+.mini .t{display:flex;justify-content:space-between;gap:6px;font-size:12.5px;font-weight:700}
+.mini .t span{font-family:var(--mono)}.mini .s{font-size:11px;color:var(--sub)}
+.cat{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:999px;background:#f3f4f6;color:#374151;margin-right:4px}
+.up{color:#c0392b}.dn{color:#1f62b5}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div><h1>미니 블벅 <b>랩</b> · 물가 지표</h1><div class="hsub" id="hsub">CPI · PCE · PPI 항목별 월간 + PPI AI 비용 항목</div></div><a class="link" href="./">← 랩 메인</a></header>
+<div class="tabs" id="tabs"></div>
+<div id="app"><div class="card note">불러오는 중…</div></div>
+<p class="hsub">투자 권유 아님 · 원자료: 미 노동통계국(BLS)·경제분석국(BEA), FRED(세인트루이스 연은) 경유 · 매일 07:00 KST 갱신, 받은 값은 계속 쌓아 둠(나중에 개정되면 ● 표시)</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct=(v,d=1)=>v==null||!isFinite(v)?'–':(v>0?'+':'')+v.toFixed(d)+'%';
+const pp=v=>v==null||!isFinite(v)?'–':(v>0?'+':'')+v.toFixed(1)+'%p';
+const NS='http://www.w3.org/2000/svg';
+const COL=['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)'];
+const store={get:k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+
+// ── 달 계산 ──
+const ymAdd=(ym,n)=>{let [y,m]=ym.split('-').map(Number);m+=n;y+=Math.floor((m-1)/12);m=((m-1)%12+12)%12+1;return `${y}-${String(m).padStart(2,'0')}`;};
+const ymDiff=(a,b)=>{const [ya,ma]=a.split('-').map(Number),[yb,mb]=b.split('-').map(Number);return (ya-yb)*12+ma-mb;};
+const ymKo=ym=>`${ym.slice(2,4)}.${ym.slice(5)}`;
+const val=(it,ym)=>{const k=ymDiff(ym,it.start);return k>=0&&k<it.v.length?it.v[k]:null;};
+const lastYm=it=>{for(let k=it.v.length-1;k>=0;k--)if(it.v[k]!=null)return ymAdd(it.start,k);return null;};
+const chg=(it,ym,n)=>{const a=val(it,ym),b=val(it,ymAdd(ym,-n));return a!=null&&b!=null?(a/b-1)*100:null;};
+const MODES={mom:{k:'전월비',f:(it,ym)=>chg(it,ym,1),clamp:.6},yoy:{k:'전년비',f:(it,ym)=>chg(it,ym,12),clamp:5},
+  ann3:{k:'3개월 연율',f:(it,ym)=>{const a=val(it,ym),b=val(it,ymAdd(ym,-3));return a!=null&&b!=null?(Math.pow(a/b,4)-1)*100:null;},clamp:7}};
+// 발산형 색: 파랑(낮음) ← 회색(0 근처) → 빨강(높음)
+function mix(a,b,t){const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));const A=p(a),B=p(b);return `rgb(${A.map((x,i)=>Math.round(x+(B[i]-x)*t)).join(',')})`;}
+const heat=(v,c)=>{if(v==null)return '#fafafa';const t=Math.max(-1,Math.min(1,v/c));return t>=0?mix('#f0efec','#e34948',t*.8):mix('#f0efec','#2a78d6',-t*.8);};
+
+// ── SVG 공통 ──
+function frame(el,W,H){el.innerHTML='';const svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);el.appendChild(svg);
+  const tip=document.createElement('div');tip.className='tip';el.appendChild(tip);return {svg,tip};}
+function add(svg,tag,attrs,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;svg.appendChild(e);return e;}
+function showTip(el,tip,x,y,html){tip.innerHTML=html;const w=tip.offsetWidth/2+4;tip.style.left=Math.max(w,Math.min(el.clientWidth-w,x))+'px';tip.style.top=Math.max(tip.offsetHeight+4,y)+'px';tip.style.opacity=1;}
+const niceStep=r=>{const raw=r/4,p=Math.pow(10,Math.floor(Math.log10(raw))),n=raw/p;return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p;};
+
+// 선 차트: series=[{name,color,dash,pts:[[ym,v],…]}] · 가로 = 달 · 세로 = % (0 기준선) · 십자선 툴팁
+function lines(el,series,{H=260,mini=false,unit='%'}={}){
+  const W=Math.max(mini?240:320,el.clientWidth||640),pad=mini?{t:8,r:8,b:18,l:34}:{t:12,r:60,b:26,l:42};
+  const {svg,tip}=frame(el,W,H);
+  const all=series.flatMap(s=>s.pts.filter(p=>p[1]!=null));if(!all.length){el.innerHTML='<div class="note">데이터 없음</div>';return;}
+  const months=[...new Set(series.flatMap(s=>s.pts.map(p=>p[0])))].sort(),m0=months[0],n=ymDiff(months[months.length-1],m0);
+  let lo=Math.min(0,...all.map(p=>p[1])),hi=Math.max(0,...all.map(p=>p[1]));const st=niceStep(hi-lo||1);lo=Math.floor(lo/st)*st;hi=Math.ceil(hi/st)*st;
+  const sx=ym=>pad.l+(W-pad.l-pad.r)*ymDiff(ym,m0)/Math.max(1,n),sy=v=>H-pad.b-(H-pad.t-pad.b)*(v-lo)/(hi-lo||1);
+  for(let v=lo;v<=hi+1e-9;v+=st){add(svg,'line',{x1:pad.l,x2:W-pad.r,y1:sy(v),y2:sy(v),stroke:Math.abs(v)<1e-9?'#9ca3af':'#eef0f3','stroke-width':1});
+    add(svg,'text',{x:pad.l-5,y:sy(v)+3,'text-anchor':'end',class:'ax'},(Math.round(v*10)/10)+(mini?'':unit));}
+  months.filter(m=>m.endsWith('-01')).forEach(m=>add(svg,'text',{x:sx(m),y:H-pad.b+(mini?12:15),'text-anchor':'middle',class:'ax'},mini?"'"+m.slice(2,4):m.slice(0,4)));
+  series.forEach(s=>{let d='';s.pts.forEach((p,i)=>{if(p[1]==null)return;d+=(i&&s.pts[i-1][1]!=null?'L':'M')+sx(p[0]).toFixed(1)+','+sy(p[1]).toFixed(1);});
+    add(svg,'path',{d,fill:'none',stroke:s.color,'stroke-width':s.w||2,'stroke-dasharray':s.dash||'','stroke-linejoin':'round','stroke-linecap':'round'});
+    const L=[...s.pts].reverse().find(p=>p[1]!=null);
+    if(L&&!mini&&s.label!==false){add(svg,'circle',{cx:sx(L[0]),cy:sy(L[1]),r:4,fill:s.color,stroke:'#fff','stroke-width':2});}});
+  // 직접 라벨 (오른쪽 끝, 겹치면 아래로 밀기)
+  if(!mini){const labs=series.filter(s=>s.label!==false).map(s=>{const L=[...s.pts].reverse().find(p=>p[1]!=null);return L&&{s,y:sy(L[1]),v:L[1]};}).filter(Boolean).sort((a,b)=>a.y-b.y);
+    let prev=-1e9;labs.forEach(l=>{l.y=Math.max(l.y,prev+12);prev=l.y;add(svg,'text',{x:W-pad.r+6,y:l.y+3,style:'font-size:10.5px;font-weight:700;fill:#111827;font-family:var(--mono)'},l.v.toFixed(1)+unit);});}
+  const cross=add(svg,'line',{y1:pad.t,y2:H-pad.b,stroke:'#9ca3af','stroke-width':1,'stroke-dasharray':'3 3',opacity:0});
+  const hit=add(svg,'rect',{x:pad.l,y:pad.t,width:W-pad.l-pad.r,height:H-pad.t-pad.b,fill:'transparent'});
+  const move=e=>{const r=svg.getBoundingClientRect(),cx=((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width*W;
+    const k=Math.max(0,Math.min(n,Math.round((cx-pad.l)/(W-pad.l-pad.r)*n))),ym=ymAdd(m0,k),x=sx(ym);
+    cross.setAttribute('x1',x);cross.setAttribute('x2',x);cross.setAttribute('opacity',1);
+    const rows=series.map(s=>{const p=s.pts.find(p=>p[0]===ym);return `<span style="color:#cbd5e1">${esc(s.name)}</span> <b>${p&&p[1]!=null?pct(p[1]):'–'}</b>`;});
+    showTip(el,tip,x/W*el.clientWidth,20,`<b>${ym}</b><br>`+rows.join('<br>'));};
+  hit.addEventListener('mousemove',move);hit.addEventListener('touchmove',move,{passive:true});hit.addEventListener('touchstart',move,{passive:true});
+  hit.addEventListener('mouseleave',()=>{tip.style.opacity=0;cross.setAttribute('opacity',0);});
+}
+
+// ── 화면 ──
+let D=null,TAB=store.get('macroTab')||'cpi',MODE=store.get('macroMode')||'mom',SPAN=+store.get('macroSpan')||36;
+const G=k=>D.groups.find(g=>g.key===k);
+const byId=id=>D.groups.flatMap(g=>g.items).find(i=>i.id===id);
+const groupLast=g=>g.items.filter(i=>i.lv===0).map(lastYm).filter(Boolean).sort().pop()||g.items.map(lastYm).sort().pop();
+
+function tabs(){const T=[['cpi','CPI'],['pce','PCE'],['ppi','PPI'],['ai','🤖 AI 비용 (PPI)']];
+  $('tabs').innerHTML=T.filter(([k])=>G(k)).map(([k,n])=>`<button class="tab${TAB===k?' on':''}" data-t="${k}">${n}</button>`).join('');}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(!b)return;TAB=b.dataset.t;store.set('macroTab',TAB);render();});
+
+function kpis(g,last){
+  return '<div class="kpis">'+g.items.filter(i=>i.lv===0).map(i=>{const L=lastYm(i),m=chg(i,L,1),y=chg(i,L,12),yp=chg(i,ymAdd(L,-1),12);
+    return `<div class="kpi"><div class="k">${esc(i.name)} · ${L}</div><div class="v">${pct(y)}</div><div class="d">전년비 · 전월비 ${pct(m,2)} · 전달 전년비 ${pct(yp)}</div></div>`;}).join('')+'</div>';}
+
+// 항목 × 달 히트맵 표
+function heatTable(g,last){
+  const M=MODES[MODE],months=Array.from({length:13},(_,i)=>ymAdd(last,i-12));
+  let h=`<div class="seg" id="mode">${Object.entries(MODES).map(([k,m])=>`<button data-m="${k}" class="${MODE===k?'on':''}">${m.k}</button>`).join('')}</div>`;
+  h+='<div class="tbl hm"><table><tr><th class="nm">항목</th>'+months.map(m=>`<th>${ymKo(m)}</th>`).join('')+'</tr>';
+  g.items.forEach(it=>{
+    h+=`<tr><td class="nm l${it.lv}">${it.cat?`<span class="cat">${esc(it.cat)}</span>`:''}${esc(it.name)}${!it.sa&&MODE==='mom'?' <span class="hsub" title="계절조정 안 된 지표라 전월비가 계절 요인에 흔들려요">*</span>':''}</td>`;
+    months.forEach(m=>{const v=M.f(it,m),rv=it.rev&&it.rev[m]!=null;
+      let t=`${esc(it.name)} ${m} ${M.k} ${pct(v,2)}`;
+      if(rv){const k=ymDiff(m,it.start),o=Object.assign({},it);o.v=it.v.slice();o.v[k]=it.rev[m];t+=` · 처음 발표 ${pct(M.f(o,m),2)} → 개정`;}
+      h+=`<td class="c${rv?' rv':''}" style="background:${heat(v,g.key==='ai'&&MODE!=='mom'?M.clamp*2:M.clamp)}" title="${t}">${v==null?'·':v.toFixed(MODE==='mom'?2:1)}</td>`;});
+    h+='</tr>';});
+  const c=g.key==='ai'&&MODE!=='mom'?M.clamp*2:M.clamp;
+  h+=`</table></div><div class="scale"><span>${pct(-c)}</span><span class="b"></span><span>${pct(c)} 이상</span><span>· 칸 위에 마우스 올리면 값 설명 · ● = 처음 발표 뒤 개정된 달${g.key!=='cpi'&&g.key!=='pce'?' · * = 계절조정 안 된 지표':''}</span></div>`;
+  return h;}
+
+function spanSeg(){return `<div class="seg" id="span">${[[24,'2년'],[36,'3년'],[60,'5년'],[120,'전체']].map(([k,n])=>`<button data-s="${k}" class="${SPAN===k?'on':''}">${n}</button>`).join('')}</div>`;}
+const yoyPts=(it,from,to)=>{const out=[];for(let m=from;m<=to;m=ymAdd(m,1))out.push([m,chg(it,m,12)]);return out;};
+
+function renderGroup(g){
+  const last=groupLast(g),from=ymAdd(last,-SPAN+1),heads=g.items.filter(i=>i.lv===0);
+  let h=`<div class="card"><h2>${esc(g.name)}</h2><p class="note">최근 발표 ${last} · ${esc(g.src)}${g.key==='pce'?' · 2024년 이전 값은 BEA 종합 개정 반영':''}</p>${kpis(g,last)}
+    <div class="legend">${heads.map((i,k)=>`<span><i style="background:${COL[k]}"></i>${esc(i.name)}</span>`).join('')}</div>${spanSeg()}
+    <div class="chart" id="gChart"></div><p class="note" style="margin-top:4px">전년 같은 달 대비 상승률(%)</p></div>`;
+  h+=`<div class="card"><h2>항목별 월간 변화</h2><p class="note">최근 13개월 · 빨강 = 물가 오름, 파랑 = 내림(기준 0)</p>${heatTable(g,last)}</div>`;
+  $('app').innerHTML=h;
+  lines($('gChart'),heads.map((i,k)=>({name:i.name,color:COL[k],pts:yoyPts(i,from,last)})));
+}
+
+// AI 비용: 항목마다 작은 차트 (항목 전년비 vs PPI 최종수요 전년비, 회색 점선)
+function renderAI(g){
+  const cmp=byId(D.compare),last=groupLast(g),from=ymAdd(last,-SPAN+1),cl=lastYm(cmp);
+  const row=it=>{const L=lastYm(it),y=chg(it,L,12),a3=MODES.ann3.f(it,L),cy=chg(cmp,L,12),base=val(it,'2022-11'),b20=val(it,'2019-12');
+    return {it,L,y,a3,gap:y!=null&&cy!=null?y-cy:null,since:base?(val(it,L)/base-1)*100:null,s20:b20?(val(it,L)/b20-1)*100:null};};
+  const R=g.items.map(row),cs=val(cmp,cl)/val(cmp,'2022-11')*100-100;
+  let h=`<div class="card"><h2>🤖 AI 비용 관련 생산자물가</h2>
+    <p class="note">AI 데이터센터에 드는 비용(클라우드·반도체·서버·전력·전력망·냉각)의 생산자물가를 PPI 최종수요(전체)와 비교 · 최근 발표 ${last} · 산업별 PPI는 계절조정 안 된 값이라 전년비로 봐요</p>
+    <div class="kpis">${['클라우드','연산','전력','전력망'].map(c=>{const rs=R.filter(r=>r.it.cat===c&&r.y!=null),avg=rs.reduce((a,r)=>a+r.y,0)/(rs.length||1);
+      return `<div class="kpi"><div class="k">${c} 평균 전년비</div><div class="v">${pct(avg)}</div><div class="d">PPI 최종수요 ${pct(chg(cmp,cl,12))} 대비 ${pp(avg-chg(cmp,cl,12))}</div></div>`;}).join('')}</div>
+    <div class="tbl"><table><tr><th class="nm">항목</th><th>최근</th><th>전년비</th><th>3개월 연율</th><th>최종수요 대비</th><th>ChatGPT 이후<br>(22.11 대비)</th><th>코로나 전<br>(19.12 대비)</th></tr>`;
+  R.forEach(r=>{h+=`<tr><td class="nm l${r.it.lv}"><span class="cat">${esc(r.it.cat)}</span>${esc(r.it.name)}</td><td>${r.L?ymKo(r.L):'–'}</td>
+    <td style="background:${heat(r.y,10)}">${pct(r.y)}</td><td style="background:${heat(r.a3,14)}">${pct(r.a3)}</td>
+    <td class="${r.gap>0?'up':r.gap<0?'dn':''}">${pp(r.gap)}</td><td>${pct(r.since)}</td><td>${pct(r.s20)}</td></tr>`;});
+  h+=`<tr><td class="nm l0">PPI 최종수요 (비교 기준)</td><td>${ymKo(cl)}</td><td>${pct(chg(cmp,cl,12))}</td><td>${pct(MODES.ann3.f(cmp,cl))}</td><td>–</td><td>${pct(cs)}</td><td>${pct(val(cmp,cl)/val(cmp,'2019-12')*100-100)}</td></tr></table></div>
+    <p class="note" style="margin-top:6px">최종수요 대비 = 항목 전년비 − PPI 최종수요 전년비 (빨강 = 전체 물가보다 빨리 오름)</p></div>`;
+  h+=`<div class="card"><h2>항목별 전년비 추이</h2><p class="note"><span style="display:inline-block;width:14px;border-top:2px dashed var(--cmp);vertical-align:3px"></span> PPI 최종수요 · <span style="display:inline-block;width:14px;border-top:2px solid var(--s1);vertical-align:3px"></span> 항목</p>${spanSeg()}
+    <div class="grid">${g.items.map((it,k)=>`<div class="mini"><div class="t"><span style="font-family:inherit">${esc(it.name)}</span><span class="${(R[k].y||0)>0?'up':'dn'}">${pct(R[k].y)}</span></div><div class="s">${esc(it.cat)} · ${R[k].L||''} · 최종수요 대비 ${pp(R[k].gap)}</div><div class="chart" id="m${k}"></div></div>`).join('')}</div></div>`;
+  h+=`<div class="card"><h2>항목별 월간 변화</h2><p class="note">최근 13개월 · 빨강 = 가격 오름, 파랑 = 내림</p>${heatTable(g,last)}</div>`;
+  $('app').innerHTML=h;
+  const cp=yoyPts(cmp,from,last);
+  g.items.forEach((it,k)=>lines($('m'+k),[{name:'PPI 최종수요',color:'var(--cmp)',dash:'4 3',w:1.5,pts:cp},{name:it.name,color:'var(--s1)',pts:yoyPts(it,from,last)}],{H:130,mini:true}));
+}
+
+function render(){if(!D)return;tabs();const g=G(TAB)||D.groups[0];TAB=g.key;g.key==='ai'?renderAI(g):renderGroup(g);
+  document.querySelectorAll('.tbl.hm').forEach(t=>t.scrollLeft=t.scrollWidth);}   // 좁은 화면: 최근 달이 먼저 보이게
+$('app').addEventListener('click',e=>{const m=e.target.closest('[data-m]'),s=e.target.closest('[data-s]');
+  if(m){MODE=m.dataset.m;store.set('macroMode',MODE);render();}if(s){SPAN=+s.dataset.s;store.set('macroSpan',SPAN);render();}});
+fetch('macro.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{D=d;$('hsub').textContent+=` · ${new Date(d.at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})} 갱신`;render();})
+  .catch(e=>{$('app').innerHTML=`<div class="card note">데이터를 불러오지 못했어요 (${esc(e.message)})</div>`;});
+let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(render,150);});
+</script>
+</body>
+</html>

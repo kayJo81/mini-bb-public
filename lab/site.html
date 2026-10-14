@@ -123,6 +123,8 @@ function render(d){
     <span><b>📅 주간 전략</b><br><span class="hsub" id="wkSub">이번 주 매크로·정치·산업·실적 일정(요일별) + 주간 전략 · 매주 일요일 20:00 갱신</span></span><span class="link">보기 →</span></a>`;
   h+=`<a class="card" href="tesla" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
     <span><b>🚗 테슬라 판매</b><br><span class="hsub">분기 인도량(라인업별, 2020~) · 에너지 저장 배치</span></span><span class="link">보기 →</span></a>`;
+  h+=`<a class="card" href="macro" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
+    <span><b>📈 매크로 지표</b><br><span class="hsub" id="macSub">CPI·PCE·PPI 항목별 월간 누적 · PPI AI 비용(클라우드·반도체·전력·전력망) 비교</span></span><span class="link">보기 →</span></a>`;
   h+=`<a class="card" href="env" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
     <span><b>🌡️ 시장 환경 기록</b><br><span class="hsub" id="envSub">옵션 수급·VIX 구조·금리·공매도·예측시장 — 국면별 전략 검증용으로 매일 저장</span></span><span class="link">보기 →</span></a>`;
 
@@ -171,6 +173,12 @@ function render(d){
   document.getElementById('app').innerHTML=h;
   fetch('env.json',{cache:'no-store'}).then(r=>r.json()).then(e=>{const x=(e.summary||[]).slice(-1)[0];const el=document.getElementById('envSub');
     if(x&&el)el.textContent=`${x.date} · VIX ${x.vix?.toFixed(1)} · VIX/VIX3M ${x.vix_term?.toFixed(2)} · 풋/콜(주식) ${x.pc_equity} · 기록 ${(e.summary||[]).length}일`;}).catch(()=>{});
+  // 매크로 지표 카드: 헤드라인 전년비 (CPI·근원 PCE·PPI)
+  fetch('macro.json',{cache:'no-store'}).then(r=>r.json()).then(m=>{const el=document.getElementById('macSub');if(!el)return;
+    const all=m.groups.flatMap(g=>g.items),one=(id,nm)=>{const i=all.find(x=>x.id===id);if(!i)return '';let k=i.v.length-1;while(k>=12&&i.v[k]==null)k--;
+      const a=i.v[k],b=i.v[k-12];if(a==null||b==null)return '';const ym=(([y,mo])=>{const t=(y*12+mo-1)+k;return `${String(Math.floor(t/12)).slice(2)}.${String(t%12+1).padStart(2,'0')}`;})(i.start.split('-').map(Number));
+      return `${nm} ${(a/b-1)*100>0?'+':''}${((a/b-1)*100).toFixed(1)}% (${ym})`;};
+    const t=[one('CPIAUCSL','CPI'),one('PCEPILFE','근원 PCE'),one('PPIFIS','PPI')].filter(Boolean).join(' · ');if(t)el.textContent=t+' · 전년비 · AI 비용 PPI 비교';}).catch(()=>{});
 }
 Promise.all([fetch('data.json?'+Date.now()).then(r=>r.json()),fetch('paper.json?'+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)])
   .then(([d,p])=>{P=p;render(d);}).catch(()=>{document.getElementById('app').innerHTML='<div class="card empty">데이터를 불러오지 못했어요.</div>';});
