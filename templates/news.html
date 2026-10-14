@@ -488,7 +488,6 @@ function render(){
     html+=list.length?list.map(x=>card(x)).join(''):`<div class="empty">${t.id==='earnings'?'최근 12시간 안에 발표된 기술주 실적이 없습니다 (실적이 나오면 여기에 표시됩니다)':'조건에 맞는 뉴스가 없습니다'}</div>`;
     html+='</div>';
   }
-  if(st.section==='매크로'&&REP&&(REP.macro||[]).length)html=ibBox(REP.macro.slice(0,6),true)+html;
   document.getElementById('list').innerHTML=html||'<div class="empty">조건에 맞는 뉴스가 없습니다</div>';
   watchCards();
 }

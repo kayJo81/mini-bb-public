@@ -431,8 +431,7 @@ function renderNews(){
   for(const t of T){if(ns.sel.size&&!isOn(t))continue;
     for(const x of t.stories){if(x.is_opinion||seen.has(x.headline))continue;seen.add(x.headline);items.push([x,t.name]);}}
   items.sort((a,b)=>b[0].first_seen-a[0].first_seen);
-  const repTop=sec==='매크로'&&rp.data?repBox('🏦 증권사 매크로 리포트',rp.data.macro.slice(0,6),'경제분석·투자전략·채권·시황 · 전체는 📑 리포트'):'';
-  document.getElementById('nlist').innerHTML=repTop+(items.length?items.map(([x,cat])=>{
+  document.getElementById('nlist').innerHTML=(items.length?items.map(([x,cat])=>{
     const tm=x.first_seen_kst.replace('-','/');
     return `<div class="nw"><div class="nr1"><span class="tb">${esc(tm)}</span><span class="vb v-${x.verdict}">${VL[x.verdict]}</span><span class="tg">${esc(cat)}</span><span class="hsub">출처 ${x.n_sources}</span></div>
       <a class="nh" href="${safeUrl(x.url)}" target="_blank" rel="noopener">${esc(x.headline)}</a>
