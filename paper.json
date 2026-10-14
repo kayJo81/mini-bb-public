@@ -12,19 +12,20 @@
  "signal_days": [
   "2026-10-09",
   "2026-10-12",
-  "2026-10-13"
+  "2026-10-13",
+  "2026-10-14"
  ],
  "seen": [],
  "pending": [
   {
-   "sym": "OKLO",
+   "sym": "ASML",
    "dir": "롱",
-   "b": "pos_dn",
+   "b": "pos_up",
    "verdict": "근거 약함",
-   "signal_date": "2026-10-13",
-   "edge": 0.75,
-   "z": 1.73,
-   "head": "OKLO Builds on Groves Progress to Expand Isotope Business"
+   "signal_date": "2026-10-14",
+   "edge": 0.22,
+   "z": 7.03,
+   "head": "Dow Jones Futures Rise, Techs Fall With ASML, BofA, Dell, HPE Early Movers; CPI Inflation Due"
   }
  ],
  "open": [
@@ -41,10 +42,10 @@
    "entry": 1100.0,
    "bench_entry": 749.64,
    "size": 5000.0,
-   "now": 987.99,
-   "ret": -10.38,
-   "bench_ret": -1.01,
-   "asof": "2026-10-13"
+   "now": 962.1527,
+   "ret": -12.73,
+   "bench_ret": -1.63,
+   "asof": "2026-10-14"
   },
   {
    "sym": "TSM",
@@ -59,10 +60,10 @@
    "entry": 439.52,
    "bench_entry": 739.52,
    "size": 5000.0,
-   "now": 445.12,
-   "ret": 1.07,
-   "bench_ret": 0.35,
-   "asof": "2026-10-13"
+   "now": 439.46,
+   "ret": -0.21,
+   "bench_ret": -0.28,
+   "asof": "2026-10-14"
   },
   {
    "sym": "IREN",
@@ -77,14 +78,32 @@
    "entry": 33.31,
    "bench_entry": 739.52,
    "size": 5000.0,
-   "now": 34.8,
-   "ret": 4.27,
-   "bench_ret": 0.35,
-   "asof": "2026-10-13"
+   "now": 32.8398,
+   "ret": -1.61,
+   "bench_ret": -0.28,
+   "asof": "2026-10-14"
+  },
+  {
+   "sym": "OKLO",
+   "dir": "롱",
+   "b": "pos_dn",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-13",
+   "edge": 0.75,
+   "z": 1.73,
+   "head": "OKLO Builds on Groves Progress to Expand Isotope Business",
+   "entry_date": "2026-10-14",
+   "entry": 31.44,
+   "bench_entry": 738.0,
+   "size": 5000.0,
+   "now": 30.76,
+   "ret": -2.36,
+   "bench_ret": -0.07,
+   "asof": "2026-10-14"
   }
  ],
  "closed": [],
- "cash": 85000.0,
+ "cash": 80000.0,
  "curve": [
   [
    "2026-10-09",
@@ -100,6 +119,11 @@
    "2026-10-13",
    99748.23,
    99984.28
+  ],
+  [
+   "2026-10-14",
+   99154.02,
+   99886.89
   ]
  ],
  "picks_log": [
@@ -122,6 +146,13 @@
    "date": "2026-10-13",
    "chosen": [
     "OKLO"
+   ],
+   "pool": 1
+  },
+  {
+   "date": "2026-10-14",
+   "chosen": [
+    "ASML"
    ],
    "pool": 1
   }
