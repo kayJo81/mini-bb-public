@@ -6,8 +6,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - run: |
-          t() { echo "== $1"; curl -s -m 20 -o /tmp/o -w "%{http_code} %{time_total}s %{size_download}B\n" "${@:2}" || echo fail; head -c 200 /tmp/o; echo; }
+      - shell: bash {0}
+        run: |
+          t() { echo "== $1"; rm -f /tmp/o; curl -sS -m 20 -o /tmp/o -w "%{http_code} %{time_total}s %{size_download}B\n" "${@:2}" || echo fail; head -c 300 /tmp/o 2>/dev/null; echo; }
           t fred-ua -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL,PCEPI&cosd=2026-01-01"
           t fred-curl "https://fred.stlouisfed.org/graph/fredgraph.csv?id=PCEPI&cosd=2026-01-01"
           t bls-v1 -X POST https://api.bls.gov/publicAPI/v1/timeseries/data/ -H 'Content-Type: application/json' -d '{"seriesid":["CUSR0000SA0","WPSFD4"],"startyear":"2026","endyear":"2026"}'
@@ -16,3 +17,5 @@ jobs:
           t dbnomics "https://api.db.nomics.com/v22/series/BLS/cu/CUSR0000SA0?observations=1"
           t dbn-bea "https://api.db.nomics.com/v22/series/BEA/NIPA-T20804?observations=1&limit=3"
           t alfred "https://alfred.stlouisfed.org/graph/alfredgraph.csv?id=PCEPI"
+          t bea-api "https://apps.bea.gov/api/data?UserID=x&method=GETDATASETLIST"
+          t bls-www -A "Mozilla/5.0 (mini-bblab; yidiar80k@gmail.com)" "https://www.bls.gov/"
