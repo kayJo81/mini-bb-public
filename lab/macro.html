@@ -167,8 +167,8 @@ function renderAI(g){
   const R=g.items.map(row),cs=val(cmp,cl)/val(cmp,'2022-11')*100-100;
   let h=`<div class="card"><h2>🤖 AI 비용 관련 생산자물가</h2>
     <p class="note">AI 데이터센터에 드는 비용(클라우드·반도체·서버·전력·전력망·냉각)의 생산자물가를 PPI 최종수요(전체)와 비교 · 최근 발표 ${last} · 산업별 PPI는 계절조정 안 된 값이라 전년비로 봐요</p>
-    <div class="kpis">${['클라우드','연산','전력','전력망'].map(c=>{const rs=R.filter(r=>r.it.cat===c&&r.y!=null),avg=rs.reduce((a,r)=>a+r.y,0)/(rs.length||1);
-      return `<div class="kpi"><div class="k">${c} 평균 전년비</div><div class="v">${pct(avg)}</div><div class="d">PPI 최종수요 ${pct(chg(cmp,cl,12))} 대비 ${pp(avg-chg(cmp,cl,12))}</div></div>`;}).join('')}</div>
+    <div class="kpis">${['클라우드','연산','전력','전력망'].map(c=>{const ys=R.filter(r=>r.it.cat===c&&r.y!=null).map(r=>r.y).sort((a,b)=>a-b),n=ys.length,avg=n?(n%2?ys[(n-1)/2]:(ys[n/2-1]+ys[n/2])/2):null;
+      return `<div class="kpi"><div class="k">${c} 전년비 (중앙값)</div><div class="v">${pct(avg)}</div><div class="d">PPI 최종수요 ${pct(chg(cmp,cl,12))} 대비 ${pp(avg-chg(cmp,cl,12))}</div></div>`;}).join('')}</div>
     <div class="tbl"><table><tr><th class="nm">항목</th><th>최근</th><th>전년비</th><th>3개월 연율</th><th>최종수요 대비</th><th>ChatGPT 이후<br>(22.11 대비)</th><th>코로나 전<br>(19.12 대비)</th></tr>`;
   R.forEach(r=>{h+=`<tr><td class="nm l${r.it.lv}"><span class="cat">${esc(r.it.cat)}</span>${esc(r.it.name)}</td><td>${r.L?ymKo(r.L):'–'}</td>
     <td style="background:${heat(r.y,10)}">${pct(r.y)}</td><td style="background:${heat(r.a3,14)}">${pct(r.a3)}</td>
