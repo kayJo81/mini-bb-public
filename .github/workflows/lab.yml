@@ -82,6 +82,7 @@ jobs:
       # 📈 물가 지표: CPI·PCE·PPI 항목별 월간 + PPI AI 비용 항목 (FRED, lab-data 에 누적)
       - name: Macro data
         continue-on-error: true
+        timeout-minutes: 8
         run: python lab/macro_data.py --out public_lab/macro.json
 
       - name: Save data

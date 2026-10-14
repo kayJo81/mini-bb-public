@@ -12,13 +12,13 @@ import csv
 import io
 import json
 import os
+import re
 import time
 from datetime import datetime, timezone
 
 import requests
 
 START = "2017-01-01"
-UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"}
 
 # [id, 이름, 들여쓰기(0=헤드라인·1=주요·2=세부), 계절조정 여부]
 GROUPS = [
@@ -92,27 +92,64 @@ GROUPS = [
 COMPARE = "PPIFIS"   # AI 항목과 비교하는 기준 (PPI 최종수요)
 
 
-def fred_many(ids, tries=3):
-    """여러 시리즈를 한 번에 (fredgraph.csv?id=A,B,C → 열 여러 개) — 요청 수를 줄여 FRED 차단을 피함"""
-    for i in range(tries):
+DEADLINE = time.time() + 300   # 전체 5분 안에 (안 되면 저장분 사용)
+
+
+def _csv(text):
+    rows = list(csv.reader(io.StringIO(text)))
+    # ALFRED 는 열 이름 뒤에 _YYYYMMDD(자료 시점)가 붙음
+    head, out = [re.sub(r"_\d{8}$", "", h) for h in rows[0][1:]], {}
+    for row in rows[1:]:
+        if not row or row[0] < START:
+            continue
+        for sid, val in zip(head, row[1:]):
+            if val not in ("", "."):
+                out.setdefault(sid, {})[row[0][:7]] = float(val)
+    return out
+
+
+def fred_many(ids):
+    """FRED → 안 되면 ALFRED. 여러 시리즈를 한 번에 받음 (id=A,B,C)
+    ※ FRED 는 데이터센터에서 오는 '브라우저 흉내' UA 를 끊어서, UA 를 따로 넣지 않음"""
+    for url in ("https://fred.stlouisfed.org/graph/fredgraph.csv", "https://alfred.stlouisfed.org/graph/alfredgraph.csv"):
+        if time.time() > DEADLINE:
+            break
         try:
-            r = requests.get("https://fred.stlouisfed.org/graph/fredgraph.csv",
-                             params={"id": ",".join(ids)}, headers=UA, timeout=60)
-            if r.ok and (r.text.startswith("observation_date") or r.text.startswith("DATE")):
-                rows = list(csv.reader(io.StringIO(r.text)))
-                head, out = rows[0][1:], {}
-                for row in rows[1:]:
-                    if row[0] < START:
-                        continue
-                    for sid, val in zip(head, row[1:]):
-                        if val not in ("", "."):
-                            out.setdefault(sid, {})[row[0][:7]] = float(val)
-                return out
-            print(f"[macro] FRED {r.status_code} ({len(ids)}개)")
+            r = requests.get(url, params={"id": ",".join(ids)}, timeout=25)
+            if r.ok and r.text.startswith(("observation_date", "DATE")):
+                return _csv(r.text)
+            print(f"[macro] {url.split('/')[2]} {r.status_code} ({len(ids)}개)")
         except requests.RequestException as e:
-            print(f"[macro] FRED 오류 {type(e).__name__}")
-        time.sleep(5 * (i + 1))
+            print(f"[macro] {url.split('/')[2]} 오류 {type(e).__name__}")
     return {}
+
+
+# BLS 공식 API (키 없이 v1: 한 번에 25개·하루 25번) — FRED 보다 발표 당일 반영이 빨라서 최근 달을 덮어씀
+BLS_ID = {"CPIAUCSL": "CUSR0000SA0", "CPILFESL": "CUSR0000SA0L1E", "CPIUFDSL": "CUSR0000SAF1", "CPIENGSL": "CUSR0000SA0E",
+          "CPIAPPSL": "CUSR0000SAA", "CPIMEDSL": "CUSR0000SAM", "PPIFIS": "WPSFD4", "PPICOR": "WPSFD49104",
+          "PPIFDG": "WPSFD41", "PPIFDF": "WPSFD411", "PPIFDE": "WPSFD412", "PPIFDS": "WPSFD42"}
+
+
+def bls_recent(ids):
+    m = {BLS_ID.get(i, i): i for i in ids if i in BLS_ID or i.startswith(("CUSR", "PCU", "WPU"))}
+    keys, out, y = list(m), {}, datetime.now(timezone.utc).year
+    for k in range(0, len(keys), 25):
+        if time.time() > DEADLINE:
+            break
+        try:
+            r = requests.post("https://api.bls.gov/publicAPI/v1/timeseries/data/",
+                              json={"seriesid": keys[k:k + 25], "startyear": str(y - 1), "endyear": str(y)}, timeout=30)
+            d = r.json()
+            if d.get("status") != "REQUEST_SUCCEEDED":
+                print(f"[macro] BLS {d.get('status')} {d.get('message')}")
+                continue
+            for s in d["Results"]["series"]:
+                for x in s.get("data", []):
+                    if x["period"].startswith("M") and x["period"] != "M13" and x["value"] not in ("-", ""):
+                        out.setdefault(m[s["seriesID"]], {})[f"{x['year']}-{x['period'][1:]}"] = float(x["value"])
+        except (requests.RequestException, ValueError, KeyError) as e:
+            print(f"[macro] BLS 오류 {type(e).__name__}")
+    return out
 
 
 def main():
@@ -129,10 +166,19 @@ def main():
     got = {}
     for k in range(0, len(ids), 10):
         got |= fred_many(ids[k:k + 10])
-        time.sleep(1)
-    # 묶음에서 빠진 것만 하나씩 다시
-    for sid in [x for x in ids if x not in got]:
-        got |= fred_many([sid], tries=2)
+    for sid in [x for x in ids if x not in got][:15]:   # 묶음에서 빠진 것만 하나씩 (최대 15개)
+        got |= fred_many([sid])
+    # BLS 최근 값으로 덮기 — 같은 달 값이 FRED 와 0.5% 넘게 다르면(대응 시리즈가 틀린 것) 버림
+    for sid, ser in bls_recent(ids).items():
+        base = got.get(sid) or values.get(sid) or {}
+        same = [m for m in ser if m in base]
+        if same and any(abs(ser[m] / base[m] - 1) > 0.005 for m in same):
+            print(f"[macro] BLS {sid} 값이 FRED 와 달라 안 씀")
+            continue
+        new = sorted(m for m in ser if m not in base)
+        if new:
+            print(f"[macro] BLS {sid} 새 달 {', '.join(new)}")
+        got[sid] = {**base, **ser}
     ok = fail = 0
     for sid in ids:
         if not got.get(sid):
