@@ -37,18 +37,11 @@ th{font-family:inherit;color:var(--sub);font-weight:600}td:first-child,th:first-
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:6px 0 10px}
 .kpi{border:.5px solid var(--bd);border-radius:10px;padding:8px 10px}.kpi .k{font-size:11.5px;color:var(--sub);font-weight:600}
 .kpi .v{font-family:var(--mono);font-size:18px;font-weight:700}.kpi .d{font-size:11.5px;color:var(--sub)}
-.form{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0}
-.form input,.form textarea{font:inherit;font-size:12.5px;padding:6px 8px;border:1px solid var(--bd);border-radius:8px;background:#fff;color:var(--ink)}
-.form textarea{width:100%;min-height:64px;font-family:var(--mono)}
-.btn{font:inherit;font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:8px;border:0;background:#111827;color:#fff;cursor:pointer}
-.mlist{display:flex;gap:6px;flex-wrap:wrap;font-size:12px;margin-top:6px}
-.mlist span{border:.5px solid var(--bd);border-radius:999px;padding:3px 4px 3px 9px;font-family:var(--mono)}
-.mlist button{border:0;background:none;color:var(--sub);cursor:pointer;font-size:12px}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header><div><h1>미니 블벅 <b>랩</b> · 테슬라 판매</h1><div class="hsub">분기 인도량(라인업별)·에너지 저장 배치·중국 주간 판매</div></div><a class="link" href="./">← 랩 메인</a></header>
+<header><div><h1>미니 블벅 <b>랩</b> · 테슬라 판매</h1><div class="hsub">분기 인도량(라인업별)·에너지 저장 배치</div></div><a class="link" href="./">← 랩 메인</a></header>
 
 <div class="card"><h2>🚗 분기 인도량 · 라인업별</h2>
   <p class="note">테슬라 분기 생산·인도 발표 (SEC 공시 8-K 첨부문서) · 2022년까지 기타 = Model S/X, 2023년부터 Other Models(S/X·사이버트럭 등)</p>
@@ -64,29 +57,12 @@ th{font-family:inherit;color:var(--sub);font-weight:600}td:first-child,th:first-
   <div class="chart" id="eChart"></div>
   <details><summary>표로 보기</summary><div class="tbl" id="eTbl"></div></details>
 </div>
-
-<div class="card"><h2>🇨🇳 중국 주간 판매 (보험 등록 대수)</h2>
-  <p class="note" id="cNote">CnEVPost 주간 기사 기준 · 주차 = 주간 마지막 날(일요일)의 ISO 주차 · 빈 주는 보도에 테슬라 수치가 없던 주</p>
-  <div class="tabs" id="cTabs"></div>
-  <div class="legend" id="cLeg"></div>
-  <div class="chart" id="cChart"></div>
-  <details><summary>표로 보기 (연도 × 주차)</summary><div class="tbl" id="cTbl"></div></details>
-  <details id="mBox"><summary>✍️ 주간 보험등록 직접 입력 (2025년 10월 이후 · @Tslachan 등에서 본 숫자)</summary>
-    <p class="note" style="margin-top:6px">주간 마지막 날(일요일)과 테슬라 대수를 넣으면 그래프에 바로 이어져요 · 같은 주는 덮어써요 · 직접 넣은 값이 CnEVPost 값보다 우선</p>
-    <div class="form"><input type="date" id="mDate"><input type="text" id="mVal" inputmode="numeric" placeholder="대수 (예: 12,300)" style="width:130px">
-      <input type="text" id="mNote" placeholder="출처 메모 (선택)" style="width:150px"></div>
-    <div class="form"><textarea id="mBulk" placeholder="여러 주 한꺼번에 (한 줄에 하나)&#10;2025-10-12 12300&#10;2025-10-19 13,050"></textarea></div>
-    <div class="form"><input type="password" id="mKey" placeholder="편집 키" autocomplete="off" style="width:150px"><button class="btn" id="mSave">저장</button><span class="note" id="mMsg" style="margin:0"></span></div>
-    <div class="mlist" id="mList"></div>
-  </details>
-</div>
-<p class="hsub">투자 권유 아님 · 원자료: SEC EDGAR(테슬라 공시), CnEVPost</p>
+<p class="hsub">투자 권유 아님 · 원자료: SEC EDGAR(테슬라 공시)</p>
 </div>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=v=>v==null?'–':Math.round(v).toLocaleString('en-US');
-const safeUrl=u=>/^https?:\/\//i.test(String(u??'').trim())?esc(u):'#';
 const pct=v=>v==null||!isFinite(v)?'–':(v>0?'+':'')+v.toFixed(1)+'%';
 const NS='http://www.w3.org/2000/svg';
 // 공통: 막대·선 차트 (SVG, 가는 막대 · 4px 둥근 끝 · 2px 간격 · 마우스/터치 툴팁)
@@ -138,50 +114,11 @@ function energy(Q){
     hit.addEventListener('mouseenter',on);hit.addEventListener('touchstart',on,{passive:true});hit.addEventListener('mouseleave',()=>hideTip(tip));});
 }
 
-// ── 중국 주간 (연도별 선, x = ISO 주차) ──
-const CN={weeks:[],years:[],on:new Set()};
-const YC=['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)'];
-function china(){
-  const el=$('cChart'),W=Math.max(320,el.clientWidth||640),H=280,pad={t:12,r:12,b:30,l:48};
-  const {svg,tip}=frame(el,W,H,pad);
-  const ys=CN.years.filter(y=>CN.on.has(y)),pts=CN.weeks.filter(w=>CN.on.has(w.year));
-  if(!pts.length){el.innerHTML='<div class="note">선택한 연도에 데이터가 없어요</div>';return;}
-  const max=niceMax(Math.max(...pts.map(w=>w.tesla)));yAxis(svg,W,pad,H,max,v=>v>=1000?(v/1000)+'k':v);
-  const sx=wk=>pad.l+(W-pad.l-pad.r)*(wk-1)/52,sy=v=>H-pad.b-(H-pad.t-pad.b)*v/max;
-  for(const wk of [1,9,18,27,36,45,53])add(svg,'text',{x:sx(wk),y:H-pad.b+14,'text-anchor':'middle',class:'ax'},wk+'주');
-  ys.forEach(y=>{const c=YC[CN.years.indexOf(y)%YC.length],L=CN.weeks.filter(w=>w.year===y).sort((a,b)=>a.week-b.week);
-    // 빈 주는 선을 끊음
-    let d='';L.forEach((w,i)=>{d+=(i&&w.week===L[i-1].week+1?'L':'M')+sx(w.week)+','+sy(w.tesla);});
-    add(svg,'path',{d,fill:'none',stroke:c,'stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'});
-    L.forEach(w=>add(svg,'circle',{cx:sx(w.week),cy:sy(w.tesla),r:2.6,fill:c,stroke:'#fff','stroke-width':1}));
-    const last=L[L.length-1];if(last)add(svg,'text',{x:Math.min(W-pad.r,sx(last.week)+4),y:sy(last.tesla)-6,style:'font-size:10.5px;font-weight:700;fill:#111827'},y);});
-  // 가로선 + 툴팁 (주차 단위)
-  const cross=add(svg,'line',{y1:pad.t,y2:H-pad.b,stroke:'#9ca3af','stroke-width':1,'stroke-dasharray':'3 3',opacity:0});
-  const hit=add(svg,'rect',{x:pad.l,y:pad.t,width:W-pad.l-pad.r,height:H-pad.t-pad.b,fill:'transparent'});
-  const move=e=>{const r=svg.getBoundingClientRect(),cx=((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width*W;
-    const wk=Math.max(1,Math.min(53,Math.round((cx-pad.l)/(W-pad.l-pad.r)*52+1)));cross.setAttribute('x1',sx(wk));cross.setAttribute('x2',sx(wk));cross.setAttribute('opacity',1);
-    const rows=ys.map(y=>{const w=CN.weeks.find(w=>w.year===y&&w.week===wk);return `<span style="color:#cbd5e1">${y}</span> <b>${w?fmt(w.tesla):'–'}</b>${w?` <span style="color:#cbd5e1">(~${w.week_end.slice(5).replace('-','/')})</span>`:''}`;});
-    showTip(el,tip,sx(wk)/W*el.clientWidth,30,`<b>${wk}주차</b><br>`+rows.join('<br>'));};
-  hit.addEventListener('mousemove',move);hit.addEventListener('touchmove',move,{passive:true});hit.addEventListener('touchstart',move,{passive:true});
-  hit.addEventListener('mouseleave',()=>{hideTip(tip);cross.setAttribute('opacity',0);});
-}
-function chinaLegend(){
-  $('cLeg').innerHTML=CN.years.map((y,i)=>`<label><input type="checkbox" data-y="${y}" ${CN.on.has(y)?'checked':''} style="display:none"><i style="background:${CN.on.has(y)?YC[i%YC.length]:'#e5e7eb'}"></i>${y}년 (${CN.weeks.filter(w=>w.year===y).length}주)</label>`).join('');
-}
-$('cLeg').addEventListener('click',e=>{const l=e.target.closest('label');if(!l)return;e.preventDefault();const y=+l.querySelector('input').dataset.y;
-  CN.on.has(y)?CN.on.delete(y):CN.on.add(y);chinaLegend();china();});
-
 function tables(Q){
   $('dTbl').innerHTML='<table><tr><th>분기</th><th>Model 3/Y</th><th>기타</th><th>합계</th><th>전년비</th><th>생산</th></tr>'+
     Q.slice().reverse().map((q,i,a)=>{const p=Q[Q.length-1-i-4];return `<tr><td>${q.q}</td><td>${fmt(q.m3y)}</td><td>${fmt(q.other)}</td><td><b>${fmt(q.total)}</b></td><td>${p?pct((q.total/p.total-1)*100):'–'}</td><td>${fmt(q.total_prod)}</td></tr>`;}).join('')+'</table>';
   $('eTbl').innerHTML='<table><tr><th>분기</th><th>배치 (GWh)</th><th>전년비</th><th>비고</th></tr>'+
     Q.slice().reverse().map((q,i)=>{const p=Q[Q.length-1-i-4];return `<tr><td>${q.q}</td><td><b>${q.storage_gwh==null?'–':q.storage_gwh.toFixed(2)}</b></td><td>${p&&p.storage_gwh?pct((q.storage_gwh/p.storage_gwh-1)*100):'–'}</td><td style="font-family:inherit;text-align:left">${esc(q.storage_note||'')}</td></tr>`;}).join('')+'</table>';
-  const ys=CN.years;let h='<table><tr><th>주차</th>'+ys.map(y=>`<th>${y}</th>`).join('')+'</tr>';
-  for(let wk=1;wk<=53;wk++){const cells=ys.map(y=>{const w=CN.weeks.find(w=>w.year===y&&w.week===wk);return `<td>${w?(w.manual?`<span title="직접 입력${w.note?' · '+esc(w.note):''}" style="color:#7c3aed">${fmt(w.tesla)}✍️</span>`:`<a href="${safeUrl(w.url)}" target="_blank" rel="noopener" style="text-decoration:none">${fmt(w.tesla)}</a>`):''}</td>`;});
-    if(cells.some(c=>c!=='<td></td>'))h+=`<tr><td>${wk}</td>${cells.join('')}</tr>`;}
-  // 연도 합계(보도된 주만)
-  h+='<tr><th>보도된 주 합계</th>'+ys.map(y=>`<th>${fmt(CN.weeks.filter(w=>w.year===y).reduce((a,w)=>a+w.tesla,0))}</th>`).join('')+'</tr></table>';
-  $('cTbl').innerHTML=h;
 }
 function kpis(Q){
   const L=Q[Q.length-1],P=Q[Q.length-5],ytd=y=>Q.filter(q=>q.q.startsWith(y)).reduce((a,q)=>a+q.total,0),yr=L.q.slice(0,4),n=+L.q.slice(-1);
@@ -194,42 +131,9 @@ function kpis(Q){
     `<div class="kpi"><div class="k">${yr}년 누적</div><div class="v">${ey(yr).toFixed(1)} GWh</div><div class="d">${+yr-1}년 연간 ${ey(String(+yr-1)).toFixed(1)} GWh</div></div>`;
 }
 let QD=null;
-function drawAll(){if(QD){deliveries(QD);energy(QD);}if(CN.weeks.length)china();}
-// ── 직접 입력한 주 (KV · /api/tesla_cn) ──
-const MAPI='/api/tesla_cn',store={get:k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
-let BASE=[],MAN=[];
-// ISO 연도·주차 (주간 마지막 날 기준)
-function isoWeek(ds){const d=new Date(ds+'T00:00:00Z'),wd=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-wd);
-  const y=d.getUTCFullYear();return [y,Math.ceil(((d-Date.UTC(y,0,1))/864e5+1)/7)];}
-function mergeCN(){
-  const m=new Map(BASE.map(w=>[w.year+'-'+w.week,w]));
-  MAN.forEach(x=>{const [y,wk]=isoWeek(x.week_end);m.set(y+'-'+wk,{week_end:x.week_end,year:y,week:wk,tesla:x.tesla,from:'직접 입력',url:'',manual:1,note:x.note||''});});
-  CN.weeks=[...m.values()].sort((a,b)=>a.week_end.localeCompare(b.week_end));
-  const ys=[...new Set(CN.weeks.map(w=>w.year))].sort(),fresh=!CN.years.length;
-  ys.filter(y=>!CN.years.includes(y)&&!fresh).forEach(y=>CN.on.add(y));CN.years=ys;if(fresh)ys.slice(-3).forEach(y=>CN.on.add(y));
-  $('mList').innerHTML=MAN.length?MAN.slice().reverse().map(x=>`<span>${esc(x.week_end)} <b>${fmt(x.tesla)}</b>${x.note?' · '+esc(x.note):''}<button data-del="${esc(x.week_end)}" title="삭제">✕</button></span>`).join(''):'<span class="note" style="border:0;padding:0">직접 넣은 주가 아직 없어요</span>';
-}
-function refreshCN(){mergeCN();if(QD)tables(QD);chinaLegend();if(CN.weeks.length)china();}
-function loadMan(){return fetch(MAPI,{cache:'no-store'}).then(r=>r.json()).then(d=>{MAN=d.weeks||[];
-  if(!d.editable)$('mMsg').textContent='편집 키가 아직 설정되지 않아 저장할 수 없어요 (GitHub Secrets 에 LAB_EDIT_KEY)';}).catch(()=>{MAN=[];});}
-$('mKey').value=store.get('labEditKey');
-$('mSave').addEventListener('click',()=>{
-  const key=$('mKey').value.trim();store.set('labEditKey',key);const rows=[];
-  if($('mDate').value&&$('mVal').value.trim())rows.push({week_end:$('mDate').value,tesla:$('mVal').value.trim(),note:$('mNote').value.trim()});
-  $('mBulk').value.split('\n').forEach(l=>{const m=l.trim().match(/^(\d{4}-\d{2}-\d{2})[\s,\t]+([\d,]+)\s*(.*)$/);if(m)rows.push({week_end:m[1],tesla:m[2],note:m[3]||$('mNote').value.trim()});});
-  if(!rows.length){$('mMsg').textContent='날짜와 대수를 넣어 주세요';return;}
-  $('mMsg').textContent='저장 중…';
-  fetch(MAPI,{method:'POST',headers:{'content-type':'application/json','x-edit-key':key},body:JSON.stringify({rows})}).then(r=>r.json())
-    .then(d=>{if(d.error){$('mMsg').textContent=d.error;return;}$('mMsg').textContent=`${d.saved}주 저장했어요`;$('mVal').value='';$('mBulk').value='';return loadMan().then(refreshCN);})
-    .catch(e=>{$('mMsg').textContent='저장 실패 ('+e.message+')';});
-});
-$('mList').addEventListener('click',e=>{const b=e.target.closest('button[data-del]');if(!b||!confirm(b.dataset.del+' 주를 지울까요?'))return;
-  fetch(MAPI+'?week_end='+encodeURIComponent(b.dataset.del),{method:'DELETE',headers:{'x-edit-key':$('mKey').value.trim()}}).then(r=>r.json())
-    .then(d=>{if(d.error){$('mMsg').textContent=d.error;return;}return loadMan().then(refreshCN);});});
-Promise.all([fetch('tesla_q.json',{cache:'no-store'}).then(r=>r.json()),fetch('tesla_cn_weekly.json',{cache:'no-store'}).then(r=>r.json()).catch(()=>({weeks:[]})),loadMan()])
-  .then(([q,c])=>{QD=q.quarters;BASE=c.weeks||[];
-    const last=BASE[BASE.length-1];if(last)$('cNote').textContent+=` · CnEVPost 마지막 보도 ${last.week_end} (그 뒤는 ✍️ 직접 입력)`;
-    mergeCN();kpis(QD);tables(QD);chinaLegend();drawAll();})
+function drawAll(){if(QD){deliveries(QD);energy(QD);}}
+fetch('tesla_q.json',{cache:'no-store'}).then(r=>r.json())
+  .then(q=>{QD=q.quarters;kpis(QD);tables(QD);drawAll();})
   .catch(e=>{document.querySelector('.wrap').insertAdjacentHTML('beforeend',`<div class="card note">데이터를 불러오지 못했어요 (${esc(e.message)})</div>`);});
 let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(drawAll,150);});
 </script>
