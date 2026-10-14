@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>미니 블벅 랩 · 테슬라 판매</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--bd:#e5e7eb;--sub:#6b7280;--ink:#111827;--grid:#eef0f3;--acc:#2563eb;--r:14px;
+  --sh:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);--mono:'JetBrains Mono',monospace;
+  /* 계열 색 (고정 순서): 1 파랑 · 2 주황 · 3 청록 · 4 노랑 · 5 자홍 */
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4}
+*{box-sizing:border-box}html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,'Apple SD Gothic Neo','Noto Sans KR',sans-serif}
+a{color:inherit}.wrap{max-width:1080px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+h1{font-size:20px;margin:0}h1 b{color:var(--acc)}.hsub{font-size:12px;color:var(--sub)}
+.link{font-size:12px;font-weight:600;text-decoration:none;background:#fff;color:#111827;border:.5px solid var(--bd);padding:7px 12px;border-radius:9px;white-space:nowrap}
+.card{background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:14px 16px;margin-bottom:12px;min-width:0}
+h2{font-size:16px;margin:0 0 2px}.note{font-size:12px;color:var(--sub);margin:0 0 8px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin:4px 0 6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.legend label{cursor:pointer;user-select:none}
+.chart{position:relative}.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.tip{position:absolute;pointer-events:none;background:#111827;color:#fff;font-size:12px;line-height:1.45;padding:6px 9px;border-radius:8px;white-space:nowrap;
+  transform:translate(-50%,-100%);margin-top:-8px;opacity:0;transition:opacity .1s;z-index:3}
+.tip b{font-family:var(--mono)}
+.ax{font-size:10px;fill:var(--sub);font-family:var(--mono)}
+details{margin-top:6px}summary{cursor:pointer;font-size:12.5px;color:var(--sub)}
+.tbl{overflow-x:auto;margin-top:6px}
+table{border-collapse:collapse;font-size:12px;width:100%}
+th,td{padding:4px 6px;border-bottom:.5px solid var(--grid);text-align:right;white-space:nowrap;font-family:var(--mono)}
+th{font-family:inherit;color:var(--sub);font-weight:600}td:first-child,th:first-child{text-align:left}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
+.tab{padding:5px 11px;border-radius:999px;border:1px solid var(--bd);background:#fff;font-weight:700;cursor:pointer;font-size:12.5px}
+.tab.on{background:#111827;color:#fff;border-color:#111827}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:6px 0 10px}
+.kpi{border:.5px solid var(--bd);border-radius:10px;padding:8px 10px}.kpi .k{font-size:11.5px;color:var(--sub);font-weight:600}
+.kpi .v{font-family:var(--mono);font-size:18px;font-weight:700}.kpi .d{font-size:11.5px;color:var(--sub)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div><h1>미니 블벅 <b>랩</b> · 테슬라 판매</h1><div class="hsub">분기 인도량(라인업별)·에너지 저장 배치·중국 주간 판매</div></div><a class="link" href="./">← 랩 메인</a></header>
+
+<div class="card"><h2>🚗 분기 인도량 · 라인업별</h2>
+  <p class="note">테슬라 분기 생산·인도 발표 (SEC 공시 8-K 첨부문서) · 2022년까지 기타 = Model S/X, 2023년부터 Other Models(S/X·사이버트럭 등)</p>
+  <div class="kpis" id="dKpi"></div>
+  <div class="legend"><span><i style="background:var(--s1)"></i>Model 3/Y</span><span><i style="background:var(--s2)"></i>기타 모델</span></div>
+  <div class="chart" id="dChart"></div>
+  <details><summary>표로 보기</summary><div class="tbl" id="dTbl"></div></details>
+</div>
+
+<div class="card"><h2>🔋 에너지 저장 배치 (GWh, 분기)</h2>
+  <p class="note">생산·인도 발표 · 실적 발표 운영 요약 · 분기보고서 · <span style="text-decoration:underline dotted">빗금</span> = 연초 누적 배치량의 차이로 계산한 분기(반올림 오차 가능)</p>
+  <div class="kpis" id="eKpi"></div>
+  <div class="chart" id="eChart"></div>
+  <details><summary>표로 보기</summary><div class="tbl" id="eTbl"></div></details>
+</div>
+
+<div class="card"><h2>🇨🇳 중국 주간 판매 (보험 등록 대수)</h2>
+  <p class="note" id="cNote">CnEVPost 주간 기사 기준 · 주차 = 주간 마지막 날(일요일)의 ISO 주차 · 빈 주는 보도에 테슬라 수치가 없던 주</p>
+  <div class="tabs" id="cTabs"></div>
+  <div class="legend" id="cLeg"></div>
+  <div class="chart" id="cChart"></div>
+  <details><summary>표로 보기 (연도 × 주차)</summary><div class="tbl" id="cTbl"></div></details>
+</div>
+<p class="hsub">투자 권유 아님 · 원자료: SEC EDGAR(테슬라 공시), CnEVPost</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=v=>v==null?'–':Math.round(v).toLocaleString('en-US');
+const pct=v=>v==null||!isFinite(v)?'–':(v>0?'+':'')+v.toFixed(1)+'%';
+const NS='http://www.w3.org/2000/svg';
+// 공통: 막대·선 차트 (SVG, 가는 막대 · 4px 둥근 끝 · 2px 간격 · 마우스/터치 툴팁)
+function frame(el,W,H,pad){el.innerHTML='';const svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);el.appendChild(svg);
+  const tip=document.createElement('div');tip.className='tip';el.appendChild(tip);return {svg,tip};}
+function add(svg,tag,attrs,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;svg.appendChild(e);return e;}
+function niceMax(v){const p=Math.pow(10,Math.floor(Math.log10(v)));const n=v/p;return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p;}
+function yAxis(svg,W,pad,H,max,fmtY){const ticks=4;for(let i=0;i<=ticks;i++){const v=max*i/ticks,y=H-pad.b-(H-pad.t-pad.b)*i/ticks;
+  add(svg,'line',{x1:pad.l,x2:W-pad.r,y1:y,y2:y,stroke:i?'#eef0f3':'#d1d5db','stroke-width':1});
+  add(svg,'text',{x:pad.l-6,y:y+3,'text-anchor':'end',class:'ax'},fmtY(v));}}
+function showTip(el,tip,x,y,html){tip.innerHTML=html;const w=tip.offsetWidth/2+4;tip.style.left=Math.max(w,Math.min(el.clientWidth-w,x))+'px';tip.style.top=Math.max(tip.offsetHeight+4,y)+'px';tip.style.opacity=1;}
+function hideTip(tip){tip.style.opacity=0;}
+// 막대 위 끝만 둥글게 (4px), 바닥은 직각
+function barPath(x,y,w,h,r){r=Math.min(r,w/2,h);return `M${x},${y+h}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h}Z`;}
+
+// ── 분기 인도량 (누적 막대: Model 3/Y + 기타) ──
+function deliveries(Q){
+  const el=$('dChart'),W=Math.max(320,el.clientWidth||640),H=300,pad={t:12,r:8,b:34,l:56};
+  const {svg,tip}=frame(el,W,H,pad);const max=niceMax(Math.max(...Q.map(q=>q.total)));
+  yAxis(svg,W,pad,H,max,v=>v>=1000?Math.round(v/1000)+'k':v);
+  const n=Q.length,bw=(W-pad.l-pad.r)/n,w=Math.max(6,bw*0.62),sy=v=>(H-pad.t-pad.b)*v/max;
+  Q.forEach((q,i)=>{const x=pad.l+bw*i+(bw-w)/2,b=H-pad.b,h1=sy(q.m3y||0),h2=sy(q.other||0);
+    add(svg,'rect',{x,y:b-h1,width:w,height:h1,fill:'var(--s1)'});
+    if(h2>0.5)add(svg,'path',{d:barPath(x,b-h1-h2,w,Math.max(0,h2-2),4),fill:'var(--s2)',transform:'translate(0,0)'});
+    if(q.q.endsWith('Q1'))add(svg,'text',{x:x+w/2,y:H-pad.b+14,'text-anchor':'middle',class:'ax'},q.q.slice(0,4));
+    const hit=add(svg,'rect',{x:pad.l+bw*i,y:pad.t,width:bw,height:H-pad.t-pad.b,fill:'transparent',style:'cursor:pointer'});
+    const prev=Q[i-4],yoy=prev?(q.total/prev.total-1)*100:null;
+    const h=`<b>${q.q}</b> 인도 <b>${fmt(q.total)}</b> (전년비 ${pct(yoy)})<br>Model 3/Y ${fmt(q.m3y)} · ${esc(q.other_label)} ${fmt(q.other)}<br>생산 ${fmt(q.total_prod)}`;
+    const on=e=>{const r=el.getBoundingClientRect();showTip(el,tip,(pad.l+bw*i+bw/2)/W*el.clientWidth,(b-h1-h2)/H*el.clientHeight,h);};
+    hit.addEventListener('mouseenter',on);hit.addEventListener('touchstart',on,{passive:true});hit.addEventListener('mouseleave',()=>hideTip(tip));});
+  // 직접 라벨: 마지막 분기 값
+  const L=Q[n-1];add(svg,'text',{x:W-pad.r,y:pad.t+10,'text-anchor':'end',style:'font-size:11px;fill:#111827;font-weight:700'},`${L.q} ${fmt(L.total)}`);
+}
+
+// ── 에너지 저장 배치 (막대, 계산값은 빗금) ──
+function energy(Q){
+  const el=$('eChart'),W=Math.max(320,el.clientWidth||640),H=240,pad={t:12,r:8,b:34,l:44};
+  const {svg,tip}=frame(el,W,H,pad);const R=Q.filter(q=>q.storage_gwh!=null);const max=niceMax(Math.max(...R.map(q=>q.storage_gwh)));
+  add(svg,'defs',{}).innerHTML='<pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#1baf7a" opacity=".35"/><line x1="0" y1="0" x2="0" y2="5" stroke="#1baf7a" stroke-width="2.4"/></pattern>';
+  yAxis(svg,W,pad,H,max,v=>v.toFixed(0));
+  const n=Q.length,bw=(W-pad.l-pad.r)/n,w=Math.max(6,bw*0.62);
+  Q.forEach((q,i)=>{const x=pad.l+bw*i+(bw-w)/2,b=H-pad.b;
+    if(q.storage_gwh!=null){const h=(H-pad.t-pad.b)*q.storage_gwh/max;add(svg,'path',{d:barPath(x,b-h,w,h,4),fill:q.storage_note?'url(#hatch)':'var(--s3)'});}
+    if(q.q.endsWith('Q1'))add(svg,'text',{x:x+w/2,y:H-pad.b+14,'text-anchor':'middle',class:'ax'},q.q.slice(0,4));
+    const hit=add(svg,'rect',{x:pad.l+bw*i,y:pad.t,width:bw,height:H-pad.t-pad.b,fill:'transparent',style:'cursor:pointer'});
+    const prev=Q[i-4],yoy=prev&&prev.storage_gwh?(q.storage_gwh/prev.storage_gwh-1)*100:null;
+    const t=`<b>${q.q}</b> <b>${q.storage_gwh==null?'–':q.storage_gwh.toFixed(2)}</b> GWh (전년비 ${pct(yoy)})${q.storage_note?'<br>'+esc(q.storage_note):''}`;
+    const on=()=>showTip(el,tip,(pad.l+bw*i+bw/2)/W*el.clientWidth,40,t);
+    hit.addEventListener('mouseenter',on);hit.addEventListener('touchstart',on,{passive:true});hit.addEventListener('mouseleave',()=>hideTip(tip));});
+}
+
+// ── 중국 주간 (연도별 선, x = ISO 주차) ──
+const CN={weeks:[],years:[],on:new Set()};
+const YC=['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)'];
+function china(){
+  const el=$('cChart'),W=Math.max(320,el.clientWidth||640),H=280,pad={t:12,r:12,b:30,l:48};
+  const {svg,tip}=frame(el,W,H,pad);
+  const ys=CN.years.filter(y=>CN.on.has(y)),pts=CN.weeks.filter(w=>CN.on.has(w.year));
+  if(!pts.length){el.innerHTML='<div class="note">선택한 연도에 데이터가 없어요</div>';return;}
+  const max=niceMax(Math.max(...pts.map(w=>w.tesla)));yAxis(svg,W,pad,H,max,v=>v>=1000?(v/1000)+'k':v);
+  const sx=wk=>pad.l+(W-pad.l-pad.r)*(wk-1)/52,sy=v=>H-pad.b-(H-pad.t-pad.b)*v/max;
+  for(const wk of [1,9,18,27,36,45,53])add(svg,'text',{x:sx(wk),y:H-pad.b+14,'text-anchor':'middle',class:'ax'},wk+'주');
+  ys.forEach(y=>{const c=YC[CN.years.indexOf(y)%YC.length],L=CN.weeks.filter(w=>w.year===y).sort((a,b)=>a.week-b.week);
+    // 빈 주는 선을 끊음
+    let d='';L.forEach((w,i)=>{d+=(i&&w.week===L[i-1].week+1?'L':'M')+sx(w.week)+','+sy(w.tesla);});
+    add(svg,'path',{d,fill:'none',stroke:c,'stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'});
+    L.forEach(w=>add(svg,'circle',{cx:sx(w.week),cy:sy(w.tesla),r:2.6,fill:c,stroke:'#fff','stroke-width':1}));
+    const last=L[L.length-1];if(last)add(svg,'text',{x:Math.min(W-pad.r,sx(last.week)+4),y:sy(last.tesla)-6,style:'font-size:10.5px;font-weight:700;fill:#111827'},y);});
+  // 가로선 + 툴팁 (주차 단위)
+  const cross=add(svg,'line',{y1:pad.t,y2:H-pad.b,stroke:'#9ca3af','stroke-width':1,'stroke-dasharray':'3 3',opacity:0});
+  const hit=add(svg,'rect',{x:pad.l,y:pad.t,width:W-pad.l-pad.r,height:H-pad.t-pad.b,fill:'transparent'});
+  const move=e=>{const r=svg.getBoundingClientRect(),cx=((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width*W;
+    const wk=Math.max(1,Math.min(53,Math.round((cx-pad.l)/(W-pad.l-pad.r)*52+1)));cross.setAttribute('x1',sx(wk));cross.setAttribute('x2',sx(wk));cross.setAttribute('opacity',1);
+    const rows=ys.map(y=>{const w=CN.weeks.find(w=>w.year===y&&w.week===wk);return `<span style="color:#cbd5e1">${y}</span> <b>${w?fmt(w.tesla):'–'}</b>${w?` <span style="color:#cbd5e1">(~${w.week_end.slice(5).replace('-','/')})</span>`:''}`;});
+    showTip(el,tip,sx(wk)/W*el.clientWidth,30,`<b>${wk}주차</b><br>`+rows.join('<br>'));};
+  hit.addEventListener('mousemove',move);hit.addEventListener('touchmove',move,{passive:true});hit.addEventListener('touchstart',move,{passive:true});
+  hit.addEventListener('mouseleave',()=>{hideTip(tip);cross.setAttribute('opacity',0);});
+}
+function chinaLegend(){
+  $('cLeg').innerHTML=CN.years.map((y,i)=>`<label><input type="checkbox" data-y="${y}" ${CN.on.has(y)?'checked':''} style="display:none"><i style="background:${CN.on.has(y)?YC[i%YC.length]:'#e5e7eb'}"></i>${y}년 (${CN.weeks.filter(w=>w.year===y).length}주)</label>`).join('');
+}
+$('cLeg').addEventListener('click',e=>{const l=e.target.closest('label');if(!l)return;e.preventDefault();const y=+l.querySelector('input').dataset.y;
+  CN.on.has(y)?CN.on.delete(y):CN.on.add(y);chinaLegend();china();});
+
+function tables(Q){
+  $('dTbl').innerHTML='<table><tr><th>분기</th><th>Model 3/Y</th><th>기타</th><th>합계</th><th>전년비</th><th>생산</th></tr>'+
+    Q.slice().reverse().map((q,i,a)=>{const p=Q[Q.length-1-i-4];return `<tr><td>${q.q}</td><td>${fmt(q.m3y)}</td><td>${fmt(q.other)}</td><td><b>${fmt(q.total)}</b></td><td>${p?pct((q.total/p.total-1)*100):'–'}</td><td>${fmt(q.total_prod)}</td></tr>`;}).join('')+'</table>';
+  $('eTbl').innerHTML='<table><tr><th>분기</th><th>배치 (GWh)</th><th>전년비</th><th>비고</th></tr>'+
+    Q.slice().reverse().map((q,i)=>{const p=Q[Q.length-1-i-4];return `<tr><td>${q.q}</td><td><b>${q.storage_gwh==null?'–':q.storage_gwh.toFixed(2)}</b></td><td>${p&&p.storage_gwh?pct((q.storage_gwh/p.storage_gwh-1)*100):'–'}</td><td style="font-family:inherit;text-align:left">${esc(q.storage_note||'')}</td></tr>`;}).join('')+'</table>';
+  const ys=CN.years;let h='<table><tr><th>주차</th>'+ys.map(y=>`<th>${y}</th>`).join('')+'</tr>';
+  for(let wk=1;wk<=53;wk++){const cells=ys.map(y=>{const w=CN.weeks.find(w=>w.year===y&&w.week===wk);return `<td>${w?`<a href="${esc(w.url)}" target="_blank" rel="noopener" style="text-decoration:none">${fmt(w.tesla)}</a>`:''}</td>`;});
+    if(cells.some(c=>c!=='<td></td>'))h+=`<tr><td>${wk}</td>${cells.join('')}</tr>`;}
+  // 연도 합계(보도된 주만)
+  h+='<tr><th>보도된 주 합계</th>'+ys.map(y=>`<th>${fmt(CN.weeks.filter(w=>w.year===y).reduce((a,w)=>a+w.tesla,0))}</th>`).join('')+'</tr></table>';
+  $('cTbl').innerHTML=h;
+}
+function kpis(Q){
+  const L=Q[Q.length-1],P=Q[Q.length-5],ytd=y=>Q.filter(q=>q.q.startsWith(y)).reduce((a,q)=>a+q.total,0),yr=L.q.slice(0,4),n=+L.q.slice(-1);
+  const ytdPrev=Q.filter(q=>q.q.startsWith(+yr-1)&&+q.q.slice(-1)<=n).reduce((a,q)=>a+q.total,0);
+  $('dKpi').innerHTML=`<div class="kpi"><div class="k">${L.q} 인도</div><div class="v">${fmt(L.total)}</div><div class="d">전년비 ${pct(P?(L.total/P.total-1)*100:null)}</div></div>`+
+    `<div class="kpi"><div class="k">${yr}년 누적 (${n}분기)</div><div class="v">${fmt(ytd(yr))}</div><div class="d">전년 같은 기간 ${pct((ytd(yr)/ytdPrev-1)*100)}</div></div>`+
+    `<div class="kpi"><div class="k">Model 3/Y 비중</div><div class="v">${(L.m3y/L.total*100).toFixed(1)}%</div><div class="d">${L.q}</div></div>`;
+  const E=Q.filter(q=>q.storage_gwh!=null),EL=E[E.length-1],EP=E[E.length-5],ey=y=>E.filter(q=>q.q.startsWith(y)).reduce((a,q)=>a+q.storage_gwh,0);
+  $('eKpi').innerHTML=`<div class="kpi"><div class="k">${EL.q} 배치</div><div class="v">${EL.storage_gwh.toFixed(1)} GWh</div><div class="d">전년비 ${pct(EP?(EL.storage_gwh/EP.storage_gwh-1)*100:null)}</div></div>`+
+    `<div class="kpi"><div class="k">${yr}년 누적</div><div class="v">${ey(yr).toFixed(1)} GWh</div><div class="d">${+yr-1}년 연간 ${ey(String(+yr-1)).toFixed(1)} GWh</div></div>`;
+}
+let QD=null;
+function drawAll(){if(QD){deliveries(QD);energy(QD);}if(CN.weeks.length)china();}
+Promise.all([fetch('tesla_q.json',{cache:'no-store'}).then(r=>r.json()),fetch('tesla_cn_weekly.json',{cache:'no-store'}).then(r=>r.json()).catch(()=>({weeks:[]}))])
+  .then(([q,c])=>{QD=q.quarters;CN.weeks=c.weeks||[];CN.years=[...new Set(CN.weeks.map(w=>w.year))].sort();CN.years.slice(-3).forEach(y=>CN.on.add(y));
+    const last=CN.weeks[CN.weeks.length-1];if(last)$('cNote').textContent+=` · 마지막 보도 ${last.week_end} (그 뒤로 CnEVPost 주간 보도 중단)`;
+    kpis(QD);tables(QD);chinaLegend();drawAll();})
+  .catch(e=>{document.querySelector('.wrap').insertAdjacentHTML('beforeend',`<div class="card note">데이터를 불러오지 못했어요 (${esc(e.message)})</div>`);});
+let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(drawAll,150);});
+</script>
+</body>
+</html>

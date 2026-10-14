@@ -68,7 +68,17 @@ jobs:
           cp lab/site.html public_lab/sim.html
           cp lab/env.html public_lab/env.html
           cp lab/weekly.html public_lab/weekly.html
+          cp lab/tesla.html public_lab/tesla.html
           printf '/*\n  X-Frame-Options: SAMEORIGIN\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n' > public_lab/_headers
+
+      # 🚗 테슬라: 분기 인도량·에너지 배치(SEC 공시) + 중국 주간 판매(CnEVPost, 저장분에 새 주만 이어 붙임)
+      - name: Tesla data
+        continue-on-error: true
+        run: |
+          mkdir -p public_lab
+          python lab/tesla_data.py --out public_lab/tesla_q.json
+          cp lab/tesla_cn_weekly.json public_lab/tesla_cn_weekly.json
+          python lab/tesla_china.py --out public_lab/tesla_cn_weekly.json || true
 
       - name: Save data
         if: always()
