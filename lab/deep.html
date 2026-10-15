@@ -68,7 +68,7 @@ fetch('deepnews/index.json',{cache:'no-store'}).then(r=>r.json()).then(L=>{
   fetch(`deepnews/${id}.html`,{cache:'no-store'}).then(r=>r.text()).then(h=>{
     document.getElementById('app').innerHTML=`<article class="card art"><span class="date">${esc(a.date)}</span> ${(a.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
       <h1>${esc(a.title)}</h1><p class="lede">${esc(a.sub)}</p>
-      <div class="req"><div class="k">📝 요청 내용</div>${esc(a.request)}</div>${h}</article>`;});
+      <div class="req"><div class="k">📝 요청 내용</div>${esc(a.request)}</div>${(a.tilts||[]).length?`<div class="req" style="border-left-color:#16a34a"><div class="k" style="color:#16a34a">🧭 포트폴리오 반영 (<a href="sim">가상 운용</a>)</div>${a.tilts.map(t=>`<div>${t.dir>0?'비중↑':'비중↓·숏'} <b>${t.syms.map(esc).join(', ')}</b> · ~${esc(t.until||'')} — ${esc(t.why||'')}</div>`).join('')}</div>`:''}${h}</article>`;});
 }).catch(e=>{document.getElementById('app').innerHTML=`<div class="card note">불러오지 못했어요 (${esc(e.message)})</div>`;});
 </script>
 </body>

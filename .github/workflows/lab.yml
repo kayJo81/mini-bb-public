@@ -92,6 +92,11 @@ jobs:
         timeout-minutes: 5
         run: python lab/gpu_rent.py --out public_lab/gpu_rent.json
 
+      # 🧭 포트폴리오 가상 운용: 시장 환경·매크로·심층 뉴스(lab/deepnews/index.json 의 tilts)·뉴스 신호 반영 (상태는 lab-data)
+      - name: Portfolio
+        continue-on-error: true
+        run: python lab/portfolio.py --out public_lab
+
       - name: Save data
         if: always()
         working-directory: labdata
