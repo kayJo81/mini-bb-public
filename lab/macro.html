@@ -53,7 +53,7 @@ td.c{position:relative;cursor:default}td.c.rv::after{content:'';position:absolut
 </head>
 <body>
 <div class="wrap">
-<header><div><h1>미니 블벅 <b>랩</b> · 물가 지표</h1><div class="hsub" id="hsub">CPI · PCE · PPI 항목별 월간 + PPI AI 비용 항목</div></div><a class="link" href="./">← 랩 메인</a></header>
+<header><div><h1>미니 블벅 <b>랩</b> · 물가 지표</h1><div class="hsub" id="hsub">CPI · PCE · PPI 항목별 월간 + PPI AI 비용 항목 + GPU 임대료</div></div><a class="link" href="./">← 랩 메인</a></header>
 <div class="tabs" id="tabs"></div>
 <div id="app"><div class="card note">불러오는 중…</div></div>
 <p class="hsub">투자 권유 아님 · 원자료: 미 노동통계국(BLS)·경제분석국(BEA), FRED(세인트루이스 연은) 경유 · 매일 07:00 KST 갱신, 받은 값은 계속 쌓아 둠(나중에 개정되면 ● 표시)</p>
@@ -122,8 +122,8 @@ const G=k=>D.groups.find(g=>g.key===k);
 const byId=id=>D.groups.flatMap(g=>g.items).find(i=>i.id===id);
 const groupLast=g=>g.items.filter(i=>i.lv===0).map(lastYm).filter(Boolean).sort().pop()||g.items.map(lastYm).sort().pop();
 
-function tabs(){const T=[['cpi','CPI'],['pce','PCE'],['ppi','PPI'],['ai','🤖 AI 비용 (PPI)']];
-  $('tabs').innerHTML=T.filter(([k])=>G(k)).map(([k,n])=>`<button class="tab${TAB===k?' on':''}" data-t="${k}">${n}</button>`).join('');}
+function tabs(){const T=[['cpi','CPI'],['pce','PCE'],['ppi','PPI'],['ai','🤖 AI 비용 (PPI)'],['gpu','🖥️ GPU 임대료']];
+  $('tabs').innerHTML=T.filter(([k])=>k==='gpu'?GR:G(k)).map(([k,n])=>`<button class="tab${TAB===k?' on':''}" data-t="${k}">${n}</button>`).join('');}
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(!b)return;TAB=b.dataset.t;store.set('macroTab',TAB);render();});
 
 function kpis(g,last){
@@ -183,10 +183,60 @@ function renderAI(g){
   g.items.forEach((it,k)=>lines($('m'+k),[{name:'PPI 최종수요',color:'var(--cmp)',dash:'4 3',w:1.5,pts:cp},{name:it.name,color:'var(--s1)',pts:yoyPts(it,from,last)}],{H:130,mini:true}));
 }
 
-function render(){if(!D)return;tabs();const g=G(TAB)||D.groups[0];TAB=g.key;g.key==='ai'?renderAI(g):renderGroup(g);
+// ── GPU 임대료 (Vast.ai 매물 중간값 · RunPod 정가, 매일 누적) ──
+let GR=null;
+const usd=v=>v==null?'–':'$'+v.toFixed(2);
+// 날짜 선 차트: series=[{name,color,pts:[[YYYY-MM-DD,v],…]}]
+function dlines(el,series,{H=240}={}){
+  const W=Math.max(320,el.clientWidth||640),pad={t:12,r:58,b:26,l:42};const {svg,tip}=frame(el,W,H);
+  const days=[...new Set(series.flatMap(s=>s.pts.map(p=>p[0])))].sort();
+  const all=series.flatMap(s=>s.pts.map(p=>p[1]).filter(v=>v!=null));
+  if(days.length<2||!all.length){el.innerHTML='<div class="note" style="padding:18px 0">📦 기록을 쌓는 중이에요 — 이틀째부터 선이 그려져요 (매일 07:00 KST 저장)</div>';return;}
+  const t0=Date.parse(days[0]),span=Math.max(1,(Date.parse(days[days.length-1])-t0)/864e5);
+  let hi=Math.max(...all);const st=niceStep(hi||1);hi=Math.ceil(hi/st)*st;
+  const sx=d=>pad.l+(W-pad.l-pad.r)*((Date.parse(d)-t0)/864e5)/span,sy=v=>H-pad.b-(H-pad.t-pad.b)*v/(hi||1);
+  for(let v=0;v<=hi+1e-9;v+=st){add(svg,'line',{x1:pad.l,x2:W-pad.r,y1:sy(v),y2:sy(v),stroke:v?'#eef0f3':'#9ca3af','stroke-width':1});add(svg,'text',{x:pad.l-5,y:sy(v)+3,'text-anchor':'end',class:'ax'},'$'+(Math.round(v*100)/100));}
+  [days[0],days[Math.floor(days.length/2)],days[days.length-1]].forEach((d,i)=>add(svg,'text',{x:sx(d),y:H-pad.b+15,'text-anchor':i?i===2?'end':'middle':'start',class:'ax'},d.slice(5).replace('-','/')));
+  const labs=[];
+  series.forEach(s=>{let d='';s.pts.forEach((p,i)=>{if(p[1]==null)return;d+=(i&&s.pts[i-1][1]!=null?'L':'M')+sx(p[0]).toFixed(1)+','+sy(p[1]).toFixed(1);});
+    add(svg,'path',{d,fill:'none',stroke:s.color,'stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'});
+    const L=[...s.pts].reverse().find(p=>p[1]!=null);if(L){add(svg,'circle',{cx:sx(L[0]),cy:sy(L[1]),r:4,fill:s.color,stroke:'#fff','stroke-width':2});labs.push({y:sy(L[1]),t:`${s.name} ${usd(L[1])}`});}});
+  labs.sort((a,b)=>a.y-b.y);let prev=-1e9;labs.forEach(l=>{l.y=Math.max(l.y,prev+12);prev=l.y;add(svg,'text',{x:W-pad.r+6,y:l.y+3,style:'font-size:10px;font-weight:700;fill:#111827;font-family:var(--mono)'},l.t.split(' ').pop());});
+  const cross=add(svg,'line',{y1:pad.t,y2:H-pad.b,stroke:'#9ca3af','stroke-width':1,'stroke-dasharray':'3 3',opacity:0});
+  const hit=add(svg,'rect',{x:pad.l,y:pad.t,width:W-pad.l-pad.r,height:H-pad.t-pad.b,fill:'transparent'});
+  const move=e=>{const r=svg.getBoundingClientRect(),cx=((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width*W;
+    const d=days.reduce((b,x)=>Math.abs(sx(x)-cx)<Math.abs(sx(b)-cx)?x:b,days[0]),x=sx(d);cross.setAttribute('x1',x);cross.setAttribute('x2',x);cross.setAttribute('opacity',1);
+    showTip(el,tip,x/W*el.clientWidth,20,`<b>${d}</b><br>`+series.map(s=>{const p=s.pts.find(p=>p[0]===d);return `<span style="color:#cbd5e1">${esc(s.name)}</span> <b>${usd(p&&p[1])}</b>`;}).join('<br>'));};
+  hit.addEventListener('mousemove',move);hit.addEventListener('touchmove',move,{passive:true});hit.addEventListener('touchstart',move,{passive:true});
+  hit.addEventListener('mouseleave',()=>{tip.style.opacity=0;cross.setAttribute('opacity',0);});
+}
+function renderGPU(){
+  const days=GR.days,L=days[days.length-1],g=L.g,ago=n=>{const t=Date.parse(L.d)-n*864e5;return [...days].reverse().find(x=>Date.parse(x.d)<=t);};
+  const w1=ago(7),m1=ago(30),chg=(a,b)=>a!=null&&b!=null?(a/b-1)*100:null;
+  const v=(x,k,f)=>x&&x.g[k]?x.g[k][f]:null;
+  const main=[['H100','var(--s1)'],['H200','var(--s2)'],['B200','var(--s3)'],['A100','var(--s4)']];
+  let h=`<div class="card"><h2>🖥️ GPU 임대료 지수</h2><p class="note">GPU 1장 · 1시간 빌리는 값(달러) · ${L.d} 기준 · 매일 07:00 KST 저장해 쌓아요<br>
+    <b>시장 호가</b> = Vast.ai 마켓에서 지금 빌릴 수 있는 매물의 중간값(GPU 수 가중, 스토리지 제외) · <b>정가</b> = RunPod 보안(데이터센터) 클라우드 표시 가격</p>
+    <div class="kpis">${main.map(([k])=>{const m=v(L,k,'vast_med'),r=v(L,k,'rp_secure'),n=(GR.gpus.find(x=>x.key===k)||{}).name||k;
+      return `<div class="kpi"><div class="k">${esc(n)} 시장 호가</div><div class="v">${usd(m)}</div><div class="d">정가 ${usd(r)} · 1주 ${pct(chg(m,v(w1,k,'vast_med')))} · 1달 ${pct(chg(m,v(m1,k,'vast_med')))}</div></div>`;}).join('')}</div>
+    <div class="legend">${main.map(([k,c])=>`<span><i style="background:${c}"></i>${esc((GR.gpus.find(x=>x.key===k)||{}).name||k)}</span>`).join('')}</div>
+    <div class="chart" id="gpuChart"></div><p class="note" style="margin-top:4px">시장 호가(중간값) 추이</p></div>`;
+  h+=`<div class="card"><h2>종류별 현재 가격</h2><p class="note">빨강 = 한 달 전보다 오름(빌리는 수요 강함), 파랑 = 내림 · 매물 = 지금 빌릴 수 있는 GPU 수(많을수록 남아돎)</p>
+    <div class="tbl"><table><tr><th class="nm">GPU</th><th>시장 중간</th><th>시장 최저</th><th>매물</th><th>정가 (보안)</th><th>정가 (커뮤니티)</th><th>1주</th><th>1달</th></tr>`;
+  GR.gpus.forEach(x=>{const s=g[x.key];if(!s)return;const c1=chg(s.vast_med,v(w1,x.key,'vast_med')),c4=chg(s.vast_med,v(m1,x.key,'vast_med'));
+    h+=`<tr><td class="nm"><b>${esc(x.name)}</b> <span class="hsub">${esc(x.gen)}</span></td><td><b>${usd(s.vast_med)}</b></td><td>${usd(s.vast_min)}</td><td>${s.vast_gpus??'–'}</td>
+      <td>${usd(s.rp_secure)}</td><td>${usd(s.rp_comm)}</td><td style="background:${heat(c1,10)}">${pct(c1)}</td><td style="background:${heat(c4,20)}">${pct(c4)}</td></tr>`;});
+  h+=`</table></div><p class="note" style="margin-top:8px">참고(보도 기준): H100 1년 예약 임대료 2025년 10월 저점 약 $1.70 → 2026년 3월 약 $2.35 · Silicon Data H100 임대 지수 2026년 9월 약 $2.53 · 하이퍼스케일러 정가는 $6~7대.<br>
+    마켓 호가는 빌려 간 매물이 빠진 '남은 매물' 기준이라, 수요가 강하면 싼 매물부터 사라져 중간값이 올라가요.</p></div>`;
+  $('app').innerHTML=h;
+  dlines($('gpuChart'),main.map(([k,c])=>({name:(GR.gpus.find(x=>x.key===k)||{}).name||k,color:c,pts:days.map(x=>[x.d,v(x,k,'vast_med')])})));
+}
+
+function render(){if(!D)return;tabs();if(TAB==='gpu'&&GR){renderGPU();return;}const g=G(TAB)||D.groups[0];TAB=g.key;g.key==='ai'?renderAI(g):renderGroup(g);
   document.querySelectorAll('.tbl.hm').forEach(t=>t.scrollLeft=t.scrollWidth);}   // 좁은 화면: 최근 달이 먼저 보이게
 $('app').addEventListener('click',e=>{const m=e.target.closest('[data-m]'),s=e.target.closest('[data-s]');
   if(m){MODE=m.dataset.m;store.set('macroMode',MODE);render();}if(s){SPAN=+s.dataset.s;store.set('macroSpan',SPAN);render();}});
+fetch('gpu_rent.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(d.days&&d.days.length){GR=d;render();}}).catch(()=>{});
 fetch('macro.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{D=d;$('hsub').textContent+=` · ${new Date(d.at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})} 갱신`;render();})
   .catch(e=>{$('app').innerHTML=`<div class="card note">데이터를 불러오지 못했어요 (${esc(e.message)})</div>`;});
 let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(render,150);});

@@ -86,6 +86,12 @@ jobs:
         timeout-minutes: 8
         run: python lab/macro_data.py --out public_lab/macro.json
 
+      # 🖥️ GPU 임대료 지수 (Vast.ai 매물 중간값 · RunPod 정가, lab-data 에 날짜별 누적)
+      - name: GPU rent
+        continue-on-error: true
+        timeout-minutes: 5
+        run: python lab/gpu_rent.py --out public_lab/gpu_rent.json
+
       - name: Save data
         if: always()
         working-directory: labdata
