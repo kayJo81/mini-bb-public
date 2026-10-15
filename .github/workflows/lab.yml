@@ -70,6 +70,7 @@ jobs:
           cp lab/weekly.html public_lab/weekly.html
           cp lab/tesla.html public_lab/tesla.html
           cp lab/macro.html public_lab/macro.html
+          cp lab/deep.html public_lab/deep.html && cp -r lab/deepnews public_lab/deepnews
           printf '/*\n  X-Frame-Options: SAMEORIGIN\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n' > public_lab/_headers
 
       # 🚗 테슬라: 분기 인도량·에너지 배치(SEC 공시)

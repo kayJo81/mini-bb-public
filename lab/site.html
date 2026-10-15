@@ -125,6 +125,8 @@ function render(d){
     <span><b>🚗 테슬라 판매</b><br><span class="hsub">분기 인도량(라인업별, 2020~) · 에너지 저장 배치</span></span><span class="link">보기 →</span></a>`;
   h+=`<a class="card" href="macro" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
     <span><b>📈 매크로 지표</b><br><span class="hsub" id="macSub">CPI·PCE·PPI 항목별 월간 누적 · PPI AI 비용(클라우드·반도체·전력·전력망) 비교</span></span><span class="link">보기 →</span></a>`;
+  h+=`<a class="card" href="deep" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
+    <span><b>🔎 심층 뉴스</b><br><span class="hsub" id="deepSub">요청한 주제를 깊게 정리한 기사 모음</span></span><span class="link">보기 →</span></a>`;
   h+=`<a class="card" href="env" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
     <span><b>🌡️ 시장 환경 기록</b><br><span class="hsub" id="envSub">옵션 수급·VIX 구조·금리·공매도·예측시장 — 국면별 전략 검증용으로 매일 저장</span></span><span class="link">보기 →</span></a>`;
 
@@ -173,6 +175,8 @@ function render(d){
   document.getElementById('app').innerHTML=h;
   fetch('env.json',{cache:'no-store'}).then(r=>r.json()).then(e=>{const x=(e.summary||[]).slice(-1)[0];const el=document.getElementById('envSub');
     if(x&&el)el.textContent=`${x.date} · VIX ${x.vix?.toFixed(1)} · VIX/VIX3M ${x.vix_term?.toFixed(2)} · 풋/콜(주식) ${x.pc_equity} · 기록 ${(e.summary||[]).length}일`;}).catch(()=>{});
+  fetch('deepnews/index.json',{cache:'no-store'}).then(r=>r.json()).then(L=>{const el=document.getElementById('deepSub');const a=L.sort((x,y)=>y.date.localeCompare(x.date))[0];
+    if(el&&a)el.textContent=`최신: ${a.title} · 기사 ${L.length}개`;}).catch(()=>{});
   // 매크로 지표 카드: 헤드라인 전년비 (CPI·근원 PCE·PPI)
   fetch('macro.json',{cache:'no-store'}).then(r=>r.json()).then(m=>{const el=document.getElementById('macSub');if(!el)return;
     const all=m.groups.flatMap(g=>g.items),one=(id,nm)=>{const i=all.find(x=>x.id===id);if(!i)return '';let k=i.v.length-1;while(k>=12&&i.v[k]==null)k--;
