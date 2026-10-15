@@ -13,21 +13,11 @@
   "2026-10-09",
   "2026-10-12",
   "2026-10-13",
-  "2026-10-14"
+  "2026-10-14",
+  "2026-10-15"
  ],
  "seen": [],
- "pending": [
-  {
-   "sym": "ASML",
-   "dir": "롱",
-   "b": "pos_up",
-   "verdict": "근거 약함",
-   "signal_date": "2026-10-14",
-   "edge": 0.22,
-   "z": 7.03,
-   "head": "Dow Jones Futures Rise, Techs Fall With ASML, BofA, Dell, HPE Early Movers; CPI Inflation Due"
-  }
- ],
+ "pending": [],
  "open": [
   {
    "sym": "LITE",
@@ -42,10 +32,10 @@
    "entry": 1100.0,
    "bench_entry": 749.64,
    "size": 5000.0,
-   "now": 896.33,
-   "ret": -18.72,
-   "bench_ret": -2.96,
-   "asof": "2026-10-14"
+   "now": 869.54,
+   "ret": -21.15,
+   "bench_ret": -3.09,
+   "asof": "2026-10-15"
   },
   {
    "sym": "TSM",
@@ -60,10 +50,10 @@
    "entry": 439.52,
    "bench_entry": 739.52,
    "size": 5000.0,
-   "now": 430.0,
-   "ret": -2.37,
-   "bench_ret": -1.63,
-   "asof": "2026-10-14"
+   "now": 422.55,
+   "ret": -4.06,
+   "bench_ret": -1.76,
+   "asof": "2026-10-15"
   },
   {
    "sym": "IREN",
@@ -78,10 +68,10 @@
    "entry": 33.31,
    "bench_entry": 739.52,
    "size": 5000.0,
-   "now": 30.56,
-   "ret": -8.46,
-   "bench_ret": -1.63,
-   "asof": "2026-10-14"
+   "now": 30.39,
+   "ret": -8.97,
+   "bench_ret": -1.76,
+   "asof": "2026-10-15"
   },
   {
    "sym": "OKLO",
@@ -96,14 +86,32 @@
    "entry": 31.44,
    "bench_entry": 738.0,
    "size": 5000.0,
-   "now": 29.04,
-   "ret": -7.83,
-   "bench_ret": -1.43,
-   "asof": "2026-10-14"
+   "now": 30.04,
+   "ret": -4.65,
+   "bench_ret": -1.56,
+   "asof": "2026-10-15"
+  },
+  {
+   "sym": "ASML",
+   "dir": "롱",
+   "b": "pos_up",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-14",
+   "edge": 0.22,
+   "z": 7.03,
+   "head": "Dow Jones Futures Rise, Techs Fall With ASML, BofA, Dell, HPE Early Movers; CPI Inflation Due",
+   "entry_date": "2026-10-15",
+   "entry": 1615.765,
+   "bench_entry": 718.54,
+   "size": 5000.0,
+   "now": 1657.4399,
+   "ret": 2.38,
+   "bench_ret": 1.12,
+   "asof": "2026-10-15"
   }
  ],
  "closed": [],
- "cash": 80000.0,
+ "cash": 75000.0,
  "curve": [
   [
    "2026-10-09",
@@ -124,6 +132,11 @@
    "2026-10-14",
    98131.46,
    99617.76
+  ],
+  [
+   "2026-10-15",
+   98177.41,
+   99647.96
   ]
  ],
  "picks_log": [
@@ -154,6 +167,11 @@
    "chosen": [
     "ASML"
    ],
+   "pool": 1
+  },
+  {
+   "date": "2026-10-15",
+   "chosen": [],
    "pool": 1
   }
  ],
