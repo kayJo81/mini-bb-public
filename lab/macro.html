@@ -53,7 +53,7 @@ td.c{position:relative;cursor:default}td.c.rv::after{content:'';position:absolut
 </head>
 <body>
 <div class="wrap">
-<header><div><h1>미니 블벅 <b>랩</b> · 물가 지표</h1><div class="hsub" id="hsub">CPI · PCE · PPI 항목별 월간 + PPI AI 비용 항목 + GPU 임대료</div></div><a class="link" href="./">← 랩 메인</a></header>
+<header><div><h1>미니 블벅 <b>랩</b> · 물가 지표</h1><div class="hsub" id="hsub">CPI · PCE · PPI 항목별 월간 + PPI AI 비용 항목 + GPU 임대료 시세</div></div><a class="link" href="./">← 랩 메인</a></header>
 <div class="tabs" id="tabs"></div>
 <div id="app"><div class="card note">불러오는 중…</div></div>
 <p class="hsub">투자 권유 아님 · 원자료: 미 노동통계국(BLS)·경제분석국(BEA), FRED(세인트루이스 연은) 경유 · 매일 07:00 KST 갱신, 받은 값은 계속 쌓아 둠(나중에 개정되면 ● 표시)</p>
@@ -205,7 +205,7 @@ function dlines(el,series,{H=240}={}){
   const W=Math.max(320,el.clientWidth||640),pad={t:12,r:58,b:26,l:42};const {svg,tip}=frame(el,W,H);
   const days=[...new Set(series.flatMap(s=>s.pts.map(p=>p[0])))].sort();
   const all=series.flatMap(s=>s.pts.map(p=>p[1]).filter(v=>v!=null));
-  if(days.length<2||!all.length){el.innerHTML='<div class="note" style="padding:18px 0">📦 기록을 쌓는 중이에요 — 이틀째부터 선이 그려져요 (매일 07:00 KST 저장)</div>';return;}
+  if(days.length<2||!all.length){el.innerHTML='<div class="note" style="padding:18px 0">자료가 아직 없어요</div>';return;}
   const t0=Date.parse(days[0]),span=Math.max(1,(Date.parse(days[days.length-1])-t0)/864e5);
   let hi=Math.max(...all);const st=niceStep(hi||1);hi=Math.ceil(hi/st)*st;
   const sx=d=>pad.l+(W-pad.l-pad.r)*((Date.parse(d)-t0)/864e5)/span,sy=v=>H-pad.b-(H-pad.t-pad.b)*v/(hi||1);
@@ -224,35 +224,55 @@ function dlines(el,series,{H=240}={}){
   hit.addEventListener('mousemove',move);hit.addEventListener('touchmove',move,{passive:true});hit.addEventListener('touchstart',move,{passive:true});
   hit.addEventListener('mouseleave',()=>{tip.style.opacity=0;cross.setAttribute('opacity',0);});
 }
+let GPV=store.get('macroGpuView')||'dc';
+const GPUGRP={dc:['B300','B200','H200','H100','A100'],inf:['PRO6000','L40S','5090','4090']};
+// 작은 추이선 (90일): 한 색, 끝점 표시
+function spark(pts,w=96,h=26){const v=pts.map(p=>p[1]).filter(x=>x!=null);if(v.length<2)return '';
+  const lo=Math.min(...v),hi=Math.max(...v),sx=i=>2+(w-6)*i/(pts.length-1),sy=x=>h-3-(h-6)*(hi>lo?(x-lo)/(hi-lo):.5);
+  const d=pts.map((p,i)=>(i?'L':'M')+sx(i).toFixed(1)+','+sy(p[1]).toFixed(1)).join('');const L=pts[pts.length-1];
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:${w}px;height:${h}px;display:block"><path d="${d}" fill="none" stroke="var(--s1)" stroke-width="1.5" stroke-linejoin="round"/><circle cx="${sx(pts.length-1)}" cy="${sy(L[1])}" r="2.5" fill="var(--s1)"/></svg>`;}
+// 7일 이동평균 (일별 중간값은 매물 몇 개에 크게 흔들려서)
+const ma7=dl=>dl.map((p,i)=>{const w=dl.slice(Math.max(0,i-6),i+1).map(x=>x[1]);return [p[0],w.reduce((a,b)=>a+b,0)/w.length];}).slice(6);
 function renderGPU(){
-  const days=GR.days,L=days[days.length-1],g=L.g,ago=n=>{const t=Date.parse(L.d)-n*864e5;return [...days].reverse().find(x=>Date.parse(x.d)<=t);};
-  const w1=ago(7),m1=ago(30),chg=(a,b)=>a!=null&&b!=null?(a/b-1)*100:null;
-  const v=(x,k,f)=>x&&x.g[k]?x.g[k][f]:null;
-  const main=[['H100','var(--s1)'],['H200','var(--s2)'],['B200','var(--s3)'],['A100','var(--s4)']];
-  let h=`<div class="card"><h2>🖥️ GPU 임대료 지수</h2><p class="note">GPU 1장 · 1시간 빌리는 값(달러) · ${L.d} 기준 · 매일 07:00 KST 저장해 쌓아요<br>
-    <b>시장 호가</b> = Vast.ai 마켓에서 지금 빌릴 수 있는 매물의 중간값(GPU 수 가중, 스토리지 제외) · <b>정가</b> = RunPod 보안(데이터센터) 클라우드 표시 가격</p>
-    <div class="kpis">${main.map(([k])=>{const m=v(L,k,'vast_med'),r=v(L,k,'rp_secure'),n=(GR.gpus.find(x=>x.key===k)||{}).name||k;
-      return `<div class="kpi"><div class="k">${esc(n)} 시장 호가</div><div class="v">${usd(m)}</div><div class="d">정가 ${usd(r)} · 1주 ${pct(chg(m,v(w1,k,'vast_med')))} · 1달 ${pct(chg(m,v(m1,k,'vast_med')))}</div></div>`;}).join('')}</div>
-    <div class="legend">${main.map(([k,c])=>`<span><i style="background:${c}"></i>${esc((GR.gpus.find(x=>x.key===k)||{}).name||k)}</span>`).join('')}</div>
-    <div class="chart" id="gpuChart"></div><p class="note" style="margin-top:4px">시장 호가(중간값) 추이</p></div>`;
-  h+=`<div class="card"><h2>종류별 현재 가격</h2><p class="note">빨강 = 한 달 전보다 오름(빌리는 수요 강함), 파랑 = 내림 · 매물 = 지금 빌릴 수 있는 GPU 수(많을수록 남아돎)</p>
-    <div class="tbl"><table><tr><th class="nm">GPU</th><th>시장 중간</th><th>시장 최저</th><th>매물</th><th>정가 (보안)</th><th>정가 (커뮤니티)</th><th>1주</th><th>1달</th></tr>`;
-  GR.gpus.forEach(x=>{const s=g[x.key];if(!s)return;const c1=chg(s.vast_med,v(w1,x.key,'vast_med')),c4=chg(s.vast_med,v(m1,x.key,'vast_med'));
-    h+=`<tr><td class="nm"><b>${esc(x.name)}</b> <span class="hsub">${esc(x.gen)}</span></td><td><b>${usd(s.vast_med)}</b></td><td>${usd(s.vast_min)}</td><td>${s.vast_gpus??'–'}</td>
-      <td>${usd(s.rp_secure)}</td><td>${usd(s.rp_comm)}</td><td style="background:${heat(c1,10)}">${pct(c1)}</td><td style="background:${heat(c4,20)}">${pct(c4)}</td></tr>`;});
+  GR.gpus.forEach(x=>{if(x.vast&&!x.vast.ma)x.vast.ma=ma7(x.vast.daily||[]);});
+  const G2=GR.gpus.filter(x=>x.vast&&x.vast.ma&&x.vast.ma.length),by=k=>GR.gpus.find(x=>x.key===k);
+  const back=(dl,n)=>{if(!dl.length)return null;const t=Date.parse(dl[dl.length-1][0])-n*864e5;const p=[...dl].reverse().find(x=>Date.parse(x[0])<=t);return p?p[1]:null;};
+  const chg=(a,b)=>a!=null&&b!=null?(a/b-1)*100:null;
+  const rpL=GR.runpod.length?GR.runpod[GR.runpod.length-1][1]:{};
+  if(!GPUGRP[GPV])GPV='dc';
+  const keys=GPUGRP[GPV].filter(k=>by(k)&&by(k).vast);
+  const lastv=x=>x.vast&&x.vast.ma.length?x.vast.ma[x.vast.ma.length-1][1]:null;
+  let h=`<div class="card"><h2>🖥️ GPU 임대료 시세</h2><p class="note">GPU 1장 · 1시간 빌리는 값(달러) · 시장 중간값 = 빌릴 수 있는 매물의 중간 호가, <b>7일 평균</b>으로 봐요(하루 값은 매물 몇 개에 크게 흔들림) · 지금 = 이번 시간 중간값<br>
+    자료: <a href="https://vast.ai/pricing" target="_blank" rel="noopener">Vast.ai 공개 가격 피드</a> (매시간 갱신, ${esc((GR.vast_updated||'').slice(0,16).replace('T',' '))} UTC) · 정가: RunPod 보안 클라우드</p>
+    <div class="kpis">${['H100','H200','B200','A100'].map(k=>{const x=by(k);if(!x||!x.vast)return '';const dl=x.vast.ma,m=lastv(x);
+      return `<div class="kpi"><div class="k">${esc(x.name)} 7일 평균</div><div class="v">${usd(m)}</div><div class="d">1주 ${pct(chg(m,back(dl,7)))} · 1달 ${pct(chg(m,back(dl,30)))} · 약 3달 ${pct(chg(m,dl[0]&&dl[0][1]))}<br>지금 ${usd(x.vast.median)} · 정가 ${usd((rpL[k]||{}).rp_secure)}</div></div>`;}).join('')}</div>
+    <div class="seg" id="gpv">${[['dc','학습·데이터센터용'],['inf','추론·소비자용']].map(([k,n])=>`<button data-gv="${k}" class="${GPV===k?'on':''}">${n}</button>`).join('')}</div>
+    <div class="legend">${keys.map((k,i)=>`<span><i style="background:${COL[i]}"></i>${esc(by(k).name)}</span>`).join('')}</div>
+    <div class="chart" id="gpuChart"></div><p class="note" style="margin-top:4px">시장 중간값 7일 평균 추이 (최근 90일)</p></div>`;
+  h+=`<div class="card"><h2>종류별 시세</h2><p class="note">빨강 = 올랐음(빌리려는 수요 강함), 파랑 = 내렸음 · 매물 = 지금 빌릴 수 있는 수(많을수록 남아돎) · 표는 옆으로 밀어서 봐요</p>
+    <div class="tbl"><table><tr><th class="nm">GPU</th><th>90일 추이</th><th>7일 평균</th><th>1주</th><th>1달</th><th>약 3달</th><th>지금</th><th>최저</th><th>매물</th><th>정가<br>(보안)</th><th>정가<br>(커뮤니티)</th></tr>`;
+  GR.gpus.forEach(x=>{const v=x.vast,rp=rpL[x.key]||{};const dl=v?v.ma:[],m=lastv(x);
+    const c1=chg(m,back(dl,7)),c4=chg(m,back(dl,30)),c12=chg(m,dl[0]&&dl[0][1]);
+    h+=`<tr><td class="nm"><b>${esc(x.name)}</b> <span class="hsub">${esc(x.gen)}</span></td><td>${spark(dl)||'<span class="hsub">–</span>'}</td><td><b>${usd(m)}</b></td>
+      <td style="background:${heat(c1,10)}">${pct(c1)}</td><td style="background:${heat(c4,20)}">${pct(c4)}</td><td style="background:${heat(c12,30)}">${pct(c12)}</td>
+      <td>${usd(v&&v.median)}</td><td>${usd(v&&v.min)}</td><td>${v&&v.available!=null?v.available:'–'}</td><td>${usd(rp.rp_secure)}</td><td>${usd(rp.rp_comm)}</td></tr>`;});
   h+=`</table></div><p class="note" style="margin-top:8px">참고(보도 기준): H100 1년 예약 임대료 2025년 10월 저점 약 $1.70 → 2026년 3월 약 $2.35 · Silicon Data H100 임대 지수 2026년 9월 약 $2.53 · 하이퍼스케일러 정가는 $6~7대.<br>
-    마켓 호가는 빌려 간 매물이 빠진 '남은 매물' 기준이라, 수요가 강하면 싼 매물부터 사라져 중간값이 올라가요.</p></div>`;
+    시장 중간값은 빌려 간 매물이 빠진 '남은 매물' 기준이라, 수요가 강하면 싼 매물부터 사라져 중간값이 올라가요. MI300X 는 이 시장에 매물이 없어 정가만 있어요.<br>'지금'(이번 시간 중간값)과 일별 중간값은 Vast.ai 피드의 집계 방식이 달라 수준 차이가 날 수 있어요 — 추세는 7일 평균으로, 지금 호가는 참고로 보세요.<br>
+    Vast.ai 피드 조건상 받은 값을 그대로 보여 주기만 해요(따로 모아 지수로 만들지 않음). 90일보다 긴 이력은 Vast.ai 데이터 라이선스가 필요해요. RunPod 정가는 매일 저장해 쌓아요.</p></div>`;
   $('app').innerHTML=h;
-  dlines($('gpuChart'),main.map(([k,c])=>({name:(GR.gpus.find(x=>x.key===k)||{}).name||k,color:c,pts:days.map(x=>[x.d,v(x,k,'vast_med')])})));
+  lines2=keys.map((k,i)=>({name:by(k).name,color:COL[i],pts:by(k).vast.ma}));
+  dlines($('gpuChart'),lines2,{H:260});
 }
+let lines2=[];
 
 function render(){if(!D)return;tabs();if(TAB==='gpu'&&GR){renderGPU();return;}const g=G(TAB)||D.groups[0];TAB=g.key;g.key==='ai'?renderAI(g):renderGroup(g);
   document.querySelectorAll('.tbl.hm').forEach(t=>t.scrollLeft=t.scrollWidth);}   // 좁은 화면: 최근 달이 먼저 보이게
 $('app').addEventListener('click',e=>{const m=e.target.closest('[data-m]'),s=e.target.closest('[data-s]'),av=e.target.closest('[data-av]'),ah=e.target.closest('[data-ah]');
   if(av){AIV=av.dataset.av;AIH.clear();store.set('macroAiView',AIV);render();return;}
+  const gv=e.target.closest('[data-gv]');if(gv){GPV=gv.dataset.gv;store.set('macroGpuView',GPV);render();return;}
   if(ah){const n=ah.dataset.ah;AIH.has(n)?AIH.delete(n):AIH.add(n);render();return;}
   if(m){MODE=m.dataset.m;store.set('macroMode',MODE);render();}if(s){SPAN=+s.dataset.s;store.set('macroSpan',SPAN);render();}});
-fetch('gpu_rent.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(d.days&&d.days.length){GR=d;render();}}).catch(()=>{});
+fetch('gpu_rent.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(d.gpus&&d.gpus.length){GR=d;render();}}).catch(()=>{});
 fetch('macro.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{D=d;$('hsub').textContent+=` · ${new Date(d.at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})} 갱신`;render();})
   .catch(e=>{$('app').innerHTML=`<div class="card note">데이터를 불러오지 못했어요 (${esc(e.message)})</div>`;});
 let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(render,150);});
