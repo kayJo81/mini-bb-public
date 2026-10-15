@@ -33,7 +33,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: pip install requests
+      - run: pip install requests numpy
 
       - name: Checkout lab-data branch
         env:
@@ -95,7 +95,10 @@ jobs:
       # 🧭 포트폴리오 가상 운용: 시장 환경·매크로·심층 뉴스(lab/deepnews/index.json 의 tilts)·뉴스 신호 반영 (상태는 lab-data)
       - name: Portfolio
         continue-on-error: true
-        run: python lab/portfolio.py --out public_lab
+        run: |
+          # 위험 점수 항목별 가중치 최적화 (2017년~, 걷기 검증) → 포트폴리오가 읽음
+          python lab/regime_opt.py --macro public_lab/macro.json --out public_lab/regime_weights.json || true
+          python lab/portfolio.py --out public_lab
 
       - name: Save data
         if: always()

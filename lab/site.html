@@ -113,7 +113,19 @@ function pfCard(F){
   const curve=(F.curve||[]).map(c=>[c[0],c[1],c[2]]);
   const sl={core:0,theme:0,signal:0};let shortW=0;(F.holdings||[]).forEach(h=>{sl[h.sleeve]+=h.weight;if(h.weight<0)shortW+=h.weight;});
   const invested=(F.holdings||[]).reduce((a,h)=>a+h.weight,0);
-  const comp=G.components.map(c=>`<tr><td><span class="tag">${esc(c.group)}</span> <b>${esc(c.label)}</b><br><span class="hsub">${esc(c.why)}</span></td><td class="mono ${c.pts>0?'up':c.pts<0?'dn':''}" style="text-align:right;font-size:14px;font-weight:700">${c.pts>0?'+':''}${c.pts}</td></tr>`).join('');
+  const comp=G.components.map(c=>{const v=c.pts*(c.w??1);return `<tr><td><span class="tag">${esc(c.group)}</span> <b>${esc(c.label)}</b><br><span class="hsub">${esc(c.why)}</span></td><td class="mono" style="text-align:right;white-space:nowrap"><span class="hsub">${c.pts>0?'+':''}${c.pts} × ${c.w??1}</span><br><b class="${v>0?'up':v<0?'dn':''}" style="font-size:14px">${v>0?'+':''}${+v.toFixed(2)}</b></td></tr>`;}).join('');
+  const W=G.weights_src,WF=W&&W.walk_forward,S=W&&W.stats;
+  const optBox=W?`<details style="margin-top:6px"><summary>⚙️ 가중치 최적화 (2017년~ 매일 되돌려 시험 · ${esc(W.asof||'')})</summary><div style="font-size:12.5px;margin-top:6px">
+    <p style="margin:0 0 6px"><b>결론: ${W.adopted==='opt'?'최적화한 가중치 채택':'같은 가중치(모두 1) 유지'}</b> — ${W.adopted==='opt'?`걷기 검증에서 같은 가중치보다 나아서 채택했어요.`:`항목별 가중치를 맞춰 볼수록 과거엔 좋아지지만, '그때까지의 자료로만 정해 다음 해에 적용'하면 오히려 나빠져서(과적합) 모두 1로 둬요.`} 매일 다시 시험해서 결과가 바뀌면 자동으로 따라가요.</p>
+    ${WF?`<div class="tw"><table><tr><th>최적값을 얼마나 반영(λ)</th>${Object.keys(WF.by_lambda).map(l=>`<th>${l==='0'?'0 (같은 가중치)':l}</th>`).join('')}</tr>
+      <tr><td>걷기 검증 샤프 (2020~)</td>${Object.entries(WF.by_lambda).map(([l,v])=>`<td class="mono ${+l===WF.lambda?'up':''}">${v.sharpe}${+l===WF.lambda?' ✓':''}</td>`).join('')}</tr></table></div>`:''}
+    ${S?`<div class="tw" style="margin-top:6px"><table><tr><th>2017~현재</th><th>샤프</th><th>연수익</th><th>최대 낙폭</th><th>평균 주식 비중</th></tr>
+      <tr><td>이 규칙 (같은 가중치)</td><td class="mono">${S.equal.all.sharpe}</td><td class="mono">${S.equal.all.cagr}%</td><td class="mono dn">${S.equal.all.mdd}%</td><td class="mono">${S.equal.all.avg_exp}%</td></tr>
+      <tr><td>최적화 가중치 (참고)</td><td class="mono">${S.opt.all.sharpe}</td><td class="mono">${S.opt.all.cagr}%</td><td class="mono dn">${S.opt.all.mdd}%</td><td class="mono">${S.opt.all.avg_exp}%</td></tr>
+      <tr><td>SPY 100%</td><td class="mono">${S.spy.all.sharpe}</td><td class="mono">${S.spy.all.cagr}%</td><td class="mono dn">${S.spy.all.mdd}%</td><td class="mono">100%</td></tr></table></div>
+      <p class="hsub" style="margin:4px 0 0">위험 예산 규칙만(SPY ↔ 현금) 따로 시험한 결과 — 수익은 SPY보다 낮지만 낙폭이 절반, 샤프는 더 높아요. ${esc(W.note||'')}</p>`:''}
+    ${WF&&WF.years?`<details><summary>해마다 (그 전 해까지로 정한 가중치 → 그 해 성과)</summary><div class="tw"><table><tr><th>해</th><th>샤프</th><th>같은 가중치</th><th>SPY</th></tr>${WF.years.map(y=>`<tr><td class="mono">${y.year}</td><td class="mono">${y.opt.sharpe}</td><td class="mono">${y.equal.sharpe}</td><td class="mono">${y.spy.sharpe}</td></tr>`).join('')}</table></div></details>`:''}
+  </div></details>`:'';
   const hold=(F.holdings||[]).map(h=>`<tr><td><span class="tag">${SLV[h.sleeve]}</span> <span class="sym" style="font-size:13px">${esc(h.sym)}</span>${h.shares<0?' <span class="dir 숏">숏</span>':''}<br><span class="hsub">${esc((h.why||'').slice(0,60))}</span><br><span class="hsub">${optLine(h.opt)}</span></td>
     <td class="mono" style="text-align:right">${h.weight.toFixed(1)}%</td><td class="mono" style="text-align:right">${money(Math.abs(h.value))}</td><td class="mono ${cls(h.pnl)}" style="text-align:right">${h.pnl>0?'+':''}${money(h.pnl).replace('$-','-$')}</td></tr>`).join('');
   const nxt=(F.next.w||[]).map(x=>`<span><span class="tag">${SLV[x.sleeve]}</span> <b>${esc(x.sym)}</b> ${x.w>0?'':'<span class="dn">숏</span> '}${Math.abs(x.w).toFixed(1)}%</span>`).join('');
@@ -123,9 +135,9 @@ function pfCard(F){
   ${F.started?`<div class="kv" style="font-size:13px"><span>평가액 <b>${money(F.equity)}</b> (<b class="${cls(F.ret)}">${pct(F.ret)}</b>)</span>
     <span>QQQ <b class="${cls(F.bench.QQQ)}">${pct(F.bench.QQQ)}</b> · SPY <b class="${cls(F.bench.SPY)}">${pct(F.bench.SPY)}</b></span><span>현금 ${money(F.cash)} (이자 ${money(F.interest)})</span></div>
   ${line(curve)}<div class="hsub">파란선: 포트폴리오 · 회색 점선: 같은 돈을 QQQ에 (${esc(F.asof)} 기준)</div>`:`<div class="card warn" style="margin:8px 0">⏳ 첫 구성 주문을 냈어요 — 다음 거래일 시가에 체결된 뒤부터 성과가 나와요.</div>`}
-  <h2 style="margin-top:12px;font-size:14px">① 위험 예산: 점수 <b class="${G.score>0?'up':G.score<0?'dn':''}">${G.score>0?'+':''}${G.score}</b> → 주식 <b>${Math.round(G.exposure*100)}%</b> · 현금 ${Math.round((1-G.exposure)*100)}%</h2>
+  <h2 style="margin-top:12px;font-size:14px">① 위험 예산: 점수 <b class="${G.score>0?'up':G.score<0?'dn':''}">${G.score>0?'+':''}${+Number(G.score).toFixed(2)}</b> → 주식 <b>${Math.round(G.exposure*100)}%</b> · 현금 ${Math.round((1-G.exposure)*100)}%</h2>
   <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;margin:4px 0 6px;max-width:420px"><div style="width:${G.exposure*100}%;background:#2563eb"></div><div style="flex:1;background:#e5e7eb"></div></div>
-  <div class="tw"><table>${comp}</table></div><p class="hsub">점수 +1 이상 90% · 0 80% · −1 70% · −2 60% · −3 50% · 그 아래 40% (시장 환경 ${esc(G.env_date||'')} 기록 · 매크로 지표 최신 발표)</p>
+  <div class="tw"><table>${comp}</table></div>${optBox}<p class="hsub">점수(항목 점수 × 가중치 합) +1 이상 90% · 0 80% · −1 70% · −2 60% · −3 50% · 그 아래 40% (시장 환경 ${esc(G.env_date||'')} 기록 · 매크로 지표 최신 발표)</p>
   <h2 style="margin-top:12px;font-size:14px">② 심층 뉴스·데이터 테마 (${(F.tilts||[]).length})</h2>
   ${tilts?`<ul style="margin:4px 0;padding-left:18px;font-size:12.5px">${tilts}</ul>`:'<p class="hsub">지금 반영 중인 테마가 없어요</p>'}
   ${(F.skipped_signals||[]).length?`<p class="hsub">건너뛴 뉴스 신호: ${F.skipped_signals.map(x=>`<b>${esc(x.sym)}</b> ${esc(x.direction)} (${esc(x.why)})`).join(' · ')}</p>`:''}

@@ -49,25 +49,25 @@ def env_score(env):
     row = (env or {}).get("summary", [{}])[-1] if (env or {}).get("summary") else {}
     comp = []
 
-    def add(pts, label, why):
-        comp.append({"group": "시장 환경", "pts": pts, "label": label, "why": why})
+    def add(pts, label, why, key):
+        comp.append({"group": "시장 환경", "key": key, "pts": pts, "label": label, "why": why})
     vix = row.get("vix")
     if vix is not None:
         p = 1 if vix < 15 else 0 if vix < 20 else -1 if vix < 25 else -2
-        add(p, f"VIX {vix:.1f}", "15 미만 안정(+1) · 20~25 경계(−1) · 25 이상 공포(−2)")
+        add(p, f"VIX {vix:.1f}", "15 미만 안정(+1) · 20~25 경계(−1) · 25 이상 공포(−2)", "vix")
     t = row.get("vix_term")
     if t is not None:
         p = 1 if t < 0.9 else 0 if t <= 1.0 else -2
-        add(p, f"VIX/VIX3M {t:.2f}", "0.9 미만 여유(+1) · 1 넘으면 단기 공포가 더 큼(−2)")
+        add(p, f"VIX/VIX3M {t:.2f}", "0.9 미만 여유(+1) · 1 넘으면 단기 공포가 더 큼(−2)", "vix_term")
     gex = row.get("spx_gex")
     if gex is not None:
-        add(-1 if gex < 0 else 0, f"S&P 딜러 감마 {gex/1000:+.1f}십억$", "음수면 딜러가 변동을 키우는 쪽(−1)")
+        add(-1 if gex < 0 else 0, f"S&P 딜러 감마 {gex/1000:+.1f}십억$", "음수면 딜러가 변동을 키우는 쪽(−1)", "gex")
     mv = row.get("move")
     if mv is not None:
-        add(-1 if mv > 120 else 0, f"MOVE {mv:.0f}", "채권 변동성 120 넘으면 −1")
+        add(-1 if mv > 120 else 0, f"MOVE {mv:.0f}", "채권 변동성 120 넘으면 −1", "move")
     cv = row.get("curve_10y3m")
     if cv is not None:
-        add(-1 if cv < 0 else 0, f"10년−3개월 {cv:+.2f}%p", "역전이면 −1")
+        add(-1 if cv < 0 else 0, f"10년−3개월 {cv:+.2f}%p", "역전이면 −1", "curve")
     return comp, row
 
 
@@ -95,7 +95,7 @@ def last_k(it):
 
 def macro_score(macro, envrow):
     comp = []
-    for sid, nm in (("PCEPILFE", "근원 PCE"), ("CPILFESL", "근원 CPI")):
+    for sid, nm, key in (("PCEPILFE", "근원 PCE", "core_pce"), ("CPILFESL", "근원 CPI", "core_cpi")):
         it = series(macro, sid)
         if not it:
             continue
@@ -106,17 +106,17 @@ def macro_score(macro, envrow):
         if y is None or a3 is None:
             continue
         p = -1 if a3 > y + 0.5 else 1 if a3 < y - 0.5 else 0
-        comp.append({"group": "매크로", "pts": p, "label": f"{nm} 3개월 연율 {a3:.1f}% vs 전년비 {y:.1f}%",
+        comp.append({"group": "매크로", "key": key, "pts": p, "label": f"{nm} 3개월 연율 {a3:.1f}% vs 전년비 {y:.1f}%",
                      "why": "최근 3개월이 더 빠르면 물가 재가속(−1), 느리면 둔화(+1)"})
     it = series(macro, "PPIFIS")
     if it:
         y = chg(it, last_k(it), 12)
         if y is not None:
-            comp.append({"group": "매크로", "pts": -1 if y > 5 else 0, "label": f"PPI 최종수요 전년비 {y:.1f}%",
+            comp.append({"group": "매크로", "key": "ppi", "pts": -1 if y > 5 else 0, "label": f"PPI 최종수요 전년비 {y:.1f}%",
                          "why": "5% 넘으면 비용 압력(−1)"})
     u = envrow.get("ust10y")
     if u is not None:
-        comp.append({"group": "매크로", "pts": -1 if u >= 5 else 0, "label": f"미 10년물 {u:.2f}%",
+        comp.append({"group": "매크로", "key": "ust10y", "pts": -1 if u >= 5 else 0, "label": f"미 10년물 {u:.2f}%",
                      "why": "5% 이상이면 성장주 할인율 부담(−1)"})
     return comp
 
@@ -334,7 +334,12 @@ def main():
     ec, envrow = env_score(env)
     mc = macro_score(macro, envrow)
     comps = ec + mc
-    score = sum(c["pts"] for c in comps)
+    # 항목별 가중치: regime_opt.py 가 2017년부터 되돌려 시험해 고른 값 (없으면 모두 1)
+    rw = load(os.path.join(a.out, "regime_weights.json"), {}) or {}
+    wts = rw.get("weights") or {}
+    for c in comps:
+        c["w"] = wts.get(c["key"], 1.0)
+    score = round(sum(c["pts"] * c["w"] for c in comps), 2)
     E = exposure(score)
     universe = set(prices)
     tilts, tscore = themes(today, deep, gpu, macro, universe)
@@ -424,7 +429,8 @@ def main():
         "ret": round((equity / R["capital"] - 1) * 100, 2),
         "bench": {b: round((v / R["capital"] - 1) * 100, 2) for b, v in bq.items()},
         "curve": st["curve"], "holdings": hold,
-        "regime": {"score": score, "exposure": E, "components": comps, "env_date": envrow.get("date")},
+        "regime": {"score": score, "exposure": E, "components": comps, "env_date": envrow.get("date"),
+                   "weights_src": {k: rw.get(k) for k in ("asof", "adopted", "train", "test", "walk_forward", "stats", "optimized", "names", "note")} if rw else None},
         "tilts": tilts, "next": {"decided": today, "full": full, "reason": st["pending"]["reason"],
                                  "w": [{"sleeve": k[0], "sym": k[1], "w": round(v * 100, 2), "why": why.get("|".join(k), ""), "opt": opts.get(k[1])}
                                        for k, v in sorted(w.items(), key=lambda kv: (["core", "theme", "signal"].index(kv[0][0]), -abs(kv[1])))]},
@@ -433,7 +439,7 @@ def main():
                       "chosen": [r | {"o": opts.get(r["sym"])} for r in sel["chosen"]], "dropped": [r | {"o": opts.get(r["sym"])} for r in sel["dropped"]]},
     }
     json.dump(out, open(os.path.join(a.out, "portfolio.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-    print(f"[portfolio] {today} 점수 {score:+d} → 주식 {E*100:.0f}% · 테마 {len(tscore)}종목 · 신호 {len(picks[:R['signal_max']])} · "
+    print(f"[portfolio] {today} 점수 {score:+.2f} → 주식 {E*100:.0f}% · 테마 {len(tscore)}종목 · 신호 {len(picks[:R['signal_max']])} · "
           f"평가액 ${equity:,.0f} ({out['ret']:+.2f}%) · 다음: {st['pending']['reason']}")
 
 
