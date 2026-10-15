@@ -33,7 +33,7 @@
 },
 "full": true,
 "reason": "첫 구성 · 정기 조정(5거래일)",
-"score": -1,
+"score": -1.0,
 "exposure": 0.7,
 "why": {
 "signal|TSM": "뉴스 신호 롱 (2026-10-15)",
