@@ -47,8 +47,16 @@ jobs:
           path: ~/.npm
           key: npm-wrangler3
 
+      # 재탕 기사 거르기용 기억(최근 72시간 기사 묶음) — 실행마다 새 키로 저장, 가장 최근 것을 불러옴
+      - uses: actions/cache@v4
+        with:
+          path: .cache/story_mem.json
+          key: mem-${{ github.run_id }}
+          restore-keys: mem-
+
       - name: Build briefing
         env:
+          STORY_MEMORY: .cache/story_mem.json
           FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
           FINNHUB_MIN_INTERVAL: "0.25"   # 15분에 한 번 몰아 호출 (59회 < 분당 60회 한도)
           FJ_DUMP: .cache/fj_latest.json

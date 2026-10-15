@@ -1158,6 +1158,91 @@ def scan_topic(topic, start, end, finnhub_token, pool, feed_items=()):
             "count": len(stories), "stories": stories}
 
 
+# ─────────────────────────────────────────────────────────────────────
+# 재탕 기사 거르기: 며칠 전 이미 나온 사건을 새 사실 없이 다시 쓴 기사
+#   · 최근 72시간 기사 묶음(헤드라인 단어·기사 주소)을 STORY_MEMORY 파일에 기억
+#   · 새 묶음이 6시간 넘게 앞선 묶음과 같은 사건이고(단어 겹침 ≥ 0.5, 고유 단어 3개 이상),
+#     새 숫자(%, $, 금액·수치)가 없으며, 후속·해설 표현이거나 의견기사·저신뢰 출처뿐이면 → 숨김
+# ─────────────────────────────────────────────────────────────────────
+REHASH_AGE_H, MEMORY_H = 6, 72
+FOLLOWUP = re.compile(r"\bextend(?:s|ed|ing)?\b|\bcontinu|\bagain\b|\bstill\b|\bdeepen|\brout\b|\bslide|\bworr(?:y|ies)|\bfears?\b|"
+                      r"\bconcerns?\b|\bweigh|\bdigest|\bmeans?\b|explain|\bwhy\b|here'?s|\brecap|takeaway|\bmount(?:s|ing)\b|"
+                      r"\brenewed\b|\blinger|\bfallout\b|\baftermath\b|\breact|\bstoke|\bfuel|\bspooks?\b|\bjitters\b|"
+                      r"\bsocial buzz\b|\bwhat (?:to|you)\b|\blessons?\b|\bshould you\b|\bbuy the dip\b", re.I)
+_NUM = re.compile(r"\$?\d[\d.,]*\s*(?:%|bn|billion|million|trillion|[bmk]\b)?", re.I)
+
+
+def _nums(text):
+    return {re.sub(r"[\s,]", "", m.group(0).lower()) for m in _NUM.finditer(text) if re.search(r"\d", m.group(0))}
+
+
+def mark_rehash(topics, path):
+    import math
+    now = time.time()
+    try:
+        mem = [m for m in json.load(open(path)) if now - m["first"] < MEMORY_H * 3600]
+    except (OSError, ValueError):
+        mem = []
+    for m in mem:
+        m["_tok"] = set(m["tok"])
+    stories = [s for t in topics for s in t["stories"]]
+    for s in stories:
+        s["_tok"] = set().union(*(_tokens(x["headline"]) for x in s["sources"][:6]))
+        s["_urls"] = {x["url"] for x in s["sources"]}
+    df = {}
+    for toks in [m["_tok"] for m in mem] + [s["_tok"] for s in stories]:
+        for t in toks:
+            df[t] = df.get(t, 0) + 1
+    n = len(mem) + len(stories) + 1
+    idf = {t: math.log((n + 1) / (c + 0.5)) for t, c in df.items()}
+    hidden = 0
+    for t in topics:
+        keep = []
+        for s in t["stories"]:
+            heads = " ".join(x["headline"] for x in s["sources"])
+            best, sim = None, 0.0
+            for m in mem:
+                if m["first"] > s["first_seen"] - REHASH_AGE_H * 3600 or (s["_urls"] & set(m["urls"])):
+                    continue   # 같은 묶음(앞선 실행에서 본 것)이거나 충분히 오래되지 않음
+                shared = s["_tok"] & m["_tok"]
+                if len([x for x in shared if idf.get(x, 0) > 1.5]) < 3:
+                    continue
+                v = _similar(s["_tok"], m["_tok"], idf)
+                if v > sim:
+                    best, sim = m, v
+            new_num = _nums(heads) - set(best["nums"]) if best else set()
+            weak = s["is_opinion"] or s["verdict"] == "UNVERIFIED" or FOLLOWUP.search(heads)
+            if best and sim >= 0.5 and not new_num and weak and s["verdict"] != "VERIFIED" or (
+                    best and sim >= 0.7 and not new_num and (s["is_opinion"] or s["verdict"] == "UNVERIFIED")):
+                hidden += 1
+                print(f"[scanner/rehash] {t['id']}: {s['headline'][:70]!r} ≈ {best['head'][:60]!r} ({sim:.2f})")
+                continue
+            keep.append(s)
+        t["stories"], t["count"], t["hidden_rehash"] = keep, len(keep), len(t["stories"]) - len(keep)
+    # 기억 갱신 (같은 기사 주소가 겹치면 같은 묶음으로 합침)
+    for s in stories:
+        hit = next((m for m in mem if s["_urls"] & set(m["urls"])), None)
+        heads = " ".join(x["headline"] for x in s["sources"])
+        if hit:
+            hit["first"] = min(hit["first"], s["first_seen"])
+            hit["urls"] = sorted(set(hit["urls"]) | s["_urls"])[-40:]
+            hit["_tok"] |= s["_tok"]
+            hit["nums"] = sorted(set(hit["nums"]) | _nums(heads))
+        else:
+            mem.append({"first": s["first_seen"], "head": s["headline"], "urls": sorted(s["_urls"])[:40],
+                        "_tok": set(s["_tok"]), "nums": sorted(_nums(heads))})
+    for s in stories:
+        s.pop("_tok", None); s.pop("_urls", None)
+    try:
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        out = [{"first": m["first"], "head": m["head"], "urls": m["urls"], "nums": m["nums"], "tok": sorted(m["_tok"])} for m in mem]
+        json.dump(out, open(path, "w"), ensure_ascii=False, separators=(",", ":"))
+    except OSError as ex:
+        print(f"[scanner/rehash] 기억 저장 실패: {ex}")
+    print(f"[scanner/rehash] 재탕 {hidden}건 숨김 · 기억 {len(mem)}건")
+    return hidden
+
+
 def build_briefing(start, end, mode, finnhub_token):
     t0 = time.time()
     # 토픽별 처리는 병렬로, 실제 HTTP 호출은 별도 풀(8개)에서 — 서로 다른 풀이라 교착 없음
@@ -1177,7 +1262,13 @@ def build_briefing(start, end, mode, finnhub_token):
                 ratings_dump(os.environ["RATINGS_DUMP"])
         except Exception as ex:
             print(f"[scanner/finviz] dump: {ex}")
-    stats = {"VERIFIED": 0, "SINGLE": 0, "UNVERIFIED": 0, "opinion": 0, "rumor": 0, "total": 0}
+    rehash = 0
+    if os.environ.get("STORY_MEMORY"):
+        try:   # 보조 기능 — 실패해도 수집은 계속
+            rehash = mark_rehash(topics, os.environ["STORY_MEMORY"])
+        except Exception as ex:
+            print(f"[scanner/rehash] {ex}")
+    stats = {"VERIFIED": 0, "SINGLE": 0, "UNVERIFIED": 0, "opinion": 0, "rumor": 0, "total": 0, "rehash": rehash}
     for t in topics:
         for s in t["stories"]:
             stats["total"] += 1
