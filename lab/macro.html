@@ -160,27 +160,41 @@ function renderGroup(g){
 }
 
 // AI 비용: 항목마다 작은 차트 (항목 전년비 vs PPI 최종수요 전년비, 회색 점선)
+// AI 비용: CPI 처럼 큰 시계열 차트 하나에 비교 (보기: 분류별 중앙값 / 분류 하나의 항목들) + PPI 최종수요(회색 점선)
+let AIV=store.get('macroAiView')||'cat';const AIH=new Set();
+const AICATS=['클라우드','연산','전력','전력망','냉각·건설'];
+const med=a=>{a=a.filter(v=>v!=null).sort((x,y)=>x-y);const n=a.length;return n?(n%2?a[(n-1)/2]:(a[n/2-1]+a[n/2])/2):null;};
 function renderAI(g){
   const cmp=byId(D.compare),last=groupLast(g),from=ymAdd(last,-SPAN+1),cl=lastYm(cmp);
   const row=it=>{const L=lastYm(it),y=chg(it,L,12),a3=MODES.ann3.f(it,L),cy=chg(cmp,L,12),base=val(it,'2022-11'),b20=val(it,'2019-12');
     return {it,L,y,a3,gap:y!=null&&cy!=null?y-cy:null,since:base?(val(it,L)/base-1)*100:null,s20:b20?(val(it,L)/b20-1)*100:null};};
-  const R=g.items.map(row),cs=val(cmp,cl)/val(cmp,'2022-11')*100-100;
+  const R=g.items.map(row),cs=val(cmp,cl)/val(cmp,'2022-11')*100-100,cy=chg(cmp,cl,12);
+  if(AIV!=='cat'&&!AICATS.includes(AIV))AIV='cat';
+  // 차트에 올릴 계열 (색은 보기 안에서 고정 순서)
+  const cmpS={name:'PPI 최종수요',color:'var(--cmp)',dash:'5 4',w:2,pts:yoyPts(cmp,from,last)};
+  let S;
+  if(AIV==='cat')S=AICATS.map((c,k)=>{const its=g.items.filter(i=>i.cat===c),pts=[];
+      for(let m=from;m<=last;m=ymAdd(m,1))pts.push([m,med(its.map(i=>chg(i,m,12)))]);return {name:c+' (중앙값)',color:COL[k],pts};});
+  else S=g.items.filter(i=>i.cat===AIV).slice(0,5).map((i,k)=>({name:i.name,color:COL[k],pts:yoyPts(i,from,last)}));
+  const shown=[...S.filter(x=>!AIH.has(x.name)),cmpS];
   let h=`<div class="card"><h2>🤖 AI 비용 관련 생산자물가</h2>
     <p class="note">AI 데이터센터에 드는 비용(클라우드·반도체·서버·전력·전력망·냉각)의 생산자물가를 PPI 최종수요(전체)와 비교 · 최근 발표 ${last} · 산업별 PPI는 계절조정 안 된 값이라 전년비로 봐요</p>
-    <div class="kpis">${['클라우드','연산','전력','전력망'].map(c=>{const ys=R.filter(r=>r.it.cat===c&&r.y!=null).map(r=>r.y).sort((a,b)=>a-b),n=ys.length,avg=n?(n%2?ys[(n-1)/2]:(ys[n/2-1]+ys[n/2])/2):null;
-      return `<div class="kpi"><div class="k">${c} 전년비 (중앙값)</div><div class="v">${pct(avg)}</div><div class="d">PPI 최종수요 ${pct(chg(cmp,cl,12))} 대비 ${pp(avg-chg(cmp,cl,12))}</div></div>`;}).join('')}</div>
-    <div class="tbl"><table><tr><th class="nm">항목</th><th>최근</th><th>전년비</th><th>3개월 연율</th><th>최종수요 대비</th><th>ChatGPT 이후<br>(22.11 대비)</th><th>코로나 전<br>(19.12 대비)</th></tr>`;
+    <div class="kpis">${AICATS.slice(0,4).map(c=>{const v=med(R.filter(r=>r.it.cat===c).map(r=>r.y));
+      return `<div class="kpi"><div class="k">${c} 전년비 (중앙값)</div><div class="v">${pct(v)}</div><div class="d">PPI 최종수요 ${pct(cy)} 대비 ${pp(v==null?null:v-cy)}</div></div>`;}).join('')}</div>
+    <div class="seg" id="aiv" style="flex-wrap:wrap">${[['cat','분류별 비교'],...AICATS.map(c=>[c,c])].map(([k,n])=>`<button data-av="${k}" class="${AIV===k?'on':''}">${n}</button>`).join('')}</div>
+    <div class="legend" id="aiLeg">${S.map(x=>`<span data-ah="${esc(x.name)}" style="cursor:pointer;${AIH.has(x.name)?'opacity:.35;text-decoration:line-through':''}"><i style="background:${x.color}"></i>${esc(x.name)}</span>`).join('')}
+      <span><i style="background:none;border-top:2px dashed var(--cmp);height:0;vertical-align:3px"></i>PPI 최종수요</span></div>
+    ${spanSeg()}<div class="chart" id="aiChart"></div>
+    <p class="note" style="margin-top:4px">전년 같은 달 대비 상승률(%) · 범례를 누르면 선을 끄고 켤 수 있어요${AIV==='cat'?' · 분류별 선 = 그 분류 항목들 전년비의 중앙값':''}</p></div>`;
+  h+=`<div class="card"><h2>항목별 비교표</h2><div class="tbl"><table><tr><th class="nm">항목</th><th>최근</th><th>전년비</th><th>3개월 연율</th><th>최종수요 대비</th><th>ChatGPT 이후<br>(22.11 대비)</th><th>코로나 전<br>(19.12 대비)</th></tr>`;
   R.forEach(r=>{h+=`<tr><td class="nm l${r.it.lv}"><span class="cat">${esc(r.it.cat)}</span>${esc(r.it.name)}</td><td>${r.L?ymKo(r.L):'–'}</td>
     <td style="background:${heat(r.y,10)}">${pct(r.y)}</td><td style="background:${heat(r.a3,14)}">${pct(r.a3)}</td>
     <td class="${r.gap>0?'up':r.gap<0?'dn':''}">${pp(r.gap)}</td><td>${pct(r.since)}</td><td>${pct(r.s20)}</td></tr>`;});
-  h+=`<tr><td class="nm l0">PPI 최종수요 (비교 기준)</td><td>${ymKo(cl)}</td><td>${pct(chg(cmp,cl,12))}</td><td>${pct(MODES.ann3.f(cmp,cl))}</td><td>–</td><td>${pct(cs)}</td><td>${pct(val(cmp,cl)/val(cmp,'2019-12')*100-100)}</td></tr></table></div>
-    <p class="note" style="margin-top:6px">최종수요 대비 = 항목 전년비 − PPI 최종수요 전년비 (빨강 = 전체 물가보다 빨리 오름)</p></div>`;
-  h+=`<div class="card"><h2>항목별 전년비 추이</h2><p class="note"><span style="display:inline-block;width:14px;border-top:2px dashed var(--cmp);vertical-align:3px"></span> PPI 최종수요 · <span style="display:inline-block;width:14px;border-top:2px solid var(--s1);vertical-align:3px"></span> 항목</p>${spanSeg()}
-    <div class="grid">${g.items.map((it,k)=>`<div class="mini"><div class="t"><span style="font-family:inherit">${esc(it.name)}</span><span class="${(R[k].y||0)>0?'up':'dn'}">${pct(R[k].y)}</span></div><div class="s">${esc(it.cat)} · ${R[k].L||''} · 최종수요 대비 ${pp(R[k].gap)}</div><div class="chart" id="m${k}"></div></div>`).join('')}</div></div>`;
+  h+=`<tr><td class="nm l0">PPI 최종수요 (비교 기준)</td><td>${ymKo(cl)}</td><td>${pct(cy)}</td><td>${pct(MODES.ann3.f(cmp,cl))}</td><td>–</td><td>${pct(cs)}</td><td>${pct(val(cmp,cl)/val(cmp,'2019-12')*100-100)}</td></tr></table></div>
+    <p class="note" style="margin-top:6px">최종수요 대비 = 항목 전년비 − PPI 최종수요 전년비 (빨강 = 전체 물가보다 빨리 오름) · 표는 옆으로 밀어서 볼 수 있어요</p></div>`;
   h+=`<div class="card"><h2>항목별 월간 변화</h2><p class="note">최근 13개월 · 빨강 = 가격 오름, 파랑 = 내림</p>${heatTable(g,last)}</div>`;
   $('app').innerHTML=h;
-  const cp=yoyPts(cmp,from,last);
-  g.items.forEach((it,k)=>lines($('m'+k),[{name:'PPI 최종수요',color:'var(--cmp)',dash:'4 3',w:1.5,pts:cp},{name:it.name,color:'var(--s1)',pts:yoyPts(it,from,last)}],{H:130,mini:true}));
+  lines($('aiChart'),shown,{H:280});
 }
 
 // ── GPU 임대료 (Vast.ai 매물 중간값 · RunPod 정가, 매일 누적) ──
@@ -234,7 +248,9 @@ function renderGPU(){
 
 function render(){if(!D)return;tabs();if(TAB==='gpu'&&GR){renderGPU();return;}const g=G(TAB)||D.groups[0];TAB=g.key;g.key==='ai'?renderAI(g):renderGroup(g);
   document.querySelectorAll('.tbl.hm').forEach(t=>t.scrollLeft=t.scrollWidth);}   // 좁은 화면: 최근 달이 먼저 보이게
-$('app').addEventListener('click',e=>{const m=e.target.closest('[data-m]'),s=e.target.closest('[data-s]');
+$('app').addEventListener('click',e=>{const m=e.target.closest('[data-m]'),s=e.target.closest('[data-s]'),av=e.target.closest('[data-av]'),ah=e.target.closest('[data-ah]');
+  if(av){AIV=av.dataset.av;AIH.clear();store.set('macroAiView',AIV);render();return;}
+  if(ah){const n=ah.dataset.ah;AIH.has(n)?AIH.delete(n):AIH.add(n);render();return;}
   if(m){MODE=m.dataset.m;store.set('macroMode',MODE);render();}if(s){SPAN=+s.dataset.s;store.set('macroSpan',SPAN);render();}});
 fetch('gpu_rent.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(d.days&&d.days.length){GR=d;render();}}).catch(()=>{});
 fetch('macro.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{D=d;$('hsub').textContent+=` · ${new Date(d.at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})} 갱신`;render();})
