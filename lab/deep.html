@@ -56,17 +56,22 @@ th{color:var(--sub);font-weight:600;font-size:12px}td.r,th.r{text-align:right;fo
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const id=(new URLSearchParams(location.search).get('id')||'').replace(/[^a-z0-9-]/g,'');
-fetch('deepnews/index.json',{cache:'no-store'}).then(r=>r.json()).then(L=>{
+// 저장소(main)에서 바로 읽기 → 푸시 몇 분 뒤 반영 (실시간 갱신 기사용) · 실패하면 배포본
+const RAW='https://raw.githubusercontent.com/kayJo81/mini-bb-public/main/lab/deepnews/';
+const get=p=>fetch(RAW+p+'?t='+Math.floor(Date.now()/60000),{cache:'no-store'}).then(r=>r.ok?r:Promise.reject(r.status)).catch(()=>fetch('deepnews/'+p,{cache:'no-store'}));
+const liveTag=a=>a.live?`<span class="tag" style="background:#fee2e2;color:#b91c1c">🔴 실시간 갱신 중${a.updated?' · '+esc(a.updated):''}</span>`:(a.updated?`<span class="tag" style="background:#f3f4f6;color:#374151">갱신 ${esc(a.updated)}</span>`:'');
+get('index.json').then(r=>r.json()).then(L=>{
   L.sort((a,b)=>b.date.localeCompare(a.date));
   if(!id){
-    document.getElementById('app').innerHTML=L.length?L.map(a=>`<a class="card item" href="deep?id=${esc(a.id)}"><span class="date">${esc(a.date)}</span> ${(a.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
+    document.getElementById('app').innerHTML=L.length?L.map(a=>`<a class="card item" href="deep?id=${esc(a.id)}"><span class="date">${esc(a.date)}</span> ${liveTag(a)} ${(a.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
       <h2>${esc(a.title)}</h2><p>${esc(a.sub)}</p></a>`).join(''):'<div class="card note">아직 기사가 없어요</div>';
     return;}
   const a=L.find(x=>x.id===id);if(!a){document.getElementById('app').innerHTML='<div class="card note">기사를 찾지 못했어요</div>';return;}
   document.title=`미니 블벅 랩 · ${a.title}`;const bk=document.getElementById('back');bk.href='deep';bk.textContent='← 심층 뉴스 목록';
   // 기사 본문은 저장소에서 직접 쓴 HTML 조각 (외부 입력 아님)
-  fetch(`deepnews/${id}.html`,{cache:'no-store'}).then(r=>r.text()).then(h=>{
-    document.getElementById('app').innerHTML=`<article class="card art"><span class="date">${esc(a.date)}</span> ${(a.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
+  if(a.live)setTimeout(()=>location.reload(),120000);   // 실시간 갱신 기사는 2분마다 새로 읽기
+  get(`${id}.html`).then(r=>r.text()).then(h=>{
+    document.getElementById('app').innerHTML=`<article class="card art"><span class="date">${esc(a.date)}</span> ${liveTag(a)} ${(a.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
       <h1>${esc(a.title)}</h1><p class="lede">${esc(a.sub)}</p>
       <div class="req"><div class="k">📝 요청 내용</div>${esc(a.request)}</div>${(a.tilts||[]).length?`<div class="req" style="border-left-color:#16a34a"><div class="k" style="color:#16a34a">🧭 포트폴리오 반영 (<a href="sim">가상 운용</a>)</div>${a.tilts.map(t=>`<div>${t.dir>0?'비중↑':'비중↓·숏'} <b>${t.syms.map(esc).join(', ')}</b> · ~${esc(t.until||'')} — ${esc(t.why||'')}</div>`).join('')}</div>`:''}${h}</article>`;});
 }).catch(e=>{document.getElementById('app').innerHTML=`<div class="card note">불러오지 못했어요 (${esc(e.message)})</div>`;});
