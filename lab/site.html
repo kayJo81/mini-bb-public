@@ -114,12 +114,12 @@ function pfCard(F){
   const sl={core:0,theme:0,signal:0};let shortW=0;(F.holdings||[]).forEach(h=>{sl[h.sleeve]+=h.weight;if(h.weight<0)shortW+=h.weight;});
   const invested=(F.holdings||[]).reduce((a,h)=>a+h.weight,0);
   const comp=G.components.map(c=>`<tr><td><span class="tag">${esc(c.group)}</span> <b>${esc(c.label)}</b><br><span class="hsub">${esc(c.why)}</span></td><td class="mono ${c.pts>0?'up':c.pts<0?'dn':''}" style="text-align:right;font-size:14px;font-weight:700">${c.pts>0?'+':''}${c.pts}</td></tr>`).join('');
-  const hold=(F.holdings||[]).map(h=>`<tr><td><span class="tag">${SLV[h.sleeve]}</span> <span class="sym" style="font-size:13px">${esc(h.sym)}</span>${h.shares<0?' <span class="dir 숏">숏</span>':''}<br><span class="hsub">${esc((h.why||'').slice(0,60))}</span></td>
+  const hold=(F.holdings||[]).map(h=>`<tr><td><span class="tag">${SLV[h.sleeve]}</span> <span class="sym" style="font-size:13px">${esc(h.sym)}</span>${h.shares<0?' <span class="dir 숏">숏</span>':''}<br><span class="hsub">${esc((h.why||'').slice(0,60))}</span><br><span class="hsub">${optLine(h.opt)}</span></td>
     <td class="mono" style="text-align:right">${h.weight.toFixed(1)}%</td><td class="mono" style="text-align:right">${money(Math.abs(h.value))}</td><td class="mono ${cls(h.pnl)}" style="text-align:right">${h.pnl>0?'+':''}${money(h.pnl).replace('$-','-$')}</td></tr>`).join('');
   const nxt=(F.next.w||[]).map(x=>`<span><span class="tag">${SLV[x.sleeve]}</span> <b>${esc(x.sym)}</b> ${x.w>0?'':'<span class="dn">숏</span> '}${Math.abs(x.w).toFixed(1)}%</span>`).join('');
   const tilts=(F.tilts||[]).map(t=>`<li><span class="tag ${t.dir>0?'ok':'mid'}">${t.dir>0?'비중↑':'비중↓·숏'}</span> <b>${t.syms.map(esc).join(', ')}</b> — ${t.id?`<a href="deep?id=${encodeURIComponent(t.id)}">${esc(t.title)}</a>`:esc(t.title)} <span class="hsub">(${esc(t.src)}${t.until?` · ~${esc(t.until)}`:''})</span><br><span class="hsub">${esc(t.why||'')}</span></li>`).join('');
   return `<div class="card"><h2>🧭 포트폴리오 가상 운용 <span class="tag ok">${esc(F.status)}</span></h2>
-  <p class="note">${esc(F.start)} 시작 · ${money(R.capital)} · 랩이 기록하는 <b>시장 환경 → 위험 예산</b>, <b>매크로 지표 → 물가 압력</b>, <b>심층 뉴스 → 테마 비중</b>, <b>뉴스 신호 → 단기 매매</b>를 합쳐 매일 목표 비중을 정하고 다음 거래일 시가에 체결 · 비용 ${(R.cost*100).toFixed(1)}% · 현금엔 3개월 국채 이자</p>
+  <p class="note">${esc(F.start)} 시작 · ${money(R.capital)} · 랩이 기록하는 <b>시장 환경 → 위험 예산</b>, <b>매크로 지표 → 물가 압력</b>, <b>심층 뉴스 → 테마 비중</b>, <b>개별 종목 옵션 → 순위·크기</b>, <b>뉴스 신호 → 단기 매매</b>를 합쳐 최대 10종목으로 매일 목표 비중을 정하고 다음 거래일 시가에 체결 · 비용 ${(R.cost*100).toFixed(1)}% · 현금엔 3개월 국채 이자</p>
   ${F.started?`<div class="kv" style="font-size:13px"><span>평가액 <b>${money(F.equity)}</b> (<b class="${cls(F.ret)}">${pct(F.ret)}</b>)</span>
     <span>QQQ <b class="${cls(F.bench.QQQ)}">${pct(F.bench.QQQ)}</b> · SPY <b class="${cls(F.bench.SPY)}">${pct(F.bench.SPY)}</b></span><span>현금 ${money(F.cash)} (이자 ${money(F.interest)})</span></div>
   ${line(curve)}<div class="hsub">파란선: 포트폴리오 · 회색 점선: 같은 돈을 QQQ에 (${esc(F.asof)} 기준)</div>`:`<div class="card warn" style="margin:8px 0">⏳ 첫 구성 주문을 냈어요 — 다음 거래일 시가에 체결된 뒤부터 성과가 나와요.</div>`}
@@ -129,12 +129,29 @@ function pfCard(F){
   <h2 style="margin-top:12px;font-size:14px">② 심층 뉴스·데이터 테마 (${(F.tilts||[]).length})</h2>
   ${tilts?`<ul style="margin:4px 0;padding-left:18px;font-size:12.5px">${tilts}</ul>`:'<p class="hsub">지금 반영 중인 테마가 없어요</p>'}
   ${(F.skipped_signals||[]).length?`<p class="hsub">건너뛴 뉴스 신호: ${F.skipped_signals.map(x=>`<b>${esc(x.sym)}</b> ${esc(x.direction)} (${esc(x.why)})`).join(' · ')}</p>`:''}
-  <h2 style="margin-top:12px;font-size:14px">③ 보유 (${(F.holdings||[]).length}) — 코어 ${sl.core.toFixed(0)}% · 테마 ${sl.theme.toFixed(1)}% · 신호 ${sl.signal.toFixed(1)}% · 현금 ${(100-invested).toFixed(0)}%</h2>
+  <h2 style="margin-top:12px;font-size:14px">③ 편입 비중 — ${F.holdings&&F.holdings.length?`지금 보유 ${new Set(F.holdings.map(h=>h.sym)).size}종목`:`다음 거래일 목표 ${new Set(F.next.w.map(x=>x.sym)).size}종목`} / 최대 ${(F.selection||{}).max_names||10}종목</h2>
+  ${F.holdings&&F.holdings.length?weightBlock(F.holdings.map(h=>({sym:h.sym,sleeve:h.sleeve,w:h.weight,opt:h.opt,why:h.why})),100-invested):weightBlock(F.next.w,100-F.next.w.reduce((a,x)=>a+x.w,0))}
+  ${F.selection&&F.selection.dropped.length?`<p class="hsub" style="margin-top:6px">10종목 제한으로 빠진 테마 후보: ${F.selection.dropped.map(r=>`<b>${esc(r.sym)}</b>(${r.adj>0?'+':''}${r.adj.toFixed(2)})`).join(', ')} · 순위 = 기사·데이터 점수 × 옵션 확인</p>`:''}
+  <h2 style="margin-top:12px;font-size:14px">④ 보유 상세 (${(F.holdings||[]).length}) — 코어 ${sl.core.toFixed(0)}% · 테마 ${sl.theme.toFixed(1)}% · 신호 ${sl.signal.toFixed(1)}% · 현금 ${(100-invested).toFixed(0)}%</h2>
   ${hold?`<div class="tw"><table><tr><th>종목 · 이유</th><th>비중</th><th>금액</th><th>손익</th></tr>${hold}</table></div>`:'<p class="hsub">아직 체결 전이에요</p>'}
   <details style="margin-top:8px"><summary>⏭️ 다음 거래일 목표 (${esc(F.next.reason)})</summary><div class="kv" style="margin-top:6px">${nxt}</div></details>
   ${(F.log||[]).length?`<details><summary>📒 조정 기록</summary><div class="kv" style="flex-direction:column;gap:2px;margin-top:6px">${F.log.slice().reverse().map(l=>`<span><b class="mono">${esc(l.date)}</b> · ${l.full?'전체 조정':'신호만'} · ${esc(l.reason)} · 점수 ${l.score} → 주식 ${Math.round(l.exposure*100)}%</span>`).join('')}</div></details>`:''}
   ${(F.trades||[]).length?`<details><summary>🧾 체결 내역 (최근 ${Math.min(F.trades.length,60)})</summary><div class="tw"><table><tr><th>날짜</th><th>종목</th><th>매매</th><th>금액</th></tr>${F.trades.slice().reverse().map(t=>`<tr><td class="mono">${esc(t.date)}</td><td><span class="tag">${SLV[t.sleeve]}</span> <b>${esc(t.sym)}</b></td><td>${esc(t.side)}</td><td class="mono" style="text-align:right">${money(Math.abs(t.amt))}</td></tr>`).join('')}</table></div></details>`:''}
   </div>`;
+}
+// 편입 비중 막대 (종목별로 슬리브 합산, 숏은 왼쪽 빨강) + 옵션 한 줄
+const SLC={core:'#2a78d6',theme:'#eb6834',signal:'#1baf7a'};
+const optLine=o=>o?`옵션 ${o.asof?esc(o.asof.slice(5))+' ':''}· IV ${o.iv!=null?o.iv.toFixed(0):'–'} · 풋/콜 ${o.pc??'–'} · 스큐 ${o.skew??'–'} · 감마 ${o.gex==null?'–':o.gex>0?'+':'−'}${o.call_wall?` · 콜월 ${o.call_wall}`:''}${o.put_wall?`/풋월 ${o.put_wall}`:''} → <b class="${o.pts>0?'up':o.pts<0?'dn':''}">${o.pts>0?'+':''}${o.pts}</b>`:'옵션 자료 없음';
+function weightBlock(rows,cash){
+  const by={};rows.forEach(r=>{const x=by[r.sym]||(by[r.sym]={sym:r.sym,w:0,parts:[],opt:r.opt,why:[]});x.w+=r.w;x.parts.push([r.sleeve,r.w]);if(r.why)x.why.push(r.why);if(r.opt)x.opt=r.opt;});
+  const L=Object.values(by).sort((a,b)=>b.w-a.w),mx=Math.max(...L.map(x=>Math.abs(x.w)),cash,1);
+  const bar=x=>`<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;display:flex;justify-content:${x.w<0?'flex-end':'flex-start'};direction:ltr">
+      <div style="display:flex;width:${Math.abs(x.w)/mx*100}%;height:12px;border-radius:${x.w<0?'4px 0 0 4px':'0 4px 4px 0'};overflow:hidden">${x.parts.map(([sl,w])=>`<div style="flex:${Math.abs(w)};background:${x.w<0?'#e34948':SLC[sl]};border-right:2px solid #fff"></div>`).join('')}</div></div>
+      <b class="mono" style="width:54px;text-align:right">${x.w.toFixed(1)}%</b></div>`;
+  return `<div style="display:grid;grid-template-columns:minmax(70px,auto) 1fr;gap:6px 10px;align-items:center;font-size:12.5px">
+    ${L.map(x=>`<div><span class="sym" style="font-size:13px">${esc(x.sym)}</span>${x.w<0?' <span class="dir 숏">숏</span>':''}<div class="hsub">${x.parts.map(([sl])=>SLV[sl]).join('+')}</div></div><div>${bar(x)}<div class="hsub" style="margin-top:2px">${optLine(x.opt)}</div></div>`).join('')}
+    <div><b>현금</b></div><div>${bar({w:cash,parts:[['cash',cash]]}).replace('background:undefined','background:#d1d5db')}</div></div>
+    <div class="hsub" style="margin-top:6px"><span style="color:#2a78d6">■</span> 코어(지수) <span style="color:#eb6834">■</span> 테마 <span style="color:#1baf7a">■</span> 뉴스 신호 <span style="color:#e34948">■</span> 숏 · 옵션 점수: 풋/콜 거래·25델타 스큐·딜러 감마·콜월/풋월로 본 방향(+강세/−약세)</div>`;
 }
 let PF=null;
 let P=null;

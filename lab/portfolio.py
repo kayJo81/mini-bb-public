@@ -12,10 +12,13 @@
   · 주식 비중(위험 예산) = 시장 환경 점수 + 매크로 점수 → 40~90%, 나머지는 현금
       시장 환경: VIX 수준, VIX/VIX3M(1 넘으면 공포), 딜러 감마(GEX), 채권 변동성(MOVE), 장단기 금리차
       매크로: 근원 PCE·근원 CPI 의 최근 3개월 연율 vs 전년비(재가속이면 감점), PPI 최종수요, 10년물 5% 이상
-  · 주식 안에서: 코어 50% (QQQ·SPY 반반) · 테마 35% · 뉴스 신호 15% (신호가 없으면 그만큼 코어로)
+  · 주식 안에서: 코어 50% · 테마 35% · 뉴스 신호 15% (신호가 없으면 그만큼 코어로)
       테마 = 심층 뉴스 기사마다 적어 둔 '시각'(종목·방향·기한) + GPU 임대료·AI 비용 PPI 로 만든 데이터 테마
       위험 점수가 -3 이하면 테마 롱 절반, 숏은 테마의 1/3 까지
-      뉴스 신호 = signals.py 오늘 후보(최근 3거래일) 상위 3개, 각 5거래일 보유, 방향은 신호대로
+      뉴스 신호 = signals.py 후보(최근 3거래일) 상위 2개, 각 5거래일 보유 — 옵션 포지션이 반대면 건너뜀
+  · 편입 종목은 10개 이내: 코어 ETF 1개(점수 0 이상 QQQ, 아니면 SPY) + 신호 + 테마(강한 순)
+  · 개별 종목 옵션(CBOE, 시장 환경 기록): 풋/콜 거래 비율·25델타 스큐·딜러 감마·콜월/풋월로 방향 점수
+      → 테마 점수에 곱해(같은 방향 최대 1.5배, 반대 최소 0.5배) 순위를 정하고, 비중은 내재변동성(IV)에 반비례
   · 다시 맞추기(리밸런싱): 위험 단계가 바뀌거나, 테마 구성이 바뀌거나, 마지막 조정 뒤 5거래일 — 아니면 신호 몫만 매일 조정
   · 비용 0.1% (사고팔 때 각각) · 비교: 같은 날 QQQ / SPY 에 전부 넣었을 때
 """
@@ -29,8 +32,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import DATA  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RULES = {"version": 1, "capital": 100000.0, "cost": 0.001, "core": 0.5, "theme": 0.35, "signal": 0.15,
-         "signal_max": 3, "signal_hold": 5, "rebalance_days": 5, "min_trade": 0.003}
+RULES = {"version": 2, "capital": 100000.0, "cost": 0.001, "core": 0.5, "theme": 0.35, "signal": 0.15,
+         "signal_max": 2, "signal_hold": 5, "rebalance_days": 5, "min_trade": 0.003, "max_names": 10}
 EXPOSURE = [(1, 0.9), (0, 0.8), (-1, 0.7), (-2, 0.6), (-3, 0.5)]   # 점수 이상 → 주식 비중, 그 아래는 40%
 
 
@@ -167,34 +170,87 @@ def themes(today, deep, gpu, macro, universe):
     return tilts, {s: v for s, v in score.items() if abs(v) >= 0.5}
 
 
-# ── 4. 목표 비중 ─────────────────────────────────────────────────
-def targets(R, E, score, theme_score, picks):
+# ── 4. 개별 종목 옵션 ─────────────────────────────────────────────
+def opt_view(o):
+    """옵션 포지션으로 본 방향 점수 (−1.5 ~ +1.5, +면 강세 쪽) + 근거"""
+    if not o or not o.get("price"):
+        return None
+    pts, why = 0.0, []
+    pc = o.get("pc_vol")
+    if pc is not None:
+        if pc < 0.6:
+            pts += 0.5; why.append(f"콜 거래 우세(풋/콜 {pc:.2f})")
+        elif pc > 1.2:
+            pts -= 0.5; why.append(f"풋 거래 우세(풋/콜 {pc:.2f})")
+    sk = o.get("skew25")
+    if sk is not None:
+        if sk < 2:
+            pts += 0.5; why.append(f"스큐 낮음 {sk:.1f}(상승 베팅)")
+        elif sk > 8:
+            pts -= 0.5; why.append(f"스큐 높음 {sk:.1f}(하락 대비)")
+    g = o.get("gex_musd")
+    if g is not None:
+        pts += 0.25 if g > 0 else -0.25
+        why.append("딜러 감마 +(변동 완화)" if g > 0 else "딜러 감마 −(변동 확대)")
+    S, cw, pw = o["price"], o.get("call_wall"), o.get("put_wall")
+    if cw and S >= cw * 0.99:
+        pts -= 0.25; why.append(f"콜월 {cw:g} 도달(위가 막힘)")
+    if pw and S <= pw * 1.02 and S >= pw * 0.97:
+        pts += 0.25; why.append(f"풋월 {pw:g} 근처(지지)")
+    return {"pts": round(pts, 2), "why": why, "iv": o.get("atm_iv30") or o.get("iv30"), "pc": pc, "skew": sk,
+            "gex": g, "call_wall": cw, "put_wall": pw, "asof": o.get("asof")}
+
+
+# ── 5. 목표 비중 (편입 종목 10개 이내) ────────────────────────────
+def targets(R, E, score, theme_score, picks, opts):
+    """반환: {(슬리브, 종목): 비중}, 테마 선정 내역"""
     w = {}
+    core_sym = "QQQ" if score >= 0 else "SPY"          # 위험 점수 좋으면 나스닥, 아니면 S&P (종목 수를 아끼려 하나만)
     sig = picks[:R["signal_max"]]
     sig_w = R["signal"] * E / R["signal_max"]
     for c in sig:
         w[("signal", c["sym"])] = sig_w * (1 if c["direction"] == "롱" else -1)
+    names = {core_sym} | {c["sym"] for c in sig}
+    room = R["max_names"] - len(names)
+    # 테마: 심층 뉴스·데이터 점수 × 옵션 확인 (같은 방향이면 키우고 반대면 줄임) → 강한 순으로 남은 자리만큼
+    ranked = []
+    for sym, base in theme_score.items():
+        ov = opts.get(sym)
+        o = ov["pts"] if ov else 0.0
+        mult = max(0.5, min(1.5, 1 + 0.3 * o * (1 if base > 0 else -1)))
+        ranked.append({"sym": sym, "base": base, "opt": o, "adj": base * mult, "iv": (ov or {}).get("iv")})
+    ranked.sort(key=lambda r: -abs(r["adj"]))
+    chosen, dropped = [], []
+    for r in ranked:
+        if r["sym"] in names:
+            chosen.append(r)          # 신호·코어와 겹치는 종목은 자리를 더 쓰지 않음
+        elif room > 0:
+            chosen.append(r)
+            names.add(r["sym"])
+            room -= 1
+        else:
+            dropped.append(r)
     unused = R["signal"] * E - sig_w * len(sig)
     core = R["core"] * E + unused
-    w[("core", "QQQ")] = core / 2
-    w[("core", "SPY")] = core / 2
     tb = R["theme"] * E
-    longs = {s: v for s, v in theme_score.items() if v > 0}
-    shorts = {s: -v for s, v in theme_score.items() if v < 0}
+    longs = [r for r in chosen if r["adj"] > 0]
+    shorts = [r for r in chosen if r["adj"] < 0]
     long_budget = tb * (0.5 if score <= -3 else 1.0)
-    short_budget = min(tb / 3, tb * sum(shorts.values()) / max(1e-9, sum(longs.values()) + sum(shorts.values()))) if shorts else 0
-    if longs:
-        tot = sum(longs.values())
-        for s, v in longs.items():
-            w[("theme", s)] = long_budget * v / tot
-    else:
-        w[("core", "QQQ")] += long_budget / 2
-        w[("core", "SPY")] += long_budget / 2
-    if shorts:
-        tot = sum(shorts.values())
-        for s, v in shorts.items():
-            w[("theme", s)] = -short_budget * v / tot
-    return w
+    # 변동성 반비례: |점수| ÷ 내재변동성 (옵션 없으면 평균 IV 가정)
+    ivs = [r["iv"] for r in chosen if r["iv"]]
+    iv0 = sum(ivs) / len(ivs) if ivs else 40
+    def rw(r):
+        return abs(r["adj"]) / max(15, r["iv"] or iv0)
+    sl, ss = sum(rw(r) for r in longs), sum(rw(r) for r in shorts)
+    short_budget = min(tb / 3, tb * ss / max(1e-9, sl + ss)) if shorts else 0
+    for r in longs:
+        w[("theme", r["sym"])] = long_budget * rw(r) / sl
+    if not longs:
+        core += long_budget
+    for r in shorts:
+        w[("theme", r["sym"])] = -short_budget * rw(r) / ss
+    w[("core", core_sym)] = core
+    return w, {"chosen": chosen, "dropped": dropped, "core": core_sym}
 
 
 def main():
@@ -282,6 +338,7 @@ def main():
     E = exposure(score)
     universe = set(prices)
     tilts, tscore = themes(today, deep, gpu, macro, universe)
+    opts = {k: v for k, v in ((k, opt_view(o)) for k, o in ((env or {}).get("latest", {}).get("options") or {}).items()) if v}
     days3 = cal[-3:]
     seen_sig = set()
     picks = []
@@ -306,13 +363,17 @@ def main():
     ok = []
     for c in picks:
         d = 1 if c["direction"] == "롱" else -1
+        ov = opts.get(c["sym"])
         if deep_dir.get(c["sym"], 0) * d < 0:
             skipped.append({"sym": c["sym"], "direction": c["direction"], "date": c["date"],
                             "why": "심층 뉴스 시각과 반대 — " + " · ".join(t["title"][:30] for t in tilts if t["src"] == "심층 뉴스" and c["sym"] in t["syms"])})
+        elif ov and ov["pts"] * d <= -1:
+            skipped.append({"sym": c["sym"], "direction": c["direction"], "date": c["date"],
+                            "why": "옵션 포지션이 반대 — " + " · ".join(ov["why"])})
         else:
             ok.append(c)
     picks = keep + [c for c in ok if c["sym"] not in {k["sym"] for k in keep}]
-    w = targets(R, E, score, tscore, picks)
+    w, sel = targets(R, E, score, tscore, picks, opts)
 
     bucket = E
     prev = st["log"][-1] if st["log"] else None
@@ -338,6 +399,9 @@ def main():
             why["|".join(k)] = f"뉴스 신호 {c.get('direction','')} ({c.get('date','')})"
         else:
             why["|".join(k)] = " · ".join(t["title"][:40] for t in tilts if k[1] in t["syms"])
+            ov = opts.get(k[1])
+            if ov and ov["why"]:
+                why["|".join(k)] += " / 옵션: " + ", ".join(ov["why"][:2])
     st["pending"] = {"decided": today, "w": {"|".join(k): round(v, 5) for k, v in w.items()}, "full": full,
                      "reason": " · ".join(reasons) or "신호 몫만 조정", "score": score, "exposure": bucket, "why": why}
     st["pos"] = {"|".join(k): v for k, v in pos.items()}
@@ -349,7 +413,7 @@ def main():
         c = px(k[1], today, 1) or 0
         buys = [t for t in st["trades"] if t["sym"] == k[1] and t["sleeve"] == k[0]]
         cost = sum(t["amt"] for t in buys)
-        hold.append({"sleeve": k[0], "sym": k[1], "shares": round(sh, 4), "px": c, "value": round(sh * c, 2),
+        hold.append({"opt": opts.get(k[1]), "sleeve": k[0], "sym": k[1], "shares": round(sh, 4), "px": c, "value": round(sh * c, 2),
                      "weight": round(sh * c / equity * 100, 2) if equity else 0,
                      "pnl": round(sh * c - cost, 2), "why": why.get("|".join(k)) or (buys[-1]["why"] if buys else "")})
     hold.sort(key=lambda h: (["core", "theme", "signal"].index(h["sleeve"]), -abs(h["value"])))
@@ -362,9 +426,11 @@ def main():
         "curve": st["curve"], "holdings": hold,
         "regime": {"score": score, "exposure": E, "components": comps, "env_date": envrow.get("date")},
         "tilts": tilts, "next": {"decided": today, "full": full, "reason": st["pending"]["reason"],
-                                 "w": [{"sleeve": k[0], "sym": k[1], "w": round(v * 100, 2), "why": why.get("|".join(k), "")}
+                                 "w": [{"sleeve": k[0], "sym": k[1], "w": round(v * 100, 2), "why": why.get("|".join(k), ""), "opt": opts.get(k[1])}
                                        for k, v in sorted(w.items(), key=lambda kv: (["core", "theme", "signal"].index(kv[0][0]), -abs(kv[1])))]},
         "log": st["log"][-30:], "trades": st["trades"][-60:], "started": bool(first), "skipped_signals": skipped,
+        "selection": {"core": sel["core"], "max_names": R["max_names"],
+                      "chosen": [r | {"o": opts.get(r["sym"])} for r in sel["chosen"]], "dropped": [r | {"o": opts.get(r["sym"])} for r in sel["dropped"]]},
     }
     json.dump(out, open(os.path.join(a.out, "portfolio.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     print(f"[portfolio] {today} 점수 {score:+d} → 주식 {E*100:.0f}% · 테마 {len(tscore)}종목 · 신호 {len(picks[:R['signal_max']])} · "
