@@ -191,7 +191,10 @@ function europeTable(){
   const head='<tr><th>국가</th>'+idx.map(i=>`<th>${+M[i].slice(5)}월</th>`).join('')+'<th>합계</th>'+(yrs.indexOf(y)>0?'<th>전년 동기비</th>':'')+'</tr>';
   const row=(c,cls)=>`<tr class="${cls||''}"><td>${esc(c.name)}</td>`+idx.map(i=>cell(c,i)).join('')+`<td class="tot">${fmt(sumY(c,y))}</td>`+(yrs.indexOf(y)>0?`<td>${pct(ytd(c))}</td>`:'')+'</tr>';
   const S={name:'집계 국가 합',v:M.map((_,i)=>{const z=C.filter(c=>c.v[i]!=null);return z.length?z.reduce((a,c)=>a+c.v[i],0):null;}),d:[]};
-  $('euTbl').innerHTML='<table>'+head+C.map(c=>row(c)).join('')+row(S,'sum')+(E.ref||[]).map(r=>row(r,'ref')).join('')+'</table>'+
+  // 집계 국가가 유럽 전체(ACEA, EU+EFTA+영국)에서 차지하는 비중 — 빠진 나라 규모 확인용
+  const A=(E.ref||[]).find(r=>r.cc==='ACEA_EUR');
+  const cov=A?`<tr class="ref"><td>${C.length}개국 / ACEA 비중</td>`+idx.map(i=>`<td>${A.v[i]&&S.v[i]!=null?(S.v[i]/A.v[i]*100).toFixed(0)+'%':'–'}</td>`).join('')+'<td></td>'+(yrs.indexOf(y)>0?'<td></td>':'')+'</tr>':'';
+  $('euTbl').innerHTML='<table>'+head+C.map(c=>row(c)).join('')+row(S,'sum')+(E.ref||[]).map(r=>row(r,'ref')).join('')+cov+'</table>'+
     `<p class="note" style="margin-top:6px">셀 색 = 전년 같은 달 대비 (파랑 증가 · 빨강 감소, 진할수록 변화 큼) · '집계 국가 합'은 빈칸(–)을 뺀 합이라 최근 달은 작게 나올 수 있어요${(E.ref||[]).length?' · 회색 줄은 유럽자동차공업협회(ACEA) 발표 합계(참고)':''}</p>`;
 }
 function europe(E){
