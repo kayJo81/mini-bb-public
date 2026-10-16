@@ -14,6 +14,7 @@
       매크로: 근원 PCE·근원 CPI 의 최근 3개월 연율 vs 전년비(재가속이면 감점), PPI 최종수요, 10년물 5% 이상
   · 주식 안에서: 코어 50% · 테마 35% · 뉴스 신호 15% (신호가 없으면 그만큼 코어로)
       테마 = 심층 뉴스 기사마다 적어 둔 '시각'(종목·방향·기한) + GPU 임대료·AI 비용 PPI 로 만든 데이터 테마
+        (데이터 테마는 옵션 쏠림에 따라 보는 기간을 바꿈: 같은 방향 쏠림 → 전월비·1주, 중립 → 3개월·1달, 반대 쏠림 → 전년비·3달)
       위험 점수가 -3 이하면 테마 롱 절반, 숏은 테마의 1/3 까지
       뉴스 신호 = signals.py 후보(최근 3거래일) 상위 2개, 각 5거래일 보유 — 옵션 포지션이 반대면 건너뜀
   · 편입 종목은 10개 이내: 코어 ETF 1개(점수 0 이상 QQQ, 아니면 SPY) + 신호 + 테마(강한 순)
@@ -129,39 +130,92 @@ def exposure(score):
 
 
 # ── 3. 테마 (심층 뉴스 시각 + 데이터 테마) ────────────────────────
-def gpu_trend(gpu):
-    """H100·H200 시장 중간값 7일 평균의 1달 변화(%)"""
+def gpu_trend(gpu, days=30):
+    """H100·H200 시장 중간값 7일 평균의 변화(%) — days 일 전 대비 (1주 7 · 1달 30 · 약 3달 89)"""
     out = []
     for g in (gpu or {}).get("gpus", []):
         if g["key"] not in ("H100", "H200") or not g.get("vast"):
             continue
         dl = g["vast"].get("daily") or []
         ma = [sum(x[1] for x in dl[max(0, i - 6):i + 1]) / len(dl[max(0, i - 6):i + 1]) for i in range(len(dl))]
-        if len(ma) > 37:
-            out.append((ma[-1] / ma[-31] - 1) * 100)
+        if len(ma) > days + 6:
+            out.append((ma[-1] / ma[-1 - days] - 1) * 100)
     return sum(out) / len(out) if out else None
 
 
-def themes(today, deep, gpu, macro, universe):
+def crowd(o):
+    """옵션 쏠림 −1(풋 쪽) ~ +1(콜 쪽): 풋/콜 거래량 비율(1 기준)과 25델타 스큐(4 기준)만 사용"""
+    if not o:
+        return None
+    parts = []
+    if o.get("pc_vol") is not None:
+        parts.append(max(-1.0, min(1.0, (1 - o["pc_vol"]) / 0.5)))
+    if o.get("skew25") is not None:
+        parts.append(max(-1.0, min(1.0, (4 - o["skew25"]) / 4)))
+    return sum(parts) / len(parts) if parts else None
+
+
+def data_theme(src, name, syms, d, vals, labels, thr, rev, why, raw_opts):
+    """데이터 테마 하나: 옵션이 어느 쪽에 몰렸는지로 볼 기간을 고름
+       · 같은 방향으로 쏠림 → 짧은 기간(전월비·1주): 긴 추세는 이미 가격에 반영, 꺾이는지가 중요
+       · 중립 → 중간 기간(3개월·1달)
+       · 반대로 쏠림 → 긴 기간(전년비·3달): 시장이 아직 안 믿는 큰 추세
+       반환: 테마(비중↑/↓) · '보류'(긴 추세는 맞지만 짧은 변화가 멈춤) · 없음"""
+    cs = [c for c in (crowd(raw_opts.get(x)) for x in syms) if c is not None]
+    c = sum(cs) / len(cs) if cs else None
+    if c is None:
+        h, hw = "mid", "옵션 자료 없음 — 중간 기간"
+    elif c * d >= 0.4:
+        h, hw = "short", f"옵션이 같은 방향으로 쏠림({c:+.2f}) → {labels['short']} 변화로 꺾임 확인"
+    elif c * d <= -0.4:
+        h, hw = "long", f"옵션이 반대로 쏠림({c:+.2f}) → 시장이 덜 믿는 큰 추세, {labels['long']} 기준"
+    else:
+        h, hw = "mid", f"옵션 쏠림 중립({c:+.2f}) → {labels['mid']} 기준"
+    vals = {k: (None if x is None else round(x, 2) + 0.0) for k, x in vals.items()}   # −0.0 표시 방지
+    v = vals.get(h)
+    if v is None:
+        h, hw = "mid", hw + " (자료 부족 → 중간 기간)"
+        v = vals.get("mid")
+    if v is None:
+        return None
+    allv = " / ".join(f"{labels[k]} {vals[k]:+.1f}%" for k in ("short", "mid", "long") if vals.get(k) is not None)
+    base = {"src": src, "syms": syms, "horizon": h, "crowd": None if c is None else round(c, 2), "vals": vals}
+    long_ok = vals.get("long") is not None and vals["long"] * d > thr["long"]
+    if v * d > thr[h]:
+        return {**base, "title": f"{name} {labels[h]} {v:+.1f}%", "dir": d, "w": 0.5, "why": f"{why} · 관찰: {hw} · {allv}"}
+    if h == "short" and long_ok and v * d <= rev:
+        return {**base, "title": f"{name} {labels[h]} {v:+.1f}% — 쏠린 쪽 되돌림 위험", "dir": -d, "w": 0.5,
+                "why": f"긴 추세({labels['long']} {vals['long']:+.1f}%)는 맞지만 옵션이 이미 쏠린 상태에서 짧은 변화가 반대로 꺾임 · 관찰: {hw} · {allv}"}
+    if long_ok:
+        return {**base, "title": f"{name} — 보류 ({labels[h]} {v:+.1f}%)", "dir": 0, "w": 0,
+                "why": f"긴 추세({labels['long']} {vals['long']:+.1f}%)는 강하지만 {labels[h]} 변화가 기준({thr[h]:g}%)에 못 미쳐 비중 확대 보류 · 관찰: {hw} · {allv}"}
+    return None
+
+
+def themes(today, deep, gpu, macro, universe, raw_opts=None):
+    raw_opts = raw_opts or {}
     tilts = []
     for a in deep or []:
         for t in a.get("tilts", []):
             if a["date"] <= today <= t.get("until", "9999"):
                 tilts.append({"src": "심층 뉴스", "title": a["title"], "id": a["id"], **t})
-    g = gpu_trend(gpu)
-    if g is not None:
-        if g > 5:
-            tilts.append({"src": "GPU 임대료", "title": f"H100·H200 임대료 1달 {g:+.1f}% — 연산 수요 강함", "syms": ["NVDA", "AVGO", "TSM"],
-                          "dir": 1, "w": 0.5, "why": "빌리는 값이 오르면 AI 칩 수요가 견조하다는 뜻"})
-        elif g < -10:
-            tilts.append({"src": "GPU 임대료", "title": f"H100·H200 임대료 1달 {g:+.1f}% — 공급 과잉 신호", "syms": ["CRWV", "NBIS", "IREN"],
-                          "dir": -1, "w": 0.5, "why": "임대료가 빠지면 GPU 임대업(네오클라우드) 회수가 늦어짐"})
+    gv = {"short": gpu_trend(gpu, 7), "mid": gpu_trend(gpu, 30), "long": gpu_trend(gpu, 83)}
+    gl = {"short": "1주", "mid": "1달", "long": "약 3달"}
+    if gv["mid"] is not None:
+        for t in (data_theme("GPU 임대료", "H100·H200 임대료", ["NVDA", "AVGO", "TSM"], 1, gv, gl,
+                             {"short": 1, "mid": 5, "long": 10}, -3, "빌리는 값이 오르면 AI 칩 수요가 견조하다는 뜻", raw_opts),
+                  data_theme("GPU 임대료", "H100·H200 임대료", ["CRWV", "NBIS", "IREN"], -1, gv, gl,
+                             {"short": 2, "mid": 10, "long": 20}, -3, "임대료가 빠지면 GPU 임대업(네오클라우드) 회수가 늦어짐", raw_opts)):
+            if t:
+                tilts.append(t)
     st = series(macro, "PCU334112334112")
     if st:
-        y = chg(st, last_k(st), 12)
-        if y is not None and y > 20:
-            tilts.append({"src": "AI 비용 PPI", "title": f"저장장치 PPI 전년비 {y:+.0f}% — 메모리 가격 강세", "syms": ["MU", "SNDK"],
-                          "dir": 1, "w": 0.5, "why": "저장장치 생산자물가 급등 = 메모리 업체 가격 결정력"})
+        k = last_k(st)
+        sv = {"short": chg(st, k, 1), "mid": chg(st, k, 3), "long": chg(st, k, 12)}
+        t = data_theme("AI 비용 PPI", "저장장치 PPI", ["MU", "SNDK"], 1, sv, {"short": "전월비", "mid": "3개월", "long": "전년비"},
+                       {"short": 0.5, "mid": 5, "long": 20}, -2, "저장장치 생산자물가 상승 = 메모리 업체 가격 결정력", raw_opts)
+        if t:
+            tilts.append(t)
     score = {}
     for t in tilts:
         for s in t["syms"]:
@@ -342,8 +396,9 @@ def main():
     score = round(sum(c["pts"] * c["w"] for c in comps), 2)
     E = exposure(score)
     universe = set(prices)
-    tilts, tscore = themes(today, deep, gpu, macro, universe)
-    opts = {k: v for k, v in ((k, opt_view(o)) for k, o in ((env or {}).get("latest", {}).get("options") or {}).items()) if v}
+    raw_opts = (env or {}).get("latest", {}).get("options") or {}
+    tilts, tscore = themes(today, deep, gpu, macro, universe, raw_opts)
+    opts = {k: v for k, v in ((k, opt_view(o)) for k, o in raw_opts.items()) if v}
     days3 = cal[-3:]
     seen_sig = set()
     picks = []
@@ -403,7 +458,7 @@ def main():
             c = next((c for c in picks if c["sym"] == k[1]), {})
             why["|".join(k)] = f"뉴스 신호 {c.get('direction','')} ({c.get('date','')})"
         else:
-            why["|".join(k)] = " · ".join(t["title"][:40] for t in tilts if k[1] in t["syms"])
+            why["|".join(k)] = " · ".join(t["title"][:40] for t in tilts if k[1] in t["syms"] and t["dir"])
             ov = opts.get(k[1])
             if ov and ov["why"]:
                 why["|".join(k)] += " / 옵션: " + ", ".join(ov["why"][:2])
