@@ -58,6 +58,15 @@ a{color:inherit}
 .mv-n .tm{font-family:var(--mono);font-size:10px;color:var(--sub);margin-right:5px}
 .mv-n .mv-src{font-size:10px;color:var(--sub)}
 .mv-empty{font-size:12px;color:var(--sub);padding:4px 0}
+.mv-sum{background:#f8fafc;border:.5px solid var(--bd);border-radius:10px;padding:8px 10px;margin-bottom:6px}
+.mv-drv{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0 2px}
+.mv-d{font-size:11px;padding:2px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:600}
+.mv-d small{font-weight:400;color:#4b5563;margin-left:4px}
+.mv-d.k0{background:#111827;color:#fff}.mv-d.k0 small{color:#d1d5db}
+.mv-x{display:flex;flex-wrap:wrap;gap:4px 10px;font-family:var(--mono);font-size:10.5px;color:#374151;margin-top:3px}
+.mv-x span b{font-family:'Inter',sans-serif;font-weight:500;color:var(--sub);margin-right:3px}
+.mv-lbl{font-size:10.5px;font-weight:700;color:var(--sub);margin-top:5px}
+.mv-tag{font-size:9.5px;padding:0 5px;border-radius:5px;background:#f3f4f6;color:#374151;margin-left:3px}
 
 /* 상단 대분류 탭: 산업 / 매크로 / 지정학 */
 .sections{margin-bottom:12px}
@@ -384,16 +393,28 @@ function renderMoves(){
   box.hidden=false;
   const idx=(m.indices||[]).map(i=>`<div class="mv-i"><b>${esc(i.name)}</b>${i.price.toLocaleString(undefined,{maximumFractionDigits:2})}
     <span class="${cls(i.change_pct)}">${pct(i.change_pct)}</span><small>정규장·전일비</small></div>`).join('');
+  const tr2=h=>(st.ko&&tr.get(h))||h;
+  // 같은 시간 다른 자산: 금리는 bp, 나머지는 %
+  const XN=[['SOX','반도체 ETF'],['RTY','러셀2000'],['UST10Y_bp','미 10년 금리'],['DXY','달러'],['OIL','유가'],['GOLD','금'],['VIX','VIX']];
+  const cross=c=>c?`<div class="mv-x">${XN.filter(([k])=>c[k]!=null).map(([k,n])=>`<span><b>${n}</b><span class="${k==='UST10Y_bp'||k==='VIX'?(c[k]>0?'dn':c[k]<0?'up':''):cls(c[k])}">${k==='UST10Y_bp'?`${c[k]>0?'+':''}${c[k].toFixed(1)}bp`:pct(c[k])}</span></span>`).join('')}</div>`:'';
+  const drv=ds=>(ds&&ds.length)?`<div class="mv-drv">${ds.map((d,i)=>`<span class="mv-d ${i?'':'k0'}" title="같은 시간 다른 자산 움직임으로 추정한 원인 유형">${esc(d.name)}<small>${esc(d.why)}</small></span>`).join('')}</div>`
+    :`<div class="mv-drv"><span class="mv-d" style="background:#f3f4f6;color:#6b7280">원인 유형 불분명 — 다른 자산 움직임이 뚜렷하지 않음</span></div>`;
+  const lead=ls=>(ls&&ls.length)?`<div class="mv-x"><span><b>많이 움직인 대형주</b></span>${ls.map(l=>`<span>${esc(l.name)} <span class="${cls(l.pct)}">${pct(l.pct)}</span></span>`).join('')}</div>`:'';
+  const nlink=(h,u,src,tm,extra)=>`<div class="mv-n"><span class="tm">${hm(tm)}</span><a href="${safeUrl(u)}" target="_blank" rel="noopener">${esc(tr2(h))}</a> <span class="mv-src">· ${esc(src)}</span>${extra||''}</div>`;
+  const S=m.summary;
+  const sum=S?`<div class="mv-sum"><div class="mv-row"><b style="font-size:12px">최근 12시간 전체</b><span class="mv-chg ${cls(S.nq_pct)}">나스닥 선물 ${pct(S.nq_pct)}</span><span class="mv-chg ${cls(S.es_pct)}">S&amp;P 선물 ${pct(S.es_pct)}</span></div>${drv(S.drivers)}${cross(S.cross)}${lead(S.leaders)}</div>`:'';
   const evs=(m.events||[]).map(e=>{
-    const news=e.news.length?e.news.map(n=>{const h=(st.ko&&tr.get(n.headline))||n.headline;
-      return `<div class="mv-n"><span class="tm">${hm(n.first_seen)}</span><a href="${safeUrl(n.url)}" target="_blank" rel="noopener">${esc(h)}</a> <span class="mv-src">· ${esc(n.source)}</span>${n.cited>=2?`<span class="mv-cite" title="이후 '주가가 ~로 하락/상승' 기사 중 이 뉴스를 원인으로 언급한 수">📰 원인 지목 ${n.cited}건</span>`:''}</div>`;}).join('')
-      :'<div class="mv-n" style="color:var(--sub)">같은 시간대에 뚜렷한 관련 뉴스를 찾지 못했습니다</div>';
+    const exp=(e.explain||[]).length?`<div class="mv-lbl">📰 언론이 설명한 이유 (구간 뒤 시장 기사)</div><div class="mv-news">${e.explain.map(n=>nlink(n.headline,n.url,n.source,n.time)).join('')}</div>`:'';
+    const news=(e.news||[]).length?`<div class="mv-lbl">🕒 그 무렵 처음 나온 관련 뉴스 (원인 후보)</div><div class="mv-news">${e.news.map(n=>nlink(n.headline,n.url,n.source,n.first_seen,
+        (n.match||[]).map(x=>`<span class="mv-tag">${esc(x)}</span>`).join('')+(n.cited>=2?`<span class="mv-cite" title="이후 시장 기사 중 이 뉴스를 원인으로 언급한 수">📰 원인 지목 ${n.cited}건</span>`:''))).join('')}</div>`
+      :'<div class="mv-n" style="color:var(--sub);margin-top:4px">원인 유형과 맞는 뉴스를 그 시간대에서 찾지 못했습니다</div>';
     return `<div class="mv-ev"><div class="mv-row"><span class="mv-time">🕒 ${hm(e.start)}–${hm(e.end)}</span>
-      <span class="mv-chg ${cls(e.nq_pct)}">나스닥 ${pct(e.nq_pct)}</span><span class="mv-chg ${cls(e.es_pct)}">S&amp;P ${pct(e.es_pct)}</span></div>
-      <div class="mv-news">${news}</div></div>`;}).join('');
+      <span class="mv-chg ${cls(e.nq_pct)}">나스닥 ${pct(e.nq_pct)}</span><span class="mv-chg ${cls(e.es_pct)}">S&amp;P ${pct(e.es_pct)}</span>
+      ${e.trig?`<span class="mv-note">가장 가파른 15분 ${hm(e.trig[0])}~ (${pct(e.trig_pct)})</span>`:''}</div>
+      ${drv(e.drivers)}${cross(e.cross)}${lead(e.leaders)}${exp}${news}</div>`;}).join('');
   box.innerHTML=`<div class="mv-h"><span class="mv-t">📈 시장을 움직인 뉴스</span>
-      <span class="mv-note">나스닥·S&amp;P 선물 15분 급변 구간과 같은 시간대 첫 보도 · '원인 지목'은 이후 시장 반응 기사가 이 뉴스를 원인으로 언급한 수 · 인과관계는 추정</span></div>
-    <div class="mv-body"><div class="mv-idx">${idx}</div>${evs||'<div class="mv-empty">최근 12시간 동안 큰 움직임이 없었습니다</div>'}</div>`;
+      <span class="mv-note">나스닥 선물을 상승·하락 구간으로 나누고 → 같은 시간 반도체·금리·유가·달러·VIX·대형주 움직임으로 원인 유형을 먼저 좁힌 뒤 → 그 유형에 맞는 뉴스와 언론 설명만 짝지음 · 인과관계는 추정</span></div>
+    <div class="mv-body"><div class="mv-idx">${idx}</div>${sum}${evs||'<div class="mv-empty">최근 12시간 동안 0.45% 넘는 움직임이 없었습니다</div>'}</div>`;
 }
 
 // ── 미국 중간선거: 하원 정당 지지도(여론조사 평균) + 예측시장 다수당 확률 ──
@@ -429,7 +450,7 @@ function render(){
   renderMidterms();
   const secOf=t=>t.section||'산업';
   document.getElementById('secTabs').innerHTML=SECTIONS.map(([k,desc,c])=>{
-    const n=k==='시장'?`급변 ${((raw.moves||{}).events||[]).length}회`
+    const n=k==='시장'?(((raw.moves||{}).summary)?`나스닥 ${pct(raw.moves.summary.nq_pct)} · ${raw.moves.events.length}구간`:`급변 ${((raw.moves||{}).events||[]).length}회`)
       :data.topics.filter(t=>secOf(t)===k).reduce((a,t)=>a+t.stories.filter(passes).length,0)+'건';
     return `<button type="button" class="stab2 ${st.section===k?'on':''}" style="--sc:${c}" data-sec="${k}" aria-pressed="${st.section===k}">
       <span class="t">${k}</span><span class="d">${desc}</span><span class="n">${n}</span></button>`;
