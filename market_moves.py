@@ -101,7 +101,7 @@ RECAP = re.compile(r"指数(?:跌|涨)|收(?:跌|涨)|盘初|盘中|尾盘|午�
                    r"\blaunch(?:es)?\b|pitchfest|webinar|conference|announces? (?:partnership|collaboration)|"
                    r"jeremy renner|wows|sums up|joked|price target|if you invest|should you buy|is it (?:a|time)|here'?s (?:why|how|what)|"
                    r"price prediction|could make|upside|\breview\b|\bvs\.?\b|which is better|best .{0,20}to buy|deal\b.{0,20}\$|"
-                   r"on sale|lowest price|guide\b|how to\b|too late to buy|meet the|stocks? to (?:buy|watch)|motley|leveraged notes?|structured notes?|autocall", re.I)
+                   r"on sale|lowest price|guide\b|how to\b|too late to buy|meet the|stocks? to (?:buy|watch)|motley|leveraged notes?|structured notes?|autocall|prediction:|could turn|into a fortune|millionaire", re.I)
 # 시장 반응 기사: "주가/지수가 ~ 때문에(after/on/as …) 떨어졌다/올랐다" — 언론이 움직임의 원인으로 지목한 것
 REACTION = re.compile(
     r"(?:stocks?|shares|nasdaq|s&p|dow|wall street|equities|futures|tech|chips?|chipmakers|semis|market|treasur\w*|yields?|oil|crude)s?\b.{0,60}?"
@@ -358,6 +358,35 @@ def _narr_rank(ev, N, f, mega, start_ts, end_ts, nq, arts_t):
     return out[:4]
 
 
+def _narr_day(N, f, mega, nq, start_ts, end_ts, n_all):
+    """12시간 전체의 이야기 순위: 기사 수(전체 기사 중 비중) × 가격 확인 — 하루 내내 이어진 이야기용"""
+    sgn = 1 if nq > 0 else -1
+    out = []
+    for n in NARRATIVES:
+        hits = [a for a in N.get(n["key"], []) if start_ts <= a[0] <= end_ts]
+        if len(hits) < 4:
+            continue
+        conf, cw = 1.0, ""
+        if n.get("syms"):
+            mv = [mega[x] for x in n["syms"] if x in mega]
+            if mv:
+                a = sum(mv) / len(mv)
+                conf = 1 + min(2, abs(a) / max(abs(nq), 0.3)) / 1.5 if a * sgn > 0 else 0.6
+                cw = ", ".join(f"{MEGA[x]} {mega[x]:+.1f}%" for x in n["syms"] if x in mega)
+        elif n.get("asset") and f.get(n["asset"]) is not None:
+            v = f[n["asset"]]
+            th = 3 if n["asset"] == "UST10Y_bp" else 1.2
+            conf = 1 + min(2, abs(v) / th) / 1.5 if v * sgn < 0 and abs(v) >= th * 0.5 else 0.7
+            cw = f"{'10년 금리' if n['asset'] == 'UST10Y_bp' else '유가'} {v:+.1f}{'bp' if n['asset'] == 'UST10Y_bp' else '%'}"
+        top = sorted((a for a in hits if not RECAP.search(a[2])), key=lambda a: a[0])
+        out.append({"key": n["key"], "name": n["name"], "driver": n["driver"], "n": len(hits),
+                    "share": round(len(hits) / max(1, n_all) * 100, 1), "confirm": round(conf, 2), "price": cw,
+                    "score": round(math.log1p(len(hits)) * conf, 2), "onset": None, "lead_min": None,
+                    "heads": [{"headline": a[2], "url": a[3], "source": a[4], "time": a[0]} for a in (top[:1] + top[-1:])][:2]})
+    out.sort(key=lambda x: -x["score"])
+    return out[:4]
+
+
 def _series(N, start_ts, end_ts):
     """화면 시간축용: 이야기별 30분 기사 수"""
     nb = int((end_ts - start_ts) // BUCKET) + 1
@@ -546,8 +575,10 @@ def build_moves(briefing, start_ts, end_ts):
     summary = None
     if abs(whole["nq_pct"]) >= MIN_LEG:
         wf, wm, wd, wl, _ = _fingerprint(whole, X, M)
+        n_all = sum(1 for t in arts_t if start_ts <= t <= end_ts)
+        dn = _narr_day(NH, wf, wm, whole["nq_pct"], start_ts, end_ts, n_all)
         summary = {"nq_pct": whole["nq_pct"], "es_pct": wf.get("ES"), "cross": wf, "drivers": wd,
-                   "leaders": [{"sym": s, "name": MEGA[s], "pct": v} for s, v in wl]}
+                   "leaders": [{"sym": s, "name": MEGA[s], "pct": v} for s, v in wl], "narratives": dn}
     # 시간축: 나스닥 선물(15분) + 구간 + 이야기별 30분 기사 수 (기사가 4건 이상인 이야기, 많은 순 6개)
     ser = _series(NH, start_ts, end_ts)
     nb = len(next(iter(ser.values()))) if ser else 0
