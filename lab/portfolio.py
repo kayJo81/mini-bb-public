@@ -14,12 +14,13 @@
       매크로: 근원 PCE·근원 CPI 의 최근 3개월 연율 vs 전년비(재가속이면 감점), PPI 최종수요, 10년물 5% 이상
   · 주식 안에서: 코어 50% · 테마 35% · 뉴스 신호 15% (신호가 없으면 그만큼 코어로)
       테마 = 심층 뉴스 기사마다 적어 둔 '시각'(종목·방향·기한) + GPU 임대료·AI 비용 PPI 로 만든 데이터 테마
-        (데이터 테마는 옵션 쏠림에 따라 보는 기간을 바꿈: 같은 방향 쏠림 → 전월비·1주, 중립 → 3개월·1달, 반대 쏠림 → 전년비·3달)
+        (데이터 테마는 종목마다 자기 옵션 쏠림에 따라 보는 기간을 바꿈: 같은 방향 쏠림 → 전월비·1주, 중립 → 3개월·1달, 반대 쏠림 → 전년비·3달)
       위험 점수가 -3 이하면 테마 롱 절반, 숏은 테마의 1/3 까지
       뉴스 신호 = signals.py 후보(최근 3거래일) 상위 2개, 각 5거래일 보유 — 옵션 포지션이 반대면 건너뜀
   · 편입 종목은 10개 이내: 코어 ETF 1개(점수 0 이상 QQQ, 아니면 SPY) + 신호 + 테마(강한 순)
-  · 개별 종목 옵션(CBOE, 시장 환경 기록): 풋/콜 거래 비율·25델타 스큐·딜러 감마·콜월/풋월로 방향 점수
-      → 테마 점수에 곱해(같은 방향 최대 1.5배, 반대 최소 0.5배) 순위를 정하고, 비중은 내재변동성(IV)에 반비례
+  · 개별 종목 옵션(CBOE, 시장 환경 기록): 풋/콜 거래 비율·25델타 스큐·딜러 감마·콜월/풋월·며칠 새 쏠림 변화로 방향 점수
+      → 테마 점수에 곱해(같은 방향 최대 1.5배, 반대 최소 0.5배; 이미 크게 쏠렸으면(±0.8) 키우지 않음) 순위를 정하고, 비중은 내재변동성(IV)에 반비례
+      → IV ÷ 실제 변동성(20일)이 1.5배 넘으면 '옵션 비쌈'으로 표시
   · 다시 맞추기(리밸런싱): 위험 단계가 바뀌거나, 테마 구성이 바뀌거나, 마지막 조정 뒤 5거래일 — 아니면 신호 몫만 매일 조정
   · 비용 0.1% (사고팔 때 각각) · 비교: 같은 날 QQQ / SPY 에 전부 넣었을 때
 """
@@ -202,20 +203,26 @@ def themes(today, deep, gpu, macro, universe, raw_opts=None):
     gv = {"short": gpu_trend(gpu, 7), "mid": gpu_trend(gpu, 30), "long": gpu_trend(gpu, 83)}
     gl = {"short": "1주", "mid": "1달", "long": "약 3달"}
     if gv["mid"] is not None:
-        for t in (data_theme("GPU 임대료", "H100·H200 임대료", ["NVDA", "AVGO", "TSM"], 1, gv, gl,
-                             {"short": 1, "mid": 5, "long": 10}, -3, "빌리는 값이 오르면 AI 칩 수요가 견조하다는 뜻", raw_opts),
-                  data_theme("GPU 임대료", "H100·H200 임대료", ["CRWV", "NBIS", "IREN"], -1, gv, gl,
-                             {"short": 2, "mid": 10, "long": 20}, -3, "임대료가 빠지면 GPU 임대업(네오클라우드) 회수가 늦어짐", raw_opts)):
+        # 종목마다 자기 옵션 쏠림으로 볼 기간을 따로 고름
+        for sym in ("NVDA", "AVGO", "TSM"):
+            t = data_theme("GPU 임대료", "H100·H200 임대료", [sym], 1, gv, gl,
+                           {"short": 1, "mid": 5, "long": 10}, -3, "빌리는 값이 오르면 AI 칩 수요가 견조하다는 뜻", raw_opts)
+            if t:
+                tilts.append(t)
+        for sym in ("CRWV", "NBIS", "IREN"):
+            t = data_theme("GPU 임대료", "H100·H200 임대료", [sym], -1, gv, gl,
+                           {"short": 2, "mid": 10, "long": 20}, -3, "임대료가 빠지면 GPU 임대업(네오클라우드) 회수가 늦어짐", raw_opts)
             if t:
                 tilts.append(t)
     st = series(macro, "PCU334112334112")
     if st:
         k = last_k(st)
         sv = {"short": chg(st, k, 1), "mid": chg(st, k, 3), "long": chg(st, k, 12)}
-        t = data_theme("AI 비용 PPI", "저장장치 PPI", ["MU", "SNDK"], 1, sv, {"short": "전월비", "mid": "3개월", "long": "전년비"},
-                       {"short": 0.5, "mid": 5, "long": 20}, -2, "저장장치 생산자물가 상승 = 메모리 업체 가격 결정력", raw_opts)
-        if t:
-            tilts.append(t)
+        for sym in ("MU", "SNDK"):
+            t = data_theme("AI 비용 PPI", "저장장치 PPI", [sym], 1, sv, {"short": "전월비", "mid": "3개월", "long": "전년비"},
+                           {"short": 0.5, "mid": 5, "long": 20}, -2, "저장장치 생산자물가 상승 = 메모리 업체 가격 결정력", raw_opts)
+            if t:
+                tilts.append(t)
     score = {}
     for t in tilts:
         for s in t["syms"]:
@@ -225,8 +232,21 @@ def themes(today, deep, gpu, macro, universe, raw_opts=None):
 
 
 # ── 4. 개별 종목 옵션 ─────────────────────────────────────────────
-def opt_view(o):
-    """옵션 포지션으로 본 방향 점수 (−1.5 ~ +1.5, +면 강세 쪽) + 근거"""
+def realized_vol(closes, n=20):
+    """최근 n거래일 종가 변화로 본 실제 변동성(연율 %)"""
+    import math
+    c = [x for x in closes if x][-(n + 1):]
+    if len(c) < n + 1:
+        return None
+    r = [math.log(c[i] / c[i - 1]) for i in range(1, len(c))]
+    m = sum(r) / len(r)
+    return (sum((x - m) ** 2 for x in r) / (len(r) - 1)) ** 0.5 * (252 ** 0.5) * 100
+
+
+def opt_view(o, prev=None, closes=None):
+    """종목별 옵션 상태 + 방향 점수(−1.75 ~ +1.75, +면 강세 쪽)
+       · 쏠림: 풋/콜 거래 비율·25델타 스큐 (−1 풋 쪽 ~ +1 콜 쪽) 와 며칠 전 대비 변화
+       · 딜러 감마 부호, 콜월·풋월까지 거리, 내재변동성(IV) ÷ 실제 변동성(20일)"""
     if not o or not o.get("price"):
         return None
     pts, why = 0.0, []
@@ -251,8 +271,24 @@ def opt_view(o):
         pts -= 0.25; why.append(f"콜월 {cw:g} 도달(위가 막힘)")
     if pw and S <= pw * 1.02 and S >= pw * 0.97:
         pts += 0.25; why.append(f"풋월 {pw:g} 근처(지지)")
-    return {"pts": round(pts, 2), "why": why, "iv": o.get("atm_iv30") or o.get("iv30"), "pc": pc, "skew": sk,
-            "gex": g, "call_wall": cw, "put_wall": pw, "asof": o.get("asof")}
+    c = crowd(o)
+    cp = crowd(prev) if prev else None
+    dc = None if c is None or cp is None else c - cp
+    if dc is not None and abs(dc) >= 0.3:
+        pts += 0.25 if dc > 0 else -0.25
+        why.append(f"며칠 새 {'콜' if dc > 0 else '풋'} 쪽으로 이동({dc:+.2f})")
+    iv = o.get("atm_iv30") or o.get("iv30")
+    rv = realized_vol(closes or [])
+    ivrv = iv / rv if iv and rv else None
+    if ivrv is not None and ivrv >= 1.5:
+        why.append(f"옵션 비쌈 IV/실제 {ivrv:.1f}배(이벤트·불안 대비)")
+    lab = None if c is None else "콜 쏠림" if c >= 0.4 else "풋 쏠림" if c <= -0.4 else "중립"
+    return {"pts": round(pts, 2), "why": why, "iv": iv, "pc": pc, "pc_oi": o.get("pc_oi"), "skew": sk,
+            "gex": g, "call_wall": cw, "put_wall": pw, "asof": o.get("asof"),
+            "crowd": None if c is None else round(c, 2), "crowd_label": lab,
+            "crowd_chg": None if dc is None else round(dc, 2), "prev_asof": (prev or {}).get("asof") if prev else None,
+            "cw_dist": round((cw / S - 1) * 100, 1) if cw else None, "pw_dist": round((pw / S - 1) * 100, 1) if pw else None,
+            "rv20": None if rv is None else round(rv, 1), "iv_rv": None if ivrv is None else round(ivrv, 2)}
 
 
 # ── 5. 목표 비중 (편입 종목 10개 이내) ────────────────────────────
@@ -271,8 +307,13 @@ def targets(R, E, score, theme_score, picks, opts):
     for sym, base in theme_score.items():
         ov = opts.get(sym)
         o = ov["pts"] if ov else 0.0
-        mult = max(0.5, min(1.5, 1 + 0.3 * o * (1 if base > 0 else -1)))
-        ranked.append({"sym": sym, "base": base, "opt": o, "adj": base * mult, "iv": (ov or {}).get("iv")})
+        d = 1 if base > 0 else -1
+        mult = max(0.5, min(1.5, 1 + 0.3 * o * d))
+        note = None
+        c = (ov or {}).get("crowd")
+        if c is not None and c * d >= 0.8 and mult > 1:
+            mult, note = 1.0, f"옵션이 이미 같은 방향으로 크게 쏠림({c:+.2f}) → 확대 안 함"
+        ranked.append({"sym": sym, "base": base, "opt": o, "mult": round(mult, 2), "note": note, "adj": base * mult, "iv": (ov or {}).get("iv")})
     ranked.sort(key=lambda r: -abs(r["adj"]))
     chosen, dropped = [], []
     for r in ranked:
@@ -305,6 +346,37 @@ def targets(R, E, score, theme_score, picks, opts):
         w[("theme", r["sym"])] = -short_budget * rw(r) / ss
     w[("core", core_sym)] = core
     return w, {"chosen": chosen, "dropped": dropped, "core": core_sym}
+
+
+def ostate_rows(sel, picks, pos, w, opts, tilts):
+    """화면용: 후보·보유 종목마다 옵션 상태와 그게 판단에 어떻게 쓰였는지"""
+    rows, seen = [], set()
+    r_by = {r["sym"]: r for r in sel["chosen"] + sel["dropped"]}
+    syms = [r["sym"] for r in sel["chosen"] + sel["dropped"]] + [c["sym"] for c in picks] + [k[1] for k in list(w) + list(pos)]
+    for t in tilts:
+        if t["src"] != "심층 뉴스":
+            syms += t["syms"]
+    for s_ in syms:
+        if s_ in seen or s_ not in opts:
+            continue
+        seen.add(s_)
+        o, r = opts[s_], r_by.get(s_)
+        use = []
+        if r:
+            use.append(r["note"] or f"테마 점수 {r['base']:+g} × 옵션 {r.get('mult', 1):.2f}배 = {r['adj']:+.2f}")
+        for t in tilts:
+            if t["src"] != "심층 뉴스" and t.get("syms") == [s_]:
+                hz = {"short": "짧은 기간", "mid": "중간 기간", "long": "긴 기간"}[t["horizon"]]
+                use.append(f"{t['src']} {'보류' if not t['dir'] else '비중↑' if t['dir'] > 0 else '비중↓'} — 쏠림 {t['crowd']:+.2f}라 {hz} 기준" if t.get("crowd") is not None
+                           else f"{t['src']} {'보류' if not t['dir'] else '비중↑' if t['dir'] > 0 else '비중↓'} — {hz} 기준")
+        if ("signal", s_) in w:
+            use.append("뉴스 신호 매매 중 (옵션 점수 −1 이하였으면 건너뜀)")
+        elif any(c["sym"] == s_ for c in picks):
+            use.append("뉴스 신호 후보 (상위 2개 밖)")
+        held = any(k[1] == s_ for k in list(w) + list(pos))
+        rows.append({"sym": s_, "in": held, **{k: o.get(k) for k in ("pts", "crowd", "crowd_label", "crowd_chg", "prev_asof", "pc", "pc_oi", "skew",
+                                                                       "gex", "cw_dist", "pw_dist", "iv", "rv20", "iv_rv", "asof")}, "use": use})
+    return rows
 
 
 def main():
@@ -398,7 +470,12 @@ def main():
     universe = set(prices)
     raw_opts = (env or {}).get("latest", {}).get("options") or {}
     tilts, tscore = themes(today, deep, gpu, macro, universe, raw_opts)
-    opts = {k: v for k, v in ((k, opt_view(o)) for k, o in raw_opts.items()) if v}
+    # 며칠 전(약 5거래일) 옵션 스냅샷 — 쏠림 변화 계산용
+    ddir = os.path.join(DATA, "env", "daily")
+    snaps = sorted(f for f in (os.listdir(ddir) if os.path.isdir(ddir) else []) if f.endswith(".json") and f[:10] < (raw_opts.get("SPX") or {}).get("asof", today))
+    prev_opts = (load(os.path.join(ddir, snaps[-5 if len(snaps) >= 5 else 0]), {}) or {}).get("options", {}) if snaps else {}
+    closes = {k: [v[1] for _, v in sorted(prices.get(k, {}).items())] for k in raw_opts}
+    opts = {k: v for k, v in ((k, opt_view(o, prev_opts.get(k), closes.get(k))) for k, o in raw_opts.items()) if v}
     days3 = cal[-3:]
     seen_sig = set()
     picks = []
@@ -489,6 +566,7 @@ def main():
         "tilts": tilts, "next": {"decided": today, "full": full, "reason": st["pending"]["reason"],
                                  "w": [{"sleeve": k[0], "sym": k[1], "w": round(v * 100, 2), "why": why.get("|".join(k), ""), "opt": opts.get(k[1])}
                                        for k, v in sorted(w.items(), key=lambda kv: (["core", "theme", "signal"].index(kv[0][0]), -abs(kv[1])))]},
+        "ostate": ostate_rows(sel, picks, pos, w, opts, tilts),
         "log": st["log"][-30:], "trades": st["trades"][-60:], "started": bool(first), "skipped_signals": skipped,
         "selection": {"core": sel["core"], "max_names": R["max_names"],
                       "chosen": [r | {"o": opts.get(r["sym"])} for r in sel["chosen"]], "dropped": [r | {"o": opts.get(r["sym"])} for r in sel["dropped"]]},
