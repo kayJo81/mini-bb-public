@@ -37,11 +37,14 @@ th{font-family:inherit;color:var(--sub);font-weight:600}td:first-child,th:first-
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:6px 0 10px}
 .kpi{border:.5px solid var(--bd);border-radius:10px;padding:8px 10px}.kpi .k{font-size:11.5px;color:var(--sub);font-weight:600}
 .kpi .v{font-family:var(--mono);font-size:18px;font-weight:700}.kpi .d{font-size:11.5px;color:var(--sub)}
+.est{text-decoration:underline dotted;text-underline-offset:2px}
+#euTbl td.tot{font-weight:700}#euTbl tr.sum td{border-top:1px solid #d1d5db;font-weight:700}#euTbl tr.ref td{color:var(--sub)}
+#euTbl td:first-child{position:sticky;left:0;background:#fff;font-family:inherit}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header><div><h1>미니 블벅 <b>랩</b> · 테슬라 판매</h1><div class="hsub">분기 인도량(라인업별)·에너지 저장 배치</div></div><a class="link" href="./">← 랩 메인</a></header>
+<header><div><h1>미니 블벅 <b>랩</b> · 테슬라 판매</h1><div class="hsub">분기 인도량(라인업별)·유럽 국가별 월간 등록·에너지 저장 배치</div></div><a class="link" href="./">← 랩 메인</a></header>
 
 <div class="card"><h2>🚗 분기 인도량 · 라인업별</h2>
   <p class="note">테슬라 분기 생산·인도 발표 (SEC 공시 8-K 첨부문서) · 2022년까지 기타 = Model S/X, 2023년부터 Other Models(S/X·사이버트럭 등)</p>
@@ -51,13 +54,23 @@ th{font-family:inherit;color:var(--sub);font-weight:600}td:first-child,th:first-
   <details><summary>표로 보기</summary><div class="tbl" id="dTbl"></div></details>
 </div>
 
+<div class="card" id="euCard"><h2>🇪🇺 유럽 국가별 월간 인도 (신규 등록 기준)</h2>
+  <p class="note">테슬라는 국가별 인도를 발표하지 않아 <b>각국 신규 등록 대수</b>로 추정해요 (등록 ≈ 고객 인도) · 출처: 각국 공식 통계(독일 KBA·영국 SMMT·프랑스 PFA·노르웨이 OFV 등)와 이를 인용한 보도 · <span class="est">점선 밑줄</span> = 누계 차이·전년비로 계산한 값 · – = 아직 미확인</p>
+  <div class="kpis" id="euKpi"></div>
+  <div class="legend" id="euLeg"></div>
+  <div class="chart" id="euChart"></div>
+  <div class="tabs" id="euTabs" style="margin-top:10px"></div>
+  <div class="tbl" id="euTbl"></div>
+  <details><summary>국가별 출처·메모</summary><div id="euSrc" style="font-size:12px"></div></details>
+</div>
+
 <div class="card"><h2>🔋 에너지 저장 배치 (GWh, 분기)</h2>
   <p class="note">생산·인도 발표 · 실적 발표 운영 요약 · 분기보고서 · <span style="text-decoration:underline dotted">빗금</span> = 연초 누적 배치량의 차이로 계산한 분기(반올림 오차 가능)</p>
   <div class="kpis" id="eKpi"></div>
   <div class="chart" id="eChart"></div>
   <details><summary>표로 보기</summary><div class="tbl" id="eTbl"></div></details>
 </div>
-<p class="hsub">투자 권유 아님 · 원자료: SEC EDGAR(테슬라 공시)</p>
+<p class="hsub">투자 권유 아님 · 원자료: SEC EDGAR(테슬라 공시) · 유럽 각국 등록 통계</p>
 </div>
 <script>
 const $=id=>document.getElementById(id);
@@ -130,11 +143,85 @@ function kpis(Q){
   $('eKpi').innerHTML=`<div class="kpi"><div class="k">${EL.q} 배치</div><div class="v">${EL.storage_gwh.toFixed(1)} GWh</div><div class="d">전년비 ${pct(EP?(EL.storage_gwh/EP.storage_gwh-1)*100:null)}</div></div>`+
     `<div class="kpi"><div class="k">${yr}년 누적</div><div class="v">${ey(yr).toFixed(1)} GWh</div><div class="d">${+yr-1}년 연간 ${ey(String(+yr-1)).toFixed(1)} GWh</div></div>`;
 }
+
+// ── 유럽 국가별 월간 (신규 등록) ──
+const EUC=['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)'],EUO='#c9cdd3';
+let EU=null,euYear=null;
+function euPrep(E){
+  const M=E.months,n=M.length;
+  // 2026 누계 기준 상위 5개국은 색, 나머지는 '기타'
+  const yrs=[...new Set(M.map(m=>m.slice(0,4)))],last=yrs[yrs.length-1];
+  const sumY=(c,y)=>c.v.reduce((a,v,i)=>a+(M[i].startsWith(y)&&v!=null?v:0),0);
+  const C=E.countries.slice().sort((a,b)=>sumY(b,last)-sumY(a,last)||sumY(b,yrs[0])-sumY(a,yrs[0]));
+  return {M,n,yrs,last,C,top:C.slice(0,5),rest:C.slice(5),sumY};
+}
+function europeChart(){
+  const E=EU,{M,n,top,rest}=euPrep(E);
+  const el=$('euChart'),W=Math.max(320,el.clientWidth||640),H=280,pad={t:12,r:8,b:34,l:50};
+  const {svg,tip}=frame(el,W,H,pad);
+  const stack=i=>{const parts=top.map(c=>c.v[i]||0);parts.push(rest.reduce((a,c)=>a+(c.v[i]||0),0));return parts;};
+  const tot=M.map((_,i)=>stack(i).reduce((a,b)=>a+b,0));
+  const max=niceMax(Math.max(...tot,1));yAxis(svg,W,pad,H,max,v=>v>=1000?(v/1000).toFixed(v%1000?1:0)+'k':v);
+  const bw=(W-pad.l-pad.r)/n,w=Math.max(5,bw*0.62),sy=v=>(H-pad.t-pad.b)*v/max;
+  M.forEach((m,i)=>{const x=pad.l+bw*i+(bw-w)/2;let y=H-pad.b;const parts=stack(i);
+    parts.forEach((v,k)=>{const h=sy(v);if(h<=0)return;const isTop=k===parts.length-1||parts.slice(k+1).every(z=>!z);
+      const gap=isTop?0:Math.min(2,h*0.3);
+      if(isTop)add(svg,'path',{d:barPath(x,y-h,w,Math.max(0,h-0),4),fill:k<top.length?EUC[k]:EUO});
+      else add(svg,'rect',{x,y:y-h+gap,width:w,height:Math.max(0,h-gap),fill:k<top.length?EUC[k]:EUO});
+      y-=h;});
+    const mo=+m.slice(5);if(mo===1||mo===7||(i===n-1&&(mo-1)%6>=3))add(svg,'text',{x:x+w/2,y:H-pad.b+14,'text-anchor':'middle',class:'ax'},mo===1?m.slice(0,4):m.slice(2).replace('-','.'));
+    const hit=add(svg,'rect',{x:pad.l+bw*i,y:pad.t,width:bw,height:H-pad.t-pad.b,fill:'transparent',style:'cursor:pointer'});
+    const py=M.indexOf((+m.slice(0,4)-1)+m.slice(4)),yoy=py>=0&&tot[py]?(tot[i]/tot[py]-1)*100:null;
+    const rows=top.map((c,k)=>`<span style="color:${['#8fb8ee','#f3a37f','#7fd3b4','#f2c35c','#f1b0c9'][k]}">■</span> ${esc(c.name)} ${fmt(c.v[i])}`).join('<br>');
+    const h=`<b>${m}</b> 집계 국가 합 <b>${fmt(tot[i])}</b>${yoy!=null?` (전년비 ${pct(yoy)})`:''}<br>${rows}<br>기타 ${fmt(stack(i).slice(-1)[0])}`;
+    const on=()=>showTip(el,tip,(pad.l+bw*i+bw/2)/W*el.clientWidth,40,h);
+    hit.addEventListener('mouseenter',on);hit.addEventListener('touchstart',on,{passive:true});hit.addEventListener('mouseleave',()=>hideTip(tip));});
+}
+function europeTable(){
+  const E=EU,{M,yrs,C,sumY}=euPrep(E),y=euYear;
+  const idx=M.map((m,i)=>m.startsWith(y)?i:-1).filter(i=>i>=0);
+  const prevIdx=i=>M.indexOf((+M[i].slice(0,4)-1)+M[i].slice(4));
+  const isD=(c,i)=>(c.d||[]).includes(M[i]);
+  const cell=(c,i)=>{const v=c.v[i];if(v==null)return '<td>–</td>';
+    const p=prevIdx(i),pv=p>=0?c.v[p]:null,ch=pv?(v/pv-1)*100:null;
+    let bg='';if(ch!=null){const a=Math.min(1,Math.abs(ch)/100)*0.28;bg=`background:${ch>=0?`rgba(42,120,214,${a})`:`rgba(227,73,72,${a})`}`;}
+    return `<td style="${bg}" title="${esc(c.name)} ${M[i]}${ch!=null?' · 전년비 '+pct(ch):''}${isD(c,i)?' · 계산값':''}">${isD(c,i)?`<span class="est">${fmt(v)}</span>`:fmt(v)}</td>`;};
+  // 같은 기간(데이터 있는 달까지) 전년 비교
+  const ytd=(c)=>{let a=0,b=0,ok=false;idx.forEach(i=>{const p=prevIdx(i);if(c.v[i]!=null&&p>=0&&c.v[p]!=null){a+=c.v[i];b+=c.v[p];ok=true;}});return ok&&b?(a/b-1)*100:null;};
+  const head='<tr><th>국가</th>'+idx.map(i=>`<th>${+M[i].slice(5)}월</th>`).join('')+'<th>합계</th>'+(yrs.indexOf(y)>0?'<th>전년 동기비</th>':'')+'</tr>';
+  const row=(c,cls)=>`<tr class="${cls||''}"><td>${esc(c.name)}</td>`+idx.map(i=>cell(c,i)).join('')+`<td class="tot">${fmt(sumY(c,y))}</td>`+(yrs.indexOf(y)>0?`<td>${pct(ytd(c))}</td>`:'')+'</tr>';
+  const S={name:'집계 국가 합',v:M.map((_,i)=>{const z=C.filter(c=>c.v[i]!=null);return z.length?z.reduce((a,c)=>a+c.v[i],0):null;}),d:[]};
+  $('euTbl').innerHTML='<table>'+head+C.map(c=>row(c)).join('')+row(S,'sum')+(E.ref||[]).map(r=>row(r,'ref')).join('')+'</table>'+
+    `<p class="note" style="margin-top:6px">셀 색 = 전년 같은 달 대비 (파랑 증가 · 빨강 감소, 진할수록 변화 큼) · '집계 국가 합'은 빈칸(–)을 뺀 합이라 최근 달은 작게 나올 수 있어요${(E.ref||[]).length?' · 회색 줄은 유럽자동차공업협회(ACEA) 발표 합계(참고)':''}</p>`;
+}
+function europe(E){
+  EU=E;const {M,yrs,last,C,top,rest}=euPrep(E);euYear=euYear||last;
+  $('euLeg').innerHTML=top.map((c,k)=>`<span><i style="background:${EUC[k]}"></i>${esc(c.name)}</span>`).join('')+(rest.length?`<span><i style="background:${EUO}"></i>기타 ${rest.length}개국</span>`:'');
+  $('euTabs').innerHTML=yrs.map(y=>`<button class="tab${y===euYear?' on':''}" data-y="${y}">${y}년 월별</button>`).join('');
+  $('euTabs').onclick=e=>{const b=e.target.closest('.tab');if(!b)return;euYear=b.dataset.y;europe(EU);};
+  // KPI: 올해 누계(전 국가 값이 있는 달까지) vs 전년 동기
+  const full=M.map((m,i)=>m.startsWith(last)&&C.every(c=>c.v[i]!=null)?i:-1).filter(i=>i>=0);
+  const lastFull=full.length?full[full.length-1]:null;
+  const sumIdx=(I)=>I.reduce((a,i)=>a+C.reduce((b,c)=>b+(c.v[i]||0),0),0);
+  const prevI=I=>I.map(i=>M.indexOf((+last-1)+M[i].slice(4))).filter(i=>i>=0);
+  let k='';
+  if(lastFull!=null){const I=M.map((m,i)=>m.startsWith(last)&&i<=lastFull?i:-1).filter(i=>i>=0),a=sumIdx(I),b=sumIdx(prevI(I));
+    k+=`<div class="kpi"><div class="k">${last}년 1~${+M[lastFull].slice(5)}월 (${C.length}개국)</div><div class="v">${fmt(a)}</div><div class="d">전년 동기 ${fmt(b)} · ${pct((a/b-1)*100)}</div></div>`;
+    const m1=sumIdx([lastFull]),m0=sumIdx(prevI([lastFull]));
+    k+=`<div class="kpi"><div class="k">${M[lastFull]} 한 달</div><div class="v">${fmt(m1)}</div><div class="d">전년비 ${pct((m1/m0-1)*100)}</div></div>`;
+    const best=C.map(c=>{const I=M.map((m,i)=>m.startsWith(last)&&i<=lastFull?i:-1).filter(i=>i>=0);const x=I.reduce((s,i)=>s+(c.v[i]||0),0),y=prevI(I).reduce((s,i)=>s+(c.v[i]||0),0);return {c,ch:y?(x/y-1)*100:null};}).filter(z=>z.ch!=null).sort((p,q)=>q.ch-p.ch);
+    if(best.length)k+=`<div class="kpi"><div class="k">가장 많이 는 / 준 나라</div><div class="v" style="font-size:15px">${esc(best[0].c.name)} ${pct(best[0].ch)}</div><div class="d">${esc(best[best.length-1].c.name)} ${pct(best[best.length-1].ch)}</div></div>`;}
+  $('euKpi').innerHTML=k+`<div class="kpi"><div class="k">자료 기준</div><div class="v" style="font-size:15px">${esc(E.updated||'')}</div><div class="d">최근 달은 일부 국가 미발표일 수 있음</div></div>`;
+  $('euSrc').innerHTML='<ul style="padding-left:18px;margin:6px 0">'+C.concat(E.ref||[]).map(c=>`<li><b>${esc(c.name)}</b> — ${esc(c.note||'')} ${(c.src||[]).map((u,j)=>`<a href="${esc(u)}" target="_blank" rel="noopener">[${j+1}]</a>`).join(' ')}</li>`).join('')+'</ul>';
+  europeChart();europeTable();
+}
 let QD=null;
-function drawAll(){if(QD){deliveries(QD);energy(QD);}}
+function drawAll(){if(QD){deliveries(QD);energy(QD);}if(EU)europeChart();}
 fetch('tesla_q.json',{cache:'no-store'}).then(r=>r.json())
   .then(q=>{QD=q.quarters;kpis(QD);tables(QD);drawAll();})
   .catch(e=>{document.querySelector('.wrap').insertAdjacentHTML('beforeend',`<div class="card note">데이터를 불러오지 못했어요 (${esc(e.message)})</div>`);});
+fetch('tesla_eu.json',{cache:'no-store'}).then(r=>r.json()).then(europe)
+  .catch(()=>{$('euCard').style.display='none';});   // 데이터 파일이 아직 없으면 카드 숨김
 let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(drawAll,150);});
 </script>
 </body>

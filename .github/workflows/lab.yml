@@ -68,7 +68,7 @@ jobs:
           cp lab/site.html public_lab/sim.html
           cp lab/env.html public_lab/env.html
           cp lab/weekly.html public_lab/weekly.html
-          cp lab/tesla.html public_lab/tesla.html
+          cp lab/tesla.html public_lab/tesla.html && (cp lab/tesla_eu.json public_lab/tesla_eu.json 2>/dev/null || true)
           cp lab/macro.html public_lab/macro.html
           cp lab/deep.html public_lab/deep.html && cp -r lab/deepnews public_lab/deepnews
           printf '/*\n  X-Frame-Options: SAMEORIGIN\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n' > public_lab/_headers
