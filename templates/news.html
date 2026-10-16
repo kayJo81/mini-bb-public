@@ -67,6 +67,13 @@ a{color:inherit}
 .mv-x span b{font-family:'Inter',sans-serif;font-weight:500;color:var(--sub);margin-right:3px}
 .mv-lbl{font-size:10.5px;font-weight:700;color:var(--sub);margin-top:5px}
 .mv-tag{font-size:9.5px;padding:0 5px;border-radius:5px;background:#f3f4f6;color:#374151;margin-left:3px}
+.mv-tl{margin:6px 0 2px}.mv-tl svg{display:block;width:100%;height:auto}
+.mv-tl .ax{font-size:8.5px;fill:#6b7280;font-family:var(--mono)}.mv-tl .nl{font-size:9px;fill:#374151}
+.mv-nar{display:flex;flex-direction:column;gap:5px;margin-top:3px}
+.mv-nr{font-size:11.5px;line-height:1.45;border-left:3px solid #c7d2fe;padding-left:7px}
+.mv-nr b{font-size:12px}.mv-nr .k{font-family:var(--mono);font-size:10.5px;color:#374151}
+.mv-nr .lead{font-size:10px;padding:0 5px;border-radius:5px;background:#dcfce7;color:#166534;margin-left:3px}
+.mv-nr .lag{background:#f3f4f6;color:#6b7280}
 
 /* 상단 대분류 탭: 산업 / 매크로 / 지정학 */
 .sections{margin-bottom:12px}
@@ -395,14 +402,36 @@ function renderMoves(){
     <span class="${cls(i.change_pct)}">${pct(i.change_pct)}</span><small>정규장·전일비</small></div>`).join('');
   const tr2=h=>(st.ko&&tr.get(h))||h;
   // 같은 시간 다른 자산: 금리는 bp, 나머지는 %
-  const XN=[['SOX','반도체 ETF'],['RTY','러셀2000'],['UST10Y_bp','미 10년 금리'],['DXY','달러'],['OIL','유가'],['GOLD','금'],['VIX','VIX']];
+  const XN=[['SOX','반도체 ETF'],['RTY','러셀2000'],['HY','하이일드 채권'],['UST10Y_bp','미 10년 금리'],['DXY','달러'],['OIL','유가'],['GOLD','금'],['VIX','VIX']];
   const cross=c=>c?`<div class="mv-x">${XN.filter(([k])=>c[k]!=null).map(([k,n])=>`<span><b>${n}</b><span class="${k==='UST10Y_bp'||k==='VIX'?(c[k]>0?'dn':c[k]<0?'up':''):cls(c[k])}">${k==='UST10Y_bp'?`${c[k]>0?'+':''}${c[k].toFixed(1)}bp`:pct(c[k])}</span></span>`).join('')}</div>`:'';
   const drv=ds=>(ds&&ds.length)?`<div class="mv-drv">${ds.map((d,i)=>`<span class="mv-d ${i?'':'k0'}" title="같은 시간 다른 자산 움직임으로 추정한 원인 유형">${esc(d.name)}<small>${esc(d.why)}</small></span>`).join('')}</div>`
     :`<div class="mv-drv"><span class="mv-d" style="background:#f3f4f6;color:#6b7280">원인 유형 불분명 — 다른 자산 움직임이 뚜렷하지 않음</span></div>`;
   const lead=ls=>(ls&&ls.length)?`<div class="mv-x"><span><b>많이 움직인 대형주</b></span>${ls.map(l=>`<span>${esc(l.name)} <span class="${cls(l.pct)}">${pct(l.pct)}</span></span>`).join('')}</div>`:'';
   const nlink=(h,u,src,tm,extra)=>`<div class="mv-n"><span class="tm">${hm(tm)}</span><a href="${safeUrl(u)}" target="_blank" rel="noopener">${esc(tr2(h))}</a> <span class="mv-src">· ${esc(src)}</span>${extra||''}</div>`;
+  // 시간축: 나스닥 선물 선 + 상승·하락 구간 + 이야기별 30분 기사 수(진할수록 많음)
+  const timeline=T=>{
+    if(!T||!(T.nq||[]).length)return '';
+    const W=360,L=96,R=6,top=6,ph=58,rh=13,rows=T.narr||[],H=top+ph+14+rows.length*rh+4;
+    const x=t=>L+(W-L-R)*(t-T.start)/(T.end-T.start);
+    const v=T.nq.map(p=>p[1]),mn=Math.min(...v),mx=Math.max(...v),y=c=>top+ph-(ph-4)*(c-mn)/((mx-mn)||1);
+    let g=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="나스닥 선물과 이야기별 기사 수">`;
+    (T.legs||[]).forEach(l=>{g+=`<rect x="${x(l[0]).toFixed(1)}" y="${top}" width="${Math.max(1,x(l[1])-x(l[0])).toFixed(1)}" height="${ph}" fill="${l[2]<0?'#fee2e2':'#dcfce7'}"/>`;});
+    g+=`<path d="${T.nq.map((p,i)=>(i?'L':'M')+x(p[0]).toFixed(1)+','+y(p[1]).toFixed(1)).join('')}" fill="none" stroke="#111827" stroke-width="1.4"/>`;
+    g+=`<text x="${L-4}" y="${top+10}" text-anchor="end" class="nl" style="font-weight:700">나스닥 선물</text><text x="${L-4}" y="${top+22}" text-anchor="end" class="ax">${pct((v[v.length-1]/v[0]-1)*100)}</text>`;
+    for(let t=Math.ceil(T.start/10800)*10800;t<=T.end;t+=10800)g+=`<line x1="${x(t).toFixed(1)}" x2="${x(t).toFixed(1)}" y1="${top}" y2="${H-4}" stroke="#eef0f3"/><text x="${x(t).toFixed(1)}" y="${top+ph+10}" text-anchor="middle" class="ax">${hm(t)}</text>`;
+    rows.forEach((r,k)=>{const yy=top+ph+14+k*rh,mxc=Math.max(...r.c,1),bw=(W-L-R)/r.c.length;
+      g+=`<text x="${L-4}" y="${yy+9}" text-anchor="end" class="nl">${esc(r.name.length>11?r.name.slice(0,11)+'…':r.name)}</text>`;
+      r.c.forEach((c,i)=>{if(c)g+=`<rect x="${(L+i*bw+0.5).toFixed(1)}" y="${yy+1}" width="${Math.max(1,bw-1).toFixed(1)}" height="${rh-3}" rx="2" fill="#2a78d6" fill-opacity="${(0.15+0.85*c/mxc).toFixed(2)}"><title>${esc(r.name)} ${hm(T.start+i*T.bucket)}~ ${c}건</title></rect>`;});});
+    g+='</svg>';
+    const rs=rows.filter(r=>r.r_next!=null&&Math.abs(r.r_next)>=0.3||r.r_same!=null&&Math.abs(r.r_same)>=0.3);
+    return `<div class="mv-lbl">🧭 시간축 — 나스닥 선물(빨강·초록 = 하락·상승 구간)과 이야기별 30분 기사 수</div><div class="mv-tl">${g}</div>
+      <div class="mv-note">진한 칸일수록 그 30분에 그 이야기 기사가 많음${rs.length?' · 시장과 함께 움직인 이야기: '+rs.map(r=>`${esc(r.name)}(${Math.abs(r.r_next||0)>Math.abs(r.r_same||0)?`기사 뒤 30분 시장과 상관 ${r.r_next}`:`같은 30분 상관 ${r.r_same}`})`).join(', '):''}</div>`;};
+  const narr=ns=>(ns&&ns.length)?`<div class="mv-lbl">📊 뉴스 흐름 — 이 구간에 몰린 이야기 (기사 수 · 전체 기사 중 비중이 평소의 몇 배 · 가격 확인)</div><div class="mv-nar">${ns.map(n=>{
+      const ld=n.lead_min==null?'':n.lead_min<=15?`<span class="lead" title="이 이야기 기사가 평소의 2배 넘게 몰리기 시작한 때가 가장 가파른 15분보다 앞섬">급증 ${hm(n.onset)} · 가격보다 ${n.lead_min<0?Math.abs(n.lead_min)+'분 먼저':'거의 동시'}</span>`:`<span class="lead lag" title="가격이 먼저 움직이고 기사가 뒤따름(해설 성격)">급증 ${hm(n.onset)} · 가격 ${n.lead_min}분 뒤</span>`;
+      const h=(n.heads||[]).slice(0,2).map(x=>`<br><span class="tm" style="font-family:var(--mono);font-size:10px;color:var(--sub)">${hm(x.time)}</span> <a href="${safeUrl(x.url)}" target="_blank" rel="noopener" style="color:#111827;text-decoration:none">${esc(tr2(x.headline))}</a> <span class="mv-src">· ${esc(x.source)}</span>`).join('');
+      return `<div class="mv-nr" style="border-left-color:${n.confirm>=1?'#2a78d6':'#d1d5db'}"><b>${esc(n.name)}</b> <span class="k">${n.n}건 · 비중 ${n.ratio}배${n.price?' · '+esc(n.price):''}</span>${ld}${n.confirm<1?' <span class="mv-tag">가격은 반대 방향</span>':''}${h}</div>`;}).join('')}</div>`:'';
   const S=m.summary;
-  const sum=S?`<div class="mv-sum"><div class="mv-row"><b style="font-size:12px">최근 12시간 전체</b><span class="mv-chg ${cls(S.nq_pct)}">나스닥 선물 ${pct(S.nq_pct)}</span><span class="mv-chg ${cls(S.es_pct)}">S&amp;P 선물 ${pct(S.es_pct)}</span></div>${drv(S.drivers)}${cross(S.cross)}${lead(S.leaders)}</div>`:'';
+  const sum=S?`<div class="mv-sum"><div class="mv-row"><b style="font-size:12px">최근 12시간 전체</b><span class="mv-chg ${cls(S.nq_pct)}">나스닥 선물 ${pct(S.nq_pct)}</span><span class="mv-chg ${cls(S.es_pct)}">S&amp;P 선물 ${pct(S.es_pct)}</span></div>${drv(S.drivers)}${cross(S.cross)}${lead(S.leaders)}${timeline(m.timeline)}</div>`:timeline(m.timeline);
   const evs=(m.events||[]).map(e=>{
     const exp=(e.explain||[]).length?`<div class="mv-lbl">📰 언론이 설명한 이유 (구간 뒤 시장 기사)</div><div class="mv-news">${e.explain.map(n=>nlink(n.headline,n.url,n.source,n.time)).join('')}</div>`:'';
     const news=(e.news||[]).length?`<div class="mv-lbl">🕒 그 무렵 처음 나온 관련 뉴스 (원인 후보)</div><div class="mv-news">${e.news.map(n=>nlink(n.headline,n.url,n.source,n.first_seen,
@@ -411,9 +440,9 @@ function renderMoves(){
     return `<div class="mv-ev"><div class="mv-row"><span class="mv-time">🕒 ${hm(e.start)}–${hm(e.end)}</span>
       <span class="mv-chg ${cls(e.nq_pct)}">나스닥 ${pct(e.nq_pct)}</span><span class="mv-chg ${cls(e.es_pct)}">S&amp;P ${pct(e.es_pct)}</span>
       ${e.trig?`<span class="mv-note">가장 가파른 15분 ${hm(e.trig[0])}~ (${pct(e.trig_pct)})</span>`:''}</div>
-      ${drv(e.drivers)}${cross(e.cross)}${lead(e.leaders)}${exp}${news}</div>`;}).join('');
+      ${drv(e.drivers)}${cross(e.cross)}${lead(e.leaders)}${narr(e.narratives)}${exp}${news}</div>`;}).join('');
   box.innerHTML=`<div class="mv-h"><span class="mv-t">📈 시장을 움직인 뉴스</span>
-      <span class="mv-note">나스닥 선물을 상승·하락 구간으로 나누고 → 같은 시간 반도체·금리·유가·달러·VIX·대형주 움직임으로 원인 유형을 먼저 좁힌 뒤 → 그 유형에 맞는 뉴스와 언론 설명만 짝지음 · 인과관계는 추정</span></div>
+      <span class="mv-note">나스닥 선물을 상승·하락 구간으로 나누고 → 같은 시간 반도체·금리·유가·신용(하이일드·AI 인프라)·VIX·대형주 움직임과 이야기별 기사 몰림(전체 기사 중 비중·급증 시점)으로 원인 유형을 좁힌 뒤 → 그 유형에 맞는 뉴스와 언론 설명만 짝지음 · 인과관계는 추정</span></div>
     <div class="mv-body"><div class="mv-idx">${idx}</div>${sum}${evs||'<div class="mv-empty">최근 12시간 동안 0.45% 넘는 움직임이 없었습니다</div>'}</div>`;
 }
 

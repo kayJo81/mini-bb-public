@@ -28,7 +28,7 @@ REV = 0.35          # 지그재그 방향 전환 되돌림(%)
 MIN_LEG = 0.45      # 보여 줄 최소 구간 크기(%)
 MAX_EVENTS = 5
 ZN_DUR = 6.3        # 10년 국채 선물 듀레이션 근사 → 가격 1% ≈ 금리 16bp
-CROSS = {"ES": "ES%3DF", "RTY": "RTY%3DF", "SOX": "SMH", "ZN": "ZN%3DF", "DXY": "DX-Y.NYB",
+CROSS = {"ES": "ES%3DF", "RTY": "RTY%3DF", "SOX": "SMH", "HY": "HYG", "ZN": "ZN%3DF", "DXY": "DX-Y.NYB",
          "OIL": "CL%3DF", "GOLD": "GC%3DF", "VIX": "%5EVIX"}
 MEGA = {"NVDA": "엔비디아", "AVGO": "브로드컴", "AMD": "AMD", "MU": "마이크론", "TSM": "TSMC", "AAPL": "애플",
         "MSFT": "마이크로소프트", "META": "메타", "AMZN": "아마존", "GOOGL": "알파벳", "TSLA": "테슬라",
@@ -58,10 +58,40 @@ DRIVERS = {
     "oil": {"name": "유가·지정학", "topics": {"mideast", "us_politics"},
             "core": r"\boil\b|crude|brent|\bwti\b|opec|hormuz|pipeline|refiner|tanker|energy price|原油|油价|霍尔木兹",
             "ctx": r"iran|israel|saudi|houthi|yemen|missile|strike|attack|drone|sanction|\bwar\b|伊朗|沙特|胡塞|袭击|导弹"},
+    "credit": {"name": "신용 위험(AI 인프라 부채)", "topics": {"ai_hw", "ai_sw", "nvda"},
+               "core": r"debt|bond|credit|borrow|financing|loan|spread|\bcds\b|default|leverage|junk|refinanc|\brout\b|downgrade|"
+                       r"private credit|cratered|price it to fail|债务|信用|违约",
+               "ctx": r"coreweave|oracle|neocloud|nebius|data cent|ai infrastructure|hyperscaler|stargate"},
     "riskoff": {"name": "위험회피(시장 전반)", "topics": {"us_politics", "fed", "us_macro", "mideast"},
                 "core": r"sell-?off|risk-?off|\bvix\b|volatility|\brout\b|plunge|credit|default|tariff|shutdown|margin call|恐慌|抛售",
                 "ctx": r"fear|panic|bank|liquidity|safe haven"},
 }
+# 뉴스 흐름: 같은 이야기를 다룬 기사 수를 30분 단위로 세어, 시장이 움직인 구간에 평소보다 몰렸는지 본다
+#   subj(주어) 와 pred(서술)가 한 제목에 함께 있어야 그 이야기로 셈 (pred 가 None 이면 subj 만)
+#   syms/asset = 그 이야기가 맞다면 같이 움직였어야 할 가격 (확인용)
+NARRATIVES = [
+    {"key": "ai_credit", "name": "AI 인프라 신용 위험", "driver": "credit", "syms": ["CRWV", "ORCL"],
+     "subj": r"coreweave|oracle|neocloud|nebius|\biren\b|crusoe|lambda|ai infrastructure|data cent|hyperscaler|stargate|ai (?:financing|debt|boom)|甲骨文",
+     "pred": r"debt|bond|credit|borrow|financ|loan|spread|\bcds\b|default|leverage|junk|refinanc|\brout\b|downgrade|cash out|cratered|price it to fail|债|信用|违约"},
+    {"key": "ai_valuation", "name": "AI 버블·밸류에이션 우려", "driver": "semis", "syms": ["NVDA", "AVGO"],
+     "subj": r"\bai\b|nvidia|chip|semiconductor|tech|nasdaq|magnificent",
+     "pred": r"bubble|dot-?com|cisco|valuation|overvalued|froth|rotation out|casino|reality check|泡沫"},
+    {"key": "chip_selloff", "name": "반도체 매도·연속 하락", "driver": "semis", "syms": ["NVDA", "AMD", "AVGO", "MU"],
+     "subj": r"chip|semiconductor|semis\b|chipmaker|\bsox\b|芯片|半导体",
+     "pred": r"drop|fall|slide|sink|sell-?off|losing streak|tumble|plunge|slump|\brout\b|retreat|weakness|下跌|大跌|连跌|重挫"},
+    {"key": "memory", "name": "메모리 가격·중국 경쟁(CXMT)", "driver": "semis", "syms": ["MU"],
+     "subj": r"memory|dram|nand|\bhbm\b|micron|hynix|sandisk|cxmt|ymtc|存储|内存", "pred": None},
+    {"key": "oil", "name": "유가·중동 공급 위험", "driver": "oil", "asset": "OIL",
+     "subj": r"\boil\b|crude|brent|\bwti\b|opec|hormuz|pipeline|refiner|tanker|原油|油价|霍尔木兹", "pred": None},
+    {"key": "fed", "name": "연준·금리 경로", "driver": "rates", "asset": "UST10Y_bp",
+     "subj": r"\bfed\b|fomc|warsh|rate[- ]hike|rate[- ]cut|yields?\b|treasur|美联储|加息|降息|美债", "pred": None},
+    {"key": "inflation", "name": "물가 지표(CPI·PPI)", "driver": "rates", "asset": "UST10Y_bp",
+     "subj": r"\bcpi\b|\bppi\b|\bpce\b|inflation|通胀", "pred": None},
+    {"key": "trade", "name": "관세·수출 통제", "driver": "riskoff",
+     "subj": r"tariff|trade war|export control|entity list|关税|出口管制", "pred": None},
+]
+BUCKET = 30 * 60
+
 TOPIC_WEIGHT = {"fed": 3, "us_macro": 3, "mideast": 3, "us_politics": 2, "earnings": 3, "ecb": 1, "boj": 1,
                 "semi_mega": 2, "semi_other": 1, "ai_hw": 1, "ai_sw": 1, "nvda": 2}
 VIA_WEIGHT = {"FinancialJuice": 2, "월스트리트견문(华尔街见闻)": 1}
@@ -71,7 +101,7 @@ RECAP = re.compile(r"指数(?:跌|涨)|收(?:跌|涨)|盘初|盘中|尾盘|午�
                    r"\blaunch(?:es)?\b|pitchfest|webinar|conference|announces? (?:partnership|collaboration)|"
                    r"jeremy renner|wows|sums up|joked|price target|if you invest|should you buy|is it (?:a|time)|here'?s (?:why|how|what)|"
                    r"price prediction|could make|upside|\breview\b|\bvs\.?\b|which is better|best .{0,20}to buy|deal\b.{0,20}\$|"
-                   r"on sale|lowest price|guide\b|how to\b|too late to buy|meet the|stocks? to (?:buy|watch)|motley", re.I)
+                   r"on sale|lowest price|guide\b|how to\b|too late to buy|meet the|stocks? to (?:buy|watch)|motley|leveraged notes?|structured notes?|autocall", re.I)
 # 시장 반응 기사: "주가/지수가 ~ 때문에(after/on/as …) 떨어졌다/올랐다" — 언론이 움직임의 원인으로 지목한 것
 REACTION = re.compile(
     r"(?:stocks?|shares|nasdaq|s&p|dow|wall street|equities|futures|tech|chips?|chipmakers|semis|market|treasur\w*|yields?|oil|crude)s?\b.{0,60}?"
@@ -190,7 +220,7 @@ def _fingerprint(ev, X, M):
     sgn = 1 if nq > 0 else -1
     sc, why = {}, {}
     sox = f.get("SOX")
-    semi = [mega[s] for s in SEMIS | AI_INFRA if s in mega]
+    semi = [mega[s] for s in SEMIS if s in mega]
     semi_avg = sum(semi) / len(semi) if semi else None
     lead = sox if sox is not None else semi_avg
     es0 = f.get("ES")
@@ -201,6 +231,21 @@ def _fingerprint(ev, X, M):
     if es0 is not None and (nq - es0) * sgn >= 0.5 and "semis" not in sc:
         sc["tech"] = min(3, abs(nq - es0) / 0.5)
         why["tech"] = f"나스닥이 S&P보다 {abs(nq - es0):.2f}%p 더 {'하락' if sgn < 0 else '상승'}"
+    # 신용 위험: AI 인프라(코어위브·오라클)가 반도체보다 훨씬 크게 같은 방향, 또는 하이일드 채권 ETF 하락
+    infra = [mega[s] for s in AI_INFRA if s in mega]
+    ia = sum(infra) / len(infra) if infra else None
+    hy = f.get("HY")
+    ref = abs(sox) if sox is not None else base
+    cs = 0.0
+    if ia is not None and ia * sgn > 0 and abs(ia) >= 2 and abs(ia) >= 1.8 * max(ref, 0.3):
+        cs += min(2.5, abs(ia) / max(ref, 0.3) / 1.5)
+    if hy is not None and sgn < 0 and hy <= -0.2:
+        cs += min(1.5, abs(hy) / 0.2 * 0.5)
+    if cs:
+        sc["credit"] = round(cs, 2)
+        why["credit"] = " · ".join(x for x in (
+            (f"AI 인프라 {', '.join(f'{MEGA[s_]} {mega[s_]:+.1f}%' for s_ in AI_INFRA if s_ in mega)}" if ia is not None and abs(ia) >= 2 else ""),
+            (f"하이일드 채권 ETF {hy:+.2f}%" if hy is not None and hy <= -0.2 else "")) if x)
     y = f.get("UST10Y_bp")
     if y is not None and abs(y) >= 3 and y * sgn < 0:
         sc["rates"] = min(3, abs(y) / 3)
@@ -227,6 +272,104 @@ def _fingerprint(ev, X, M):
     drivers = sorted(sc, key=lambda k: -sc[k])
     return f, mega, [{"key": k, "name": (DRIVERS.get(k) or {"name": f"개별 종목({MEGA.get(single, '')})"})["name"],
                       "why": why[k], "score": round(sc[k], 2)} for k in drivers], leaders, single
+
+
+def _articles(topics):
+    """모든 출처 기사 (같은 제목 재전송은 하나로): [(시각, 제목 소문자, 제목, url, 매체)]"""
+    out, seen = [], set()
+    for t in topics:
+        for s in t["stories"]:
+            for x in s["sources"]:
+                h = x.get("headline") or ""
+                key = re.sub(r"[^a-z가-힣一-龥]", "", h.lower())[:40]
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                out.append((x.get("published", s["first_seen"]), h.lower(), h, x.get("url") or s["url"], x.get("name", "")))
+    return out
+
+
+def _narr_hits(arts, start_ts, end_ts):
+    """이야기마다 해당 기사 목록 (창 안)"""
+    N = {}
+    for n in NARRATIVES:
+        sj, pd = re.compile(n["subj"], re.I), (re.compile(n["pred"], re.I) if n["pred"] else None)
+        N[n["key"]] = [a for a in arts if start_ts - 2 * 3600 <= a[0] <= end_ts and sj.search(a[1]) and (pd is None or pd.search(a[1]))]
+    return N
+
+
+def _narr_rank(ev, N, f, mega, start_ts, end_ts, nq, arts_t):
+    """구간(시작 90분 전 ~ 끝)에 이야기 기사가 평소보다 몰렸는지 × 가격이 그 이야기대로 움직였는지
+       · 몰림 = 구간 안 '전체 기사 중 이 이야기 비중' ÷ 구간 밖 비중 (미국 장중엔 기사 자체가 많아지는 것을 보정)
+       · 급증 시작 = 구간 안에서 이 이야기 30분 기사 수가 평소 30분 평균의 2배(최소 2건)를 처음 넘은 때
+         → 가장 가파른 15분보다 먼저면 '원인 쪽', 한참 뒤면 '해설 쪽'"""
+    lo, hi = ev["start"] - 90 * 60, ev["end"]
+    w0 = start_ts - 2 * 3600
+    tot_in = sum(1 for t in arts_t if lo <= t <= hi) or 1
+    tot_out = sum(1 for t in arts_t if w0 <= t <= end_ts and not lo <= t <= hi) or 1
+    dout = max((end_ts - w0) - max(hi - lo, 3600), 3600)
+    sgn = 1 if nq > 0 else -1
+    out = []
+    for n in NARRATIVES:
+        hits = N.get(n["key"], [])
+        k_in = sum(1 for a in hits if lo <= a[0] <= hi)
+        if k_in < 3:
+            continue
+        k_out = len(hits) - k_in
+        ratio = ((k_in + 0.5) / tot_in) / ((k_out + 1) / tot_out)
+        per_b = (k_out + 1) / dout * BUCKET                     # 평소 30분당 기사 수
+        # 급증한 30분들(평소보다 많고 직전 1시간보다도 늘어남) 중 가장 가파른 15분에 가장 가까운 '앞쪽' 것, 없으면 첫 뒤쪽 것
+        bursts, b = [], lo
+        while b <= hi:
+            c_ = sum(1 for a in hits if b <= a[0] < b + BUCKET)
+            prev = sum(1 for a in hits if b - 2 * BUCKET <= a[0] < b) / 2
+            if c_ >= max(2, 2 * per_b, 1.5 * prev + 1):
+                bursts.append(b)
+            b += BUCKET // 2
+        tg = ev["trig"][0]
+        before = [x for x in bursts if x <= tg + 15 * 60]
+        onset = before[-1] if before else (bursts[0] if bursts else None)
+        # 가격 확인: 관련 종목이 나스닥보다 크게 같은 방향 / 유가는 반대 방향 / 금리는 주식과 반대
+        conf, cw = 1.0, ""
+        if n.get("syms"):
+            mv = [mega[x] for x in n["syms"] if x in mega]
+            if mv:
+                a = sum(mv) / len(mv)
+                conf = 1 + min(2, abs(a) / max(abs(nq), 0.3)) / 1.5 if a * sgn > 0 else 0.6
+                cw = ", ".join(f"{MEGA[x]} {mega[x]:+.1f}%" for x in n["syms"] if x in mega)
+        elif n.get("asset"):
+            v = f.get(n["asset"])
+            if v is not None:
+                th = 3 if n["asset"] == "UST10Y_bp" else 1.2
+                conf = 1 + min(2, abs(v) / th) / 1.5 if v * sgn < 0 and abs(v) >= th * 0.5 else 0.7
+                cw = f"{'10년 금리' if n['asset'] == 'UST10Y_bp' else '유가'} {v:+.1f}{'bp' if n['asset'] == 'UST10Y_bp' else '%'}"
+        score = math.log1p(k_in) * min(ratio, 5) ** 0.5 * conf
+        if ratio < 1.2 and k_in < 8:
+            continue
+        top = sorted((a for a in hits if lo <= a[0] <= hi and not RECAP.search(a[2])), key=lambda a: a[0])
+        lead = None if onset is None else round((onset - ev["trig"][0]) / 60)
+        if lead is not None and lead <= 15:
+            score *= 1.25                                        # 가격보다 먼저 몰린 이야기 가산
+        out.append({"key": n["key"], "name": n["name"], "driver": n["driver"], "n": k_in, "ratio": round(ratio, 1),
+                    "confirm": round(conf, 2), "price": cw, "score": round(score, 2), "onset": onset, "lead_min": lead,
+                    "first": top[0][0] if top else None,
+                    "heads": [{"headline": a[2], "url": a[3], "source": a[4], "time": a[0]} for a in top[:1] + top[-2:]][:3]})
+    out.sort(key=lambda x: -x["score"])
+    return out[:4]
+
+
+def _series(N, start_ts, end_ts):
+    """화면 시간축용: 이야기별 30분 기사 수"""
+    nb = int((end_ts - start_ts) // BUCKET) + 1
+    out = {}
+    for n in NARRATIVES:
+        c = [0] * nb
+        for a in N.get(n["key"], []):
+            i = int((a[0] - start_ts) // BUCKET)
+            if 0 <= i < nb:
+                c[i] += 1
+        out[n["key"]] = c
+    return out
 
 
 def _toks(text):
@@ -292,7 +435,24 @@ def _relevance(t, s, drivers, single, leaders):
     return rel, hit
 
 
-def _match_news(ev, topics, drivers, single, leaders, idf):
+def _merge_drivers(drivers, narr):
+    """가격 지문으로 찾은 원인 유형 + 뉴스 흐름(기사 급증 × 가격 확인) → 합친 순위"""
+    by = {d["key"]: dict(d) for d in drivers}
+    for n in narr:
+        if n["confirm"] < 1 or n["score"] < 1.5 or n["ratio"] < 1.2 or n["driver"] not in DRIVERS:
+            continue
+        note = f"뉴스 흐름 '{n['name']}' 기사 {n['n']}건(비중 평소의 {n['ratio']:g}배)"
+        d = by.get(n["driver"])
+        if d:
+            d["why"] += " · " + note
+            d["score"] = round(d["score"] + 0.5 * n["score"], 2)
+        else:
+            by[n["driver"]] = {"key": n["driver"], "name": DRIVERS[n["driver"]]["name"],
+                               "why": note + (f" · {n['price']}" if n["price"] else ""), "score": round(0.8 * n["score"], 2), "from_news": True}
+    return sorted(by.values(), key=lambda d: -d["score"])
+
+
+def _match_news(ev, topics, drivers, single, leaders, idf, narr=()):
     a, b = ev["trig"]
     # 후보 시간: 방아쇠(가장 가파른 15분) 45분 전 ~ 10분 후, 또는 구간 시작 30분 전 ~ 15분 후
     win = [(a - 45 * 60, b + 10 * 60), (ev["start"] - 30 * 60, ev["start"] + 15 * 60)]
@@ -304,6 +464,12 @@ def _match_news(ev, topics, drivers, single, leaders, idf):
             if s.get("is_opinion") or not any(x <= s["first_seen"] <= y for x, y in win) or RECAP.search(s["headline"]) or REACTION.search(s["headline"]):
                 continue
             rel, hit = _relevance(t, s, drivers or [{"key": k} for k in ("rates", "oil", "semis", "riskoff")], single, leaders)
+            # 이 구간에 기사가 몰린 이야기(뉴스 흐름)에 속하면 가산
+            hl = s["headline"].lower()
+            for n in narr[:2]:
+                N_ = next(x for x in NARRATIVES if x["key"] == n["key"])
+                if re.search(N_["subj"], hl, re.I) and (not N_["pred"] or re.search(N_["pred"], hl, re.I)):
+                    rel += 3; hit.append(n["name"])
             if rel <= 0:
                 continue   # 원인 유형과 무관하면 시간이 맞아도 버림
             via = max((VIA_WEIGHT.get(x.get("via"), 0) for x in s["sources"]), default=0)
@@ -356,16 +522,22 @@ def build_moves(briefing, start_ts, end_ts):
     nq = bars["NQ"]
     topics = briefing.get("topics", [])
     idf = _idf(topics)
+    arts = _articles(topics)
+    arts_t = [a[0] for a in arts]
+    NH = _narr_hits(arts, start_ts, end_ts)
     events = _legs(nq, start_ts, end_ts)
     X = {k: bars.get(k, []) for k in CROSS}
     M = {s: bars.get(s, []) for s in MEGA}
     for ev in events:
         f, mega, drivers, leaders, single = _fingerprint(ev, X, M)
+        narr = _narr_rank(ev, NH, f, mega, start_ts, end_ts, ev["nq_pct"], arts_t)
+        drivers = _merge_drivers(drivers, narr)
         ev["es_pct"] = f.get("ES")
         ev["cross"] = f
         ev["leaders"] = [{"sym": s, "name": MEGA[s], "pct": v} for s, v in leaders]
         ev["drivers"] = drivers
-        ev["news"], ev["explain"] = _match_news(ev, topics, drivers, single, leaders, idf)
+        ev["narratives"] = narr
+        ev["news"], ev["explain"] = _match_news(ev, topics, drivers, single, leaders, idf, narr)
     events.sort(key=lambda e: -e["end"])
     # 창 전체 요약 (오늘 무엇이 시장을 끌었나)
     whole = {"start": max(start_ts, nq[0][0]), "end": min(end_ts, nq[-1][0])}
@@ -376,11 +548,46 @@ def build_moves(briefing, start_ts, end_ts):
         wf, wm, wd, wl, _ = _fingerprint(whole, X, M)
         summary = {"nq_pct": whole["nq_pct"], "es_pct": wf.get("ES"), "cross": wf, "drivers": wd,
                    "leaders": [{"sym": s, "name": MEGA[s], "pct": v} for s, v in wl]}
+    # 시간축: 나스닥 선물(15분) + 구간 + 이야기별 30분 기사 수 (기사가 4건 이상인 이야기, 많은 순 6개)
+    ser = _series(NH, start_ts, end_ts)
+    nb = len(next(iter(ser.values()))) if ser else 0
+    tot = [0] * nb
+    for t in arts_t:
+        i = int((t - start_ts) // BUCKET)
+        if 0 <= i < nb:
+            tot[i] += 1
+    rets = []
+    for i in range(nb):
+        a, b = _at(nq, start_ts + i * BUCKET), _at(nq, start_ts + (i + 1) * BUCKET)
+        rets.append((b / a - 1) * 100 if a and b else None)
+
+    def corr(x, y):
+        pr = [(p, q) for p, q in zip(x, y) if p is not None and q is not None]
+        if len(pr) < 8:
+            return None
+        mx, my = sum(p for p, _ in pr) / len(pr), sum(q for _, q in pr) / len(pr)
+        sx = sum((p - mx) ** 2 for p, _ in pr) ** 0.5
+        sy = sum((q - my) ** 2 for _, q in pr) ** 0.5
+        return round(sum((p - mx) * (q - my) for p, q in pr) / (sx * sy), 2) if sx and sy else None
+    tl_n = []
+    for n in NARRATIVES:
+        c = ser[n["key"]]
+        if sum(c) < 4:
+            continue
+        share = [c[i] / tot[i] if tot[i] else None for i in range(nb)]          # 전체 기사 중 비중 (시간대별 기사량 보정)
+        r0 = corr(share, rets)                                                  # 같은 30분
+        r1 = corr(share[:-1], rets[1:])                                         # 기사 뒤 30분 시장
+        tl_n.append({"key": n["key"], "name": n["name"], "c": c, "n": sum(c), "r_same": r0, "r_next": r1})
+    tl_n = sorted(tl_n, key=lambda x: -x["n"])[:6]
+    timeline = {"start": start_ts, "end": end_ts, "bucket": BUCKET,
+                "nq": [[t, round(c, 2)] for t, c in nq if start_ts <= t <= end_ts and (t - start_ts) % 900 < 300],
+                "legs": [[e["start"], e["end"], e["nq_pct"]] for e in events], "narr": tl_n}
     span = [c for t, c in bars.get("ES", []) if start_ts <= t <= end_ts]
     print(f"[moves] 구간 {len(events)}개 · 원인 유형 " + ", ".join(d["name"] for e in events for d in e["drivers"][:1]))
     return {
         "indices": [x for x in (_index_summary("%5EGSPC", "S&P 500"), _index_summary("%5EIXIC", "나스닥")) if x],
         "futures_window": {"nq_pct": whole["nq_pct"], "es_pct": round((span[-1] / span[0] - 1) * 100, 2) if len(span) > 1 else None},
         "summary": summary,
+        "timeline": timeline,
         "events": events,
     }
