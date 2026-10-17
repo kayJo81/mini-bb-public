@@ -28,6 +28,25 @@ env:
   CF_PROJECT: mini-bbterminal
 
 jobs:
+  # 랩 아침 실행(UTC 월~금 22:00 = KST 07:00)이 빠졌으면 대신 실행 — 스케줄러가 놓쳐도 늦어도 22:30 UTC 전후에는 돌게
+  lab-watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      actions: write
+    steps:
+      - name: Dispatch lab if missed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          dow=$(date -u +%u); hm=$(date -u +%H%M)          # 1=월 … 7=일
+          if [ "$dow" -gt 5 ] || [ "$hm" -lt 2220 ]; then echo "확인 시간 아님"; exit 0; fi
+          since="$(date -u +%Y-%m-%d)T21:55:00Z"
+          n=$(gh api -X GET "repos/$REPO/actions/workflows/lab.yml/runs" -f created=">=$since" -f per_page=5 --jq '.total_count')
+          echo "오늘 랩 실행 수: $n"
+          if [ "$n" = "0" ]; then gh workflow run lab.yml -R "$REPO" -f days=4 && echo "랩 아침 실행 누락 → 대신 실행"; fi
+
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15

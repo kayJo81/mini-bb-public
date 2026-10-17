@@ -4,8 +4,9 @@ compatibility_date = "2024-09-01"
 workers_dev = false
 
 # 15분 간격 (매시 07·22·37·52분 — 05:30 KST 메일 실행과 겹치지 않게)
-# + 20:30 UTC(05:30 KST, 서머타임) / 21:30 UTC(06:30 KST, 겨울): 일일 PDF 메일 — 미국 장 마감 30분 뒤 (index.js REPORT_CRON_* 과 같아야 함)
-# + 22:00 UTC 월~금(= 07:00 KST 화~토, 요일은 UTC 기준): 미니 블벅 랩 (index.js LAB_CRON 과 같아야 함)
-# + 11:00 UTC 일(20:00 KST): 주간 전략 (index.js WEEKLY_CRON 과 같아야 함)
+# + 20:30·21:30 UTC 한 줄(30 20,21): 서머타임이면 20:30(05:30 KST), 겨울이면 21:30(06:30 KST)에 일일 PDF 메일 — 미국 장 마감 30분 뒤 (index.js REPORT_CRON_* 과 같아야 함)
+# + 22:00 UTC 매일 → 코드에서 월~금만(= 07:00 KST 화~토): 미니 블벅 랩 (index.js LAB_CRON 과 같아야 함)
+# + 11:00 UTC 매일 → 코드에서 일요일만(20:00 KST): 주간 전략 (index.js WEEKLY_CRON 과 같아야 함)
+#   (크론 요일 이름 MON-FRI·SUN 이 실행되지 않던 문제로 요일은 코드에서 확인)
 [triggers]
-crons = ["7,22,37,52 * * * *", "30 20 * * *", "30 21 * * *", "0 22 * * MON-FRI", "0 11 * * SUN"]
+crons = ["7,22,37,52 * * * *", "30 20,21 * * *", "0 22 * * *", "0 11 * * *"]
