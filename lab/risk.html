@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>미니 블벅 랩 · 위험 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--bd:#e5e7eb;--sub:#6b7280;--ink:#111827;--grid:#eef0f3;--acc:#2563eb;--r:14px;
+  --sh:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);--mono:'JetBrains Mono',monospace;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--cmp:#9ca3af}
+*{box-sizing:border-box}html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,'Apple SD Gothic Neo','Noto Sans KR',sans-serif}
+a{color:inherit}.wrap{max-width:1080px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+h1{font-size:20px;margin:0}h1 b{color:var(--acc)}.hsub{font-size:12px;color:var(--sub)}
+.bar{display:flex;gap:6px;flex-wrap:wrap}
+.link{font-size:12px;font-weight:600;text-decoration:none;background:#fff;color:#111827;border:.5px solid var(--bd);padding:7px 12px;border-radius:9px;white-space:nowrap}
+.link.dark{background:#111827;color:#fff;border-color:#111827}
+.card{background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:14px 16px;margin-bottom:12px;min-width:0}
+h2{font-size:16px;margin:0 0 2px}.note{font-size:12px;color:var(--sub);margin:0 0 8px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.tab{padding:7px 13px;border-radius:999px;border:1px solid var(--bd);background:#fff;font-weight:700;cursor:pointer;font-size:13px;font-family:inherit;color:var(--ink)}
+.tab.on{background:#111827;color:#fff;border-color:#111827}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.grid.w{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.tile{border-radius:10px;padding:8px 10px;border:.5px solid var(--bd);min-width:0}
+.tile .t{display:flex;justify-content:space-between;gap:6px;font-size:12.5px;font-weight:700}
+.tile .v{font-family:var(--mono);font-size:16px;font-weight:700;margin:1px 0}
+.tile .s{font-size:11px;color:#374151;font-family:var(--mono)}
+.tile svg{display:block;width:100%;height:30px;margin-top:4px}
+.grp{font-size:12px;font-weight:700;color:var(--sub);margin:10px 0 6px}
+.chart{position:relative}.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.ax{font-size:10px;fill:var(--sub);font-family:var(--mono)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin:4px 0 6px}
+.legend i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:4px;vertical-align:3px}
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:6px}
+table{border-collapse:separate;border-spacing:0;font-size:12px;width:100%}
+th,td{padding:5px 7px;text-align:right;white-space:nowrap;font-family:var(--mono);border-bottom:1px solid #f0f1f3}
+th{font-family:inherit;color:var(--sub);font-weight:600;font-size:11px}
+td.nm,th.nm{text-align:left;font-family:inherit;position:sticky;left:0;background:#fff;z-index:1;box-shadow:4px 0 0 #fff}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:6px 0 10px}
+.kpi{border:.5px solid var(--bd);border-radius:10px;padding:8px 10px}.kpi .k{font-size:11.5px;color:var(--sub);font-weight:600}
+.kpi .v{font-family:var(--mono);font-size:17px;font-weight:700}.kpi .d{font-size:11.5px;color:var(--sub)}
+.up{color:#c0392b}.dn{color:#1f62b5}
+.scale{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--sub);margin:4px 0 8px;flex-wrap:wrap}
+.scale span.b{display:inline-block;width:120px;height:8px;border-radius:4px;background:linear-gradient(90deg,#2a78d6,#f0efec,#e34948)}
+.pbar{position:relative;height:8px;border-radius:4px;background:linear-gradient(90deg,#dbe7f7,#f3f4f6,#f8dcdc);min-width:90px}
+.pbar i{position:absolute;top:-3px;width:3px;height:14px;border-radius:2px;background:#111827}
+@media(max-width:600px){td.nm{white-space:normal;min-width:110px;max-width:140px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div><h1>미니 블벅 <b>랩</b> · 위험 대시보드</h1><div class="hsub" id="hsub">자산 Z점수 · 금리 곡선 · 신용·스트레스 · 유동성 · 선물 포지션 · 비트코인 옵션</div></div>
+  <div class="bar"><a class="link dark" href="prefill">📝 아침 프리필</a><a class="link" href="./">← 랩 메인</a></div></header>
+<div class="tabs" id="tabs"></div>
+<div id="app"><div class="card note">불러오는 중…</div></div>
+<p class="hsub">투자 권유 아님 · 원자료: 야후 파이낸스, FRED(세인트루이스 연은), CFTC 선물 포지션, Deribit · 매일 07:00 KST 갱신</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct=(v,d=1)=>v==null||!isFinite(v)?'–':(v>0?'+':'')+v.toFixed(d)+'%';
+const f=(v,d=2)=>v==null||!isFinite(v)?'–':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const sg=v=>v==null?'–':(v>0?'+':'')+v.toFixed(1)+'σ';
+const tone=v=>v>0?'up':v<0?'dn':'';
+const store={get:k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+// Z → 파랑(낮음)·회색·빨강(높음)
+function zc(z){if(z==null)return '#fff';const t=Math.max(-1,Math.min(1,z/3));const a=[240,239,236],b=t<0?[42,120,214]:[227,73,72],k=Math.abs(t)*.55;
+  return `rgb(${a.map((x,i)=>Math.round(x+(b[i]-x)*k)).join(',')})`;}
+function spark(v,col='var(--s1)',h=30){v=(v||[]).filter(x=>x!=null);if(v.length<2)return '';const w=200,mn=Math.min(...v),mx=Math.max(...v),r=mx-mn||1;
+  const p=v.map((x,i)=>`${(i/(v.length-1)*w).toFixed(1)},${(h-2-(x-mn)/r*(h-4)).toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${p}" fill="none" stroke="${col}" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>`;}
+// 선 그래프: S=[{name,col,pts:[[x,y]...],axis:'l'|'r'}], 가로축 = 날짜 문자열 또는 숫자
+function line(S,{h=240,xs=null,fy=v=>v,fy2=v=>v,xl=null}={}){
+  const W=Math.round(Math.min(1000,Math.max(330,($('app').clientWidth||640)-34))),H=h,L=46,Rr=S.some(s=>s.axis==='r')?46:12,T=10,B=24;
+  const xv=S.flatMap(s=>s.pts.map(p=>p[0]));const xmin=Math.min(...xv),xmax=Math.max(...xv);
+  const rng=ax=>{const y=S.filter(s=>(s.axis||'l')===ax).flatMap(s=>s.pts.map(p=>p[1]));if(!y.length)return null;let a=Math.min(...y),b=Math.max(...y);const pad=(b-a)*.08||1;return [a-pad,b+pad];};
+  const yl=rng('l'),yr=rng('r');
+  const X=x=>L+(x-xmin)/(xmax-xmin||1)*(W-L-Rr),Y=(y,r)=>T+(1-(y-r[0])/(r[1]-r[0]))*(H-T-B);
+  let g='';
+  for(let i=0;i<=4;i++){const yy=T+i/4*(H-T-B);g+=`<line x1="${L}" x2="${W-Rr}" y1="${yy}" y2="${yy}" stroke="var(--grid)"/>`;
+    if(yl)g+=`<text class="ax" x="${L-4}" y="${yy+3}" text-anchor="end">${fy(yl[1]-i/4*(yl[1]-yl[0]))}</text>`;
+    if(yr)g+=`<text class="ax" x="${W-Rr+4}" y="${yy+3}">${fy2(yr[1]-i/4*(yr[1]-yr[0]))}</text>`;}
+  const ticks=xs||[];ticks.forEach(([x,lab])=>{g+=`<text class="ax" x="${X(x)}" y="${H-6}" text-anchor="middle">${esc(lab)}</text>`;});
+  for(const s of S){const r=(s.axis||'l')==='r'?yr:yl;const p=s.pts.map(q=>`${X(q[0]).toFixed(1)},${Y(q[1],r).toFixed(1)}`).join(' ');
+    g+=`<polyline points="${p}" fill="none" stroke="${s.col}" stroke-width="${s.w||2}" ${s.dash?'stroke-dasharray="4 3"':''}/>`;
+    if(s.dots)s.pts.forEach(q=>{g+=`<circle cx="${X(q[0])}" cy="${Y(q[1],r)}" r="3" fill="${s.col}"><title>${esc(s.name)} ${esc(xl?xl(q[0]):q[0])}: ${fy(q[1])}</title></circle>`;});}
+  return `<div class="legend">${S.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.name)}</span>`).join('')}</div><div class="chart"><svg viewBox="0 0 ${W} ${H}">${g}</svg></div>`;
+}
+const dnum=d=>Date.parse(d)/864e5;
+const yticks=(a,b)=>{const out=[];const y0=new Date(a*864e5).getUTCFullYear(),y1=new Date(b*864e5).getUTCFullYear();
+  for(let y=y0;y<=y1;y++)for(const m of [0,6]){const t=Date.UTC(y,m,1)/864e5;if(t>=a&&t<=b)out.push([t,`${String(y).slice(2)}.${m?'07':'01'}`]);}return out;};
+
+let D=null,TAB=store.get('risk:tab')||'z';
+const TABS=[['z','🌡️ 자산 Z점수'],['rates','💰 금리 곡선'],['credit','🏦 신용·스트레스'],['liq','💧 유동성'],['cot','📌 선물 포지션'],['btc','₿ 비트코인 옵션']];
+
+function tabZ(){
+  let h=`<div class="card"><h2>자산별 위치 (1년 기준 Z점수)</h2><p class="note">색 = 지금 가격이 지난 1년 평균에서 몇 표준편차 떨어져 있는지(빨강 높음 · 파랑 낮음). 아래 숫자: 1일·1주·1달 변화, 1일 변동 Z(평소 하루 변동의 몇 배).</p>
+  <div class="scale">−3σ <span class="b"></span> +3σ</div>`;
+  for(const g of D.assets){h+=`<div class="grp">${esc(g.group)}</div><div class="grid">`;
+    for(const x of g.items){h+=`<div class="tile" style="background:${zc(x.z_level)}"><div class="t"><span>${esc(x.name)}</span><span>${sg(x.z_level)}</span></div>
+      <div class="v">${f(x.last,x.last>=1000?0:2)}</div><div class="s"><span class="${tone(x.d1)}">${pct(x.d1)}</span> · 1주 ${pct(x.w1)} · 1달 ${pct(x.m1)}${x.z_1d!=null&&Math.abs(x.z_1d)>=2?` · <b>1일 ${sg(x.z_1d)}</b>`:''}</div>${spark(x.spark,'#111827')}</div>`;}
+    h+='</div>';}
+  if(D.ratios?.length){h+=`<div class="grp">비율</div><div class="grid">`;
+    for(const x of D.ratios)h+=`<div class="tile" style="background:${zc(x.z_level)}"><div class="t"><span>${esc(x.name)}</span><span>${sg(x.z_level)}</span></div><div class="v">${f(x.last,x.last>1?2:4)}</div>
+      <div class="s">1주 ${pct(x.w1)} · 1달 ${pct(x.m1)}</div><div class="s" style="font-family:inherit;color:var(--sub)">${esc(x.why)}</div>${spark(x.spark,'#111827')}</div>`;
+    h+='</div>';}
+  return h+'</div>';
+}
+const F=id=>Object.values(D.fred||{}).flat().find(x=>x.id===id);
+function tabRates(){
+  const C=D.fred?.curve||[];if(!C.length)return '<div class="card">금리 데이터를 못 받았어요.</div>';
+  const xs=C.map((c,i)=>[i,c.name]);
+  const S=[{name:`지금 (${(C.find(c=>c.id==='DGS10')||C[0]).date.slice(5)})`,col:'var(--s1)',w:2.4,dots:true,pts:C.map((c,i)=>[i,c.last])},
+    {name:'1주 전',col:'var(--s4)',dash:true,pts:C.map((c,i)=>[i,c.w1]).filter(p=>p[1]!=null)},
+    {name:'1달 전',col:'var(--s2)',pts:C.map((c,i)=>[i,c.m1]).filter(p=>p[1]!=null)},
+    {name:'1년 전',col:'var(--cmp)',pts:C.map((c,i)=>[i,c.y1]).filter(p=>p[1]!=null)}];
+  let h=`<div class="card"><h2>미 국채 수익률 곡선</h2><p class="note">만기별 금리 — 지금과 1주·1달·1년 전 비교 (FRED, 하루 늦게 올라옴)</p>${line(S,{xs,fy:v=>v.toFixed(2)+'%',xl:i=>C[i].name})}
+  <div class="tbl"><table><thead><tr><th class="nm">만기</th>${C.map(c=>`<th>${esc(c.name)}</th>`).join('')}</tr></thead><tbody>
+  <tr><td class="nm">지금</td>${C.map(c=>`<td><b>${f(c.last)}</b></td>`).join('')}</tr>
+  <tr><td class="nm">1주 변화</td>${C.map(c=>{const v=c.w1==null?null:(c.last-c.w1)*100;return `<td class="${tone(v)}">${v==null?'–':(v>0?'+':'')+v.toFixed(0)}</td>`}).join('')}</tr>
+  <tr><td class="nm">1달 변화</td>${C.map(c=>{const v=c.m1==null?null:(c.last-c.m1)*100;return `<td class="${tone(v)}">${v==null?'–':(v>0?'+':'')+v.toFixed(0)}</td>`}).join('')}</tr>
+  <tr><td class="nm">Z(3년)</td>${C.map(c=>`<td style="background:${zc(c.z)}">${sg(c.z)}</td>`).join('')}</tr></tbody></table></div><p class="note">변화 단위 bp(0.01%p)</p></div>`;
+  h+=cards('정책 금리·스프레드·기대인플레',D.fred.policy,v=>v.toFixed(2)+'%');
+  return h;
+}
+function cards(title,L,fmt,note=''){
+  if(!L?.length)return '';
+  return `<div class="card"><h2>${esc(title)}</h2>${note?`<p class="note">${esc(note)}</p>`:''}<div class="grid w">${L.map(x=>{
+    const hv=(x.hist||[]).map(p=>p[1]);const ch=x.m1!=null?x.last-x.m1:null;
+    return `<div class="tile"><div class="t"><span>${esc(x.name)}</span><span style="background:${zc(x.z)};border-radius:5px;padding:0 5px">${sg(x.z)}</span></div>
+    <div class="v">${fmt(x.last,x)}</div><div class="s">1달 전 ${x.m1==null?'–':fmt(x.m1,x)} · 1년 전 ${x.y1==null?'–':fmt(x.y1,x)} · 3년 중 ${x.pct}%</div>${spark(hv,ch>0?'#c0392b':'#1f62b5',34)}
+    <div class="s" style="color:var(--sub)">${esc(x.date)} · 3년 추이</div></div>`}).join('')}</div></div>`;
+}
+function tabCredit(){
+  const by=Object.fromEntries(D.assets.flatMap(g=>g.items).map(x=>[x.sym,x]));
+  let h=cards('회사채 스프레드',D.fred.credit,v=>v.toFixed(2)+'%p','국채 대비 추가 금리. 넓어질수록(빨강) 신용 위험을 더 크게 봄 · ICE BofA 지수');
+  h+=`<div class="card"><h2>사모신용·신용 시세</h2><p class="note">사모대출 BDC·블루아울·지방은행·하이일드 ETF — 스프레드보다 하루 빨리 반응</p><div class="grid">${['HYG','LQD','BIZD','OWL','KRE','TLT'].map(s=>by[s]).filter(Boolean).map(x=>
+    `<div class="tile" style="background:${zc(x.z_level)}"><div class="t"><span>${esc(x.name)}</span><span>${sg(x.z_level)}</span></div><div class="v">$${f(x.last)}</div>
+    <div class="s">1주 ${pct(x.w1)} · 1달 <span class="${tone(x.m1)}">${pct(x.m1)}</span> · 1년 ${pct(x.y1,0)}</div>${spark(x.spark,'#111827')}</div>`).join('')}</div></div>`;
+  const fm=(v,x)=>x.id==='ICSA'||x.id==='CCSA'?f(v/1000,0)+'천':x.id==='UNRATE'||x.id==='RECPROUSM156N'?v.toFixed(2)+'%':v.toFixed(2);
+  h+=cards('금융 스트레스·경기',D.fred.stress,fm,'NFCI·스트레스 지수는 0 위면 평소보다 빡빡 · 삼 법칙 0.5 이상이면 침체 진입 신호 · 실업수당은 주간');
+  return h;
+}
+function tabLiq(){
+  const L=D.fred?.liq||[];const N=L.find(x=>x.id==='NETLIQ');
+  if(!N)return '<div class="card">유동성 데이터를 못 받았어요.</div>';
+  const n=N.hist.map(p=>[dnum(p[0]),p[1]/1000]);const a=n[0][0];
+  const sp=(D.spx_w||[]).map(p=>[dnum(p[0]),p[1]]).filter(p=>p[0]>=a);
+  const S=[{name:'순유동성 ($T, 왼쪽)',col:'var(--s1)',w:2.4,pts:n},{name:'S&P 500 (오른쪽)',col:'var(--s2)',axis:'r',pts:sp}];
+  const xr=n.concat(sp).map(p=>p[0]);
+  let h=`<div class="card"><h2>순유동성 vs S&P 500</h2><p class="note">순유동성 = 연준 총자산 − 재무부 계좌(TGA) − 역레포. 시중에 풀린 달러의 근사치로, 주식과 같이 움직이는 경향</p>
+  <div class="kpis">${L.map(x=>`<div class="kpi"><div class="k">${esc(x.name.replace(' (연준 자산 − TGA − 역레포)',''))}</div><div class="v">${x.id==='M2SL'||x.id==='NETLIQ'||x.id==='WALCL'||x.id==='WRESBAL'?'$'+f(x.last/1000,2)+'T':'$'+f(x.last,x.last<10?1:0)+'B'}</div>
+    <div class="d">1달 ${x.m1==null?'–':((x.last-x.m1)>0?'+':'')+f(x.last-x.m1,0)+'B'} · ${esc(x.date.slice(5))}</div></div>`).join('')}</div>
+  ${line(S,{xs:yticks(Math.min(...xr),Math.max(...xr)),fy:v=>v.toFixed(2),fy2:v=>f(v,0)})}</div>`;
+  h+=cards('구성 요소 (3년)',L.filter(x=>x.id!=='NETLIQ'),(v,x)=>x.id==='RRPONTSYD'||x.id==='WTREGEN'?'$'+f(v,0)+'B':'$'+f(v/1000,2)+'T','연준 H.4.1(매주 목) · 역레포는 매일');
+  return h;
+}
+function tabCot(){
+  const C=D.cot||{};const rows=[...(C.financial||[]),...(C.commodity||[])];
+  if(!rows.length)return '<div class="card">선물 포지션 데이터를 못 받았어요.</div>';
+  let h=`<div class="card"><h2>선물 포지션 (CFTC)</h2><p class="note">순포지션 = 매수 − 매도 계약. 막대 위치 = 지난 3년 범위에서 지금 위치(왼쪽 끝 최대 매도 · 오른쪽 끝 최대 매수). 기준일 ${esc(rows[0].date)}(화) · 매주 금요일 발표</p>
+  <div class="tbl"><table><thead><tr><th class="nm">시장</th><th style="text-align:left">주체</th><th>순포지션</th><th>1주 변화</th><th>미결제 대비</th><th style="text-align:left">3년 위치</th><th style="text-align:left">1년 추이</th></tr></thead><tbody>`;
+  for(const r of rows)for(const k of ['lev','am','mm']){const x=r[k];if(!x)continue;const ext=x.pctile!=null&&(x.pctile>=90||x.pctile<=10);
+    h+=`<tr><td class="nm">${k==='am'?'':`<b>${esc(r.market)}</b>`}</td><td style="text-align:left;font-family:inherit">${esc(x.name)}</td><td class="${tone(x.net)}">${x.net.toLocaleString()}</td>
+    <td class="${tone(x.wow)}">${x.wow==null?'–':(x.wow>0?'+':'')+x.wow.toLocaleString()}</td><td>${x.pct_oi==null?'–':x.pct_oi.toFixed(1)+'%'}</td>
+    <td style="text-align:left"><div class="pbar" title="${x.pctile}"><i style="left:calc(${x.pctile??50}% - 1px)"></i></div><span style="font-size:10.5px;${ext?'font-weight:700;color:#c0392b':'color:var(--sub)'}">${x.pctile??'–'}${ext?' 극단':''}</span></td>
+    <td style="width:120px">${spark(x.hist,x.net>=0?'#c0392b':'#1f62b5',24)}</td></tr>`;}
+  return h+`</tbody></table></div><p class="note">레버리지 펀드 = 헤지펀드·CTA(단기 추세) · 자산운용사 = 연기금·뮤추얼펀드(장기) · 원자재는 투기(관리)자금</p></div>`;
+}
+function tabBtc(){
+  const b=D.btc;if(!b?.spot)return '<div class="card">비트코인 옵션 데이터를 못 받았어요.</div>';
+  const rd=b.range_day||{},rw=b.range_week||{},em=b.expected_move;
+  let h=`<div class="card"><h2>비트코인 옵션 (Deribit)</h2><p class="note">${esc(b.asof.replace('T',' ').slice(0,16))} UTC 기준</p><div class="kpis">
+  <div class="kpi"><div class="k">지수 가격</div><div class="v">$${f(b.spot,0)}</div><div class="d">맥스페인 $${f(b.max_pain_near,0)}</div></div>
+  <div class="kpi"><div class="k">DVOL</div><div class="v">${f(b.dvol,1)}</div><div class="d">전일 ${b.dvol_chg>0?'+':''}${f(b.dvol_chg,1)}</div></div>
+  <div class="kpi"><div class="k">25델타 스큐(최근 만기)</div><div class="v">${b.skew_near>0?'+':''}${f(b.skew_near,1)}</div><div class="d">+ 면 풋이 비쌈</div></div>
+  <div class="kpi"><div class="k">풋/콜 미결제</div><div class="v">${f(b.pc_oi,2)}</div><div class="d">콜 ${f(b.call_oi,0)} · 풋 ${f(b.put_oi,0)}</div></div>
+  <div class="kpi"><div class="k">변동성 프리미엄</div><div class="v">${f(b.vrp,1)}</div><div class="d">1주 IV − 20일 실현 ${f(b.rv20,1)}%</div></div>
+  <div class="kpi"><div class="k">펀딩 · 베이시스</div><div class="v">${f(b.funding_8h,4)}%</div><div class="d">베이시스 연 ${f(b.basis_ann,1)}%</div></div></div>
+  <div class="tbl"><table><thead><tr><th class="nm">범위</th><th>1σ (68%)</th><th>2σ (95%)</th><th>IV</th></tr></thead><tbody>
+  <tr><td class="nm">하루</td><td>$${f(rd.lo1,0)} ~ $${f(rd.hi1,0)}</td><td>$${f(rd.lo2,0)} ~ $${f(rd.hi2,0)}</td><td>${f(rd.iv,1)}%</td></tr>
+  <tr><td class="nm">1주</td><td>$${f(rw.lo1,0)} ~ $${f(rw.hi1,0)}</td><td>$${f(rw.lo2,0)} ~ $${f(rw.hi2,0)}</td><td>${f(rw.iv,1)}%</td></tr>
+  ${em?`<tr><td class="nm">스트래들 (${esc(em.expiry)})</td><td>$${f(em.lo,0)} ~ $${f(em.hi,0)}</td><td>±$${f(em.straddle,0)}</td><td></td></tr>`:''}</tbody></table></div></div>`;
+  const T=(b.term||[]).filter(t=>t.atm_iv!=null);
+  if(T.length){const st=Math.ceil(T.length/6),xs=T.map((t,i)=>[i,t.expiry.replace(/\d\d$/,'')]).filter((x,i)=>i%st===0);
+    h+=`<div class="card"><h2>만기별 변동성 · 스큐</h2><p class="note">ATM 내재변동성(왼쪽)과 25델타 스큐(오른쪽: + 면 하방 헤지 수요) — 가로축 만기</p>
+    ${line([{name:'ATM IV %',col:'var(--s1)',w:2.4,dots:true,pts:T.map((t,i)=>[i,t.atm_iv])},{name:'25델타 스큐',col:'var(--s2)',axis:'r',dots:true,pts:T.map((t,i)=>[i,t.skew25]).filter(p=>p[1]!=null)}],
+      {h:220,xs,fy:v=>v.toFixed(0),fy2:v=>v.toFixed(1),xl:i=>T[i].expiry+` (${T[i].days}일)`})}</div>`;}
+  const K=b.top_strikes||[];
+  if(K.length){const mx=Math.max(...K.flatMap(k=>[k.call,k.put]));
+    h+=`<div class="card"><h2>행사가별 미결제 (상위 10)</h2><p class="note"><span style="color:var(--s1)">■</span> 콜 · <span style="color:var(--s2)">■</span> 풋 · 굵은 선 = 현재가 근처</p>
+    ${K.map(k=>{const near=Math.abs(k.strike-b.spot)/b.spot<0.03;return `<div style="display:grid;grid-template-columns:72px 1fr 1fr;gap:6px;align-items:center;font-size:12px;margin:3px 0;${near?'font-weight:700;border-top:2px solid #111827;padding-top:2px':''}">
+      <span style="font-family:var(--mono)">$${f(k.strike/1000,0)}K</span>
+      <div style="display:flex;justify-content:flex-end"><div style="height:12px;width:${k.put/mx*100}%;background:var(--s2);border-radius:3px 0 0 3px" title="풋 ${k.put}"></div></div>
+      <div><div style="height:12px;width:${k.call/mx*100}%;background:var(--s1);border-radius:0 3px 3px 0" title="콜 ${k.call}"></div></div></div>`}).join('')}
+    <div style="display:grid;grid-template-columns:72px 1fr 1fr;gap:6px;font-size:11px;color:var(--sub)"><span></span><span style="text-align:right">← 풋</span><span>콜 →</span></div></div>`;}
+  return h;
+}
+function render(){
+  $('tabs').innerHTML=TABS.map(([k,n])=>`<button class="tab${k===TAB?' on':''}" data-k="${k}">${n}</button>`).join('');
+  $('tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{TAB=b.dataset.k;store.set('risk:tab',TAB);render();});
+  const fn={z:tabZ,rates:tabRates,credit:tabCredit,liq:tabLiq,cot:tabCot,btc:tabBtc}[TAB]||tabZ;
+  try{$('app').innerHTML=fn();}catch(e){$('app').innerHTML=`<div class="card">이 칸을 그리지 못했어요 (${esc(e.message)}).</div>`;}
+}
+fetch('risk.json?t='+Date.now()).then(r=>r.json()).then(d=>{D=d;
+  $('hsub').textContent=`${d.at.replace('T',' ').slice(0,16)} UTC 수집 · 자산 Z점수 · 금리 곡선 · 신용·스트레스 · 유동성 · 선물 포지션 · 비트코인 옵션`;render();})
+  .catch(()=>{$('app').innerHTML='<div class="card">데이터를 불러오지 못했어요. 다음 아침 실행(07:00 KST) 뒤에 생겨요.</div>';});
+</script>
+</body>
+</html>

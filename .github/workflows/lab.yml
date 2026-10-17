@@ -33,7 +33,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: pip install requests numpy
+      - run: pip install requests numpy python-docx
 
       - name: Checkout lab-data branch
         env:
@@ -70,6 +70,7 @@ jobs:
           cp lab/weekly.html public_lab/weekly.html
           cp lab/tesla.html public_lab/tesla.html && (cp lab/tesla_eu.json public_lab/tesla_eu.json 2>/dev/null || true)
           cp lab/macro.html public_lab/macro.html
+          cp lab/risk.html public_lab/risk.html && cp lab/prefill.html public_lab/prefill.html
           cp lab/deep.html public_lab/deep.html && cp -r lab/deepnews public_lab/deepnews
           printf '/*\n  X-Frame-Options: SAMEORIGIN\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n' > public_lab/_headers
 
@@ -86,6 +87,12 @@ jobs:
         timeout-minutes: 8
         run: python lab/macro_data.py --out public_lab/macro.json
 
+      # 📊 위험·유동성: 자산 Z점수·금리 곡선·신용 스프레드·순유동성(FRED)·선물 포지션(CFTC)·비트코인 옵션(Deribit)
+      - name: Risk data
+        continue-on-error: true
+        timeout-minutes: 6
+        run: python lab/risk_data.py --out public_lab/risk.json
+
       # 🖥️ GPU 임대료 지수 (Vast.ai 매물 중간값 · RunPod 정가, lab-data 에 날짜별 누적)
       - name: GPU rent
         continue-on-error: true
@@ -99,6 +106,12 @@ jobs:
           # 위험 점수 항목별 가중치 최적화 (2017년~, 걷기 검증) → 포트폴리오가 읽음
           python lab/regime_opt.py --macro public_lab/macro.json --out public_lab/regime_weights.json || true
           python lab/portfolio.py --out public_lab
+
+      # 📝 아침 프리필: 위 데이터 + 터미널 밤사이 뉴스 + 이번 주 일정 → 회의 전 문서(웹 + Word), 지난 문서는 lab-data 에 누적
+      - name: Prefill
+        continue-on-error: true
+        timeout-minutes: 4
+        run: python lab/prefill.py --out public_lab
 
       - name: Save data
         if: always()
