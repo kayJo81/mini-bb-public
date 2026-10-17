@@ -390,6 +390,115 @@ TOPIC_BY_ID["earnings"]["exclude"] = [
     "前瞻", "预期", "将于", "即将", "预告", "有望", "或将"]
 
 
+# ─────────────────────────────────────────────────────────────────────
+# 산업 토픽: 회사 이름만 스친 기사 거르기 (주가·본업과 무관)
+#   1) 생활·엔터·공시 잡음 — 사용법·개인 후기, 영화·드라마·스포츠, 기관 지분 공시·옵션 시세 페이지·소송 모집 광고, 코인 홍보, 스팸
+#   2) 쇼핑·할인 — 소비자용 메가테크(애플·아마존·알파벳·MS·메타)에서만 (사업 'deal'·가격 정책은 남김)
+#   3) 이름만 같은 다른 것 — 아마존 열대우림, 사과·사이다, 정보(intel), 황반변성(AMD), 스타트렉 스타십 등
+#   4) 회사가 주어가 아님 — 'Amazon 에서 산 OO', 'Google 지도에서 본 OO' 처럼 판매처·도구로만 나오고 사업 단어가 없을 때
+# ─────────────────────────────────────────────────────────────────────
+_NOT_STOCK = r"(?!.*\b(?:stocks?|shares|trad(?:e|ing)|invest\w*|earnings|valuation)\b)"
+NOISE_RE = re.compile("|".join([
+    # 사용법·개인 후기·비교 추천
+    rf"\bhow to\b{_NOT_STOCK}", r"\btips (?:and|&) tricks\b", r"\btips? (?:to|for|on how)\b", r"\btricks? (?:to|for|you)\b", r"\btutorial\b",
+    r"\bhidden (?:feature|setting)", r"\bsecret (?:code|feature|setting|trick)", r"\bhands-on\b", r"\bunboxing\b", r"\breview:",
+    rf"\bi (?:tested|tried|use|used|switched|ditched|never thought|went on|bought|waited|turned|replaced|stopped)\b{_NOT_STOCK}",
+    r"\bmy (?:google|apple|amazon|iphone|pixel|android|kindle|alexa|echo|tv|mac|macbook)\b",
+    r"\byour (?:iphone|android|pixel|mac|pc|phone|tv|kindle|alexa|echo|smart home|windows|apple|google|amazon)\b",
+    r"\bcommon problems\b", r"\bwhat to do next\b", rf"\bbest .{{0,40}}(?:of 20\d\d|to buy|for (?:most|students|gaming|travel|kids))\b{_NOT_STOCK}",
+    r"\bworth (?:it|buying|the upgrade)\b", r"\bwaterproof\b", r"\bphone cases?\b", r"\bcases? for (?:iphone|ipad|galaxy|pixel|airpods)\b",
+    r"\bin my (?:house|home|kitchen|car|life|office)\b", r"\bi(?:'ll|’ll| will) (?:always|never)\b", r"\bif you use\b",
+    r"\bwhich (?:camera|phone|one|is better)\b", rf"^\d+ (?:cheaper|cheap|best|great|budget)\b{_NOT_STOCK}", r"\bapp spotlight\b",
+    r"\b20\d\d guide\b", r"\bguide (?:&|and) tools\b", r"\bultimate guide\b", rf"\bvs\.? .{{2,40}}\b(?:20\d\d|pricing|gap)\b{_NOT_STOCK}",
+    r"\bmsrp \$", r"\blegend of the week\b", r"\bmemes\b", r"\bheadlines you may have missed\b", r"\bpresented by\b",
+    r"\bwatch live (?:&|and) on demand\b", r"\bbook (?:holiday )?flights?\b", r"\bwallpapers?\b", r"\b\d+ recipes\b",
+    r"\brecipe for (?!disaster|success|trouble)", r"\bon sale\b", r"\b\d{1,2}% off\b", r"\bup to \d+% off\b", r"\bgift card",
+    r"\bflash sale\b", r"\bdeal of the day\b", r"\bis a steal\b", r"\bgiveaway\b", r"\bsweepstakes\b",
+    # 영화·드라마·팟캐스트·게임·스포츠
+    r"\bseason \d", r"\bepisodes?\b", r"\b(?:official|teaser|first|final|new) trailer\b", r"\bpremieres?\b", r"\bstreams? on\b",
+    r"\bstreaming (?:smash|hit|series|now)\b", r"\b(?:the|its|star-studded|main) cast\b", r"\bcast (?:of|members?)\b", r"\bto cast\b",
+    r"\bshowrunner\b", r"\bscreenwriter\b", r"\bnovelist\b", r"\bactress\b", r"\bfilmmaker\b", r"\bstarring\b", r"\bthriller\b",
+    r"\bdocumentary\b", r"\bsitcom\b", r"\bpodcast (?:out|series|episode|hosts?)\b", r"\b(?:launches|hosts|new) podcast\b",
+    r"\brotten tomatoes\b", r"\bbox office\b", r"\bjames bond\b", r"\bhorror (?:flick|film|movie|series)\b", r"\bin theaters\b",
+    r"\badapt(?:s|ation)?\b.*\b(?:series|novel|books?)\b", r"\bcyberpunk\b", r"\bgran turismo\b", r"\bfortnite\b",
+    r"\bnfl\b", r"\bnba\b", r"\bmlb\b", r"\bnhl\b", r"\bqb\b", r"\bpremier league\b", r"\bman utd\b", r"\bquarterback\b", r"\btouchdown\b",
+    r"\bsuper bowl\b", r"\bplayoffs?\b", r"\bbasketball\b", r"\bdepth chart\b", r"\bgame ?day\b", r"\btip-off\b", r"\bfor tailgating\b", r"\btailgate part",
+    r"\b(?:football|soccer|baseball|hockey) (?:team|club|season|game|star|coach|players?|fans?)\b", r"\bhalloween costume",
+    # 기관 지분 공시·시세 페이지·소송 모집 광고·가정형 수익률
+    r"\bshares? (?:bought|sold|acquired|purchased) by\b", r"\bshares? newly acquired by\b",
+    r"\b(?:sells?|buys?|acquires?|purchases?|trims?|grows?|boosts?|cuts?|lifts?) (?:\d[\d,]* )?shares? of\b",
+    r"\b(?:grows?|trims?|boosts?|lifts?|raises?|cuts?|lowers?) (?:its )?(?:position|stake|holdings?)\b.*\b(?:llc|inc|management|advisors?|capital|partners|group|bank|trust)\b",
+    r"\b(?:grows|trims|boosts|lifts|raises|cuts|lowers|increases|reduces|initiates|takes|builds) (?:its |a )?(?:new )?(?:position|stake|holdings)\s*$",
+    r"\$[a-z]{1,5} (?:stock|shares):", r"\bmakes? (?:a )?new \$[\d.,]+ (?:million |billion )?investment in\b", r"\bbuys? new (?:holdings|position|stake) in\b",
+    r"\bstock price, news, quote\b", r"\binteractive stock chart\b", r"\bstock historical prices\b", r"\bquote & history\b",
+    r"\b\d{4} [\d.]+ (?:call|put)\b", r"\$\d[\d,]* invested in\b", r"\bcould be worth (?:this|\$)",
+    r"\bshareholder (?:action )?(?:alert|reminder|notice)\b", r"\bclass action\b.*\b(?:reminds?|deadline|encourag|investors who)\b",
+    r"\bsecurities fraud class\b", r"\bopportunity to lead securities\b",
+    r"\bfaruqi\b", r"\brosen law\b", r"\bpomerantz\b", r"\blevi & korsinsky\b", r"\bbragar\b", r"\bgross law\b", r"\bschall law\b",
+    # 코인 홍보 글·스팸
+    r"\bpresale\b", r"\bremittix\b", r"\balphapepe\b", r"\bpepeto\b", r"\blife-changing gains\b", r"\b\d{2,4}x (?:potential|gains?|returns?|rally)\b",
+    r"\bbest crypto(?:s|currency|currencies)? (?:to buy|to watch|presale)\b", r"\bxxx\b", r"\bporn", r"\baunty\b",
+    r"preferred source on google", r"\badd us on google\b", r"\bhoroscope",
+]), re.I)
+RETAIL_TOPICS = {"aapl", "amzn", "googl", "msft", "meta"}
+RETAIL_NOISE = re.compile("|".join([
+    r"(?:record|all[- ]time|its|their|new|lowest)[- ]low(?:est)? price", r"\blowest price\b", r"\bprice drop\b", r"\bclearance(?:-level)? (?:sale|prices?|deals?)\b",
+    rf"\bbargain\b{_NOT_STOCK}", r"\bcoupon codes?\b", r"\bpromo code", r"\b(?:prime day|black friday|cyber monday) deals\b",
+    r"\b(?:top|best|weekend|early|holiday|daily|today'?s|tech|biggest|last-minute|good|great) deals?\b", r"\bdeals? (?:from|start(?:s|ing)? at) \$",
+    r"\bsave (?:up to )?(?:\d+%|\$\d[\d,.]*(?![\d,.])(?!\s*(?:bn|billion|million|mn|[bm]\b)))", r"\bamazon (?:cuts|slashes|drops) (?:the )?price",
+    r"\bto (?:a |its )?new (?:all[- ]time|record) low\b", r"\bget .{0,40}\bfor \$\d[\d,.]*(?![\d,.])(?!\s*(?:bn|billion|million|trillion))", r"\brefurbished\b",
+]), re.I)
+NAME_CLASH = {k: re.compile(v, re.I) for k, v in {
+    "amzn": r"\bamazon(?:ia|as|ian)\b|(?:brazil(?:ian|'s)?|colombian|peruvian|ecuadorian|bolivian) amazon|deforestation|rain ?forest"
+            r"|\bthe amazon\b(?! (?:app|store|web|warehouse|marketplace|prime|echo|kindle|fire|alexa))"
+            r"|\bamazon (?:basin|river|forest|jungle|region|canopy|soils?|tribes?|indigenous|fires?|wildfires?|drought|biome|parrot)",
+    "aapl": r"\bapples\b|\bapple (?:cider|pie|juice|orchard|picking|trees?|day|crisp|crumble|sauce|harvest|festival|varieties|variety|farms?|growers?|recipes?|cake)\b"
+            r"|caramel apple|big apple|\ban apple\b|\bcider\b|\borchard",
+    "tesla": r"nikola tesla|tesla coil|tesla (?:valve|tower)|nvidia tesla|tesla [kpvt]\d+\b",
+    "space": r"star trek|starship enterprise|\bstarfleet\b|\buss \w+",
+    "meta": r"meta-?analys|\bmetadata\b",
+    "googl": r"google (?:search(?:es)? (?:for|plunge|surge|spike|soar|interest|volume|data)|trends\b)|\bgoogle doodle\b|\bgulf of (?:america|mexico)\b|\btrump ocean\b|\bjokingly\b",
+    "semi_mega": r"\b(?:us|u\.s\.|israeli|military|ukrainian|russian|western|british|german|french|new|fresh|faulty|bad|key|spilling|insider|scouting|gathering) intel\b"
+                 r"|\bintel (?:officials?|agenc|report(?:s|ed)?|community|chief|sources?|assessment|failure|briefing|sharing|on|production)\b|intel-e-waste"
+                 r"|\b(?:wet|dry|neovascular) amd\b|macular|\bamd (?:trial|patients?|treatment|drug)\b|\d+\s*-?\s*microns?\b|\bmicrons\b",
+    "semi_other": r"\b(?:his|her|their|broken|right|left|bionic|robotic) arm\b|\barm (?:injur|surgery|wrestl|band)",
+    "ai_hw": r"oracle of omaha|\boracles?\b.*\b(?:chainlink|defi|blockchain|price feed|crypto)\b"
+             r"|\bcoherent (?:strategy|plan|policy|approach|argument|vision|message|framework|light|state|story|response|action|whole)\b",
+    "auto": r"\bcar bomb|\bcar (?:crash|accident) (?:kills|injures)|\bcar chase\b",
+}.items()}
+_RETAIL_NAMES = {"aapl": r"apple|iphone|ipad|mac(?:book)?|airpods|app store|apple tv", "amzn": r"amazon(?:'s)?|aws|prime video|alexa|kindle",
+                 "googl": r"google(?:'s)?(?: \w+)?|youtube|gemini|pixel|android", "msft": r"microsoft(?:'s)?(?: \w+)?|windows|xbox|azure|teams|office|copilot|bing",
+                 "meta": r"meta|facebook|instagram|whatsapp|threads"}
+_PREP = r"(?:on|at|from|via|through|behind|using|with|in|into|for|by|powered by|like|than|over|vs\.?|versus)"
+_INCID = {k: re.compile(rf"\b{_PREP} (?:the |an? |a new |your |my )?(?:{v})\b", re.I) for k, v in _RETAIL_NAMES.items()}
+_ANYNAME = {k: re.compile(rf"\b(?:{v})\b", re.I) for k, v in _RETAIL_NAMES.items()}
+_PRICE = re.compile(r"(?:\$|£|€)\d[\d,.]*(?![\d,.])(?!\s*(?:bn|billion|million|mn|trillion|[bmt]\b|per (?:share|million|hour|token)|a share|/share))k?\b", re.I)
+_PRICE_OK = re.compile(r"\bfees?\b|\bsubscription|\bprice (?:hike|increase|cut|war)|\braises? (?:the )?prices?|\bcharges?\b|\bwill charge\b|\bcharging (?:users|customers|you|for)\b|"
+                       r"\bpricing\b|\bpriced\b|\btiers?\b|\bwill cost\b|\bcosts? (?:\$|£|€)|\bstarts? at (?:\$|£|€)|\bprices by\b|\bwages?\b|\bpay\b|\bsalar|\bworkers?\b|"
+                       r"\bemployees?\b|\bhourly\b", re.I)
+_BIZ = re.compile(r"\bstocks?\b|\bshares?\b|\brevenue|\bearnings|\bprofit|\bguidance|\binvest|\bantitrust|\blawsuit|\bregulat|\bprobe\b|\bfined?\b|\bceo\b|\bexecutive|"
+                  r"\blayoffs?\b|\bjob cuts|data cent|\bchips?\b|\bbillion|\bmillion|\bacqui|\bmerger|\bpartner|\bcontracts?\b|\btariff|\bmarket (?:share|value|cap)|"
+                  r"\bvaluation|\bcapex|\bspending|\bsued?\b|\bcourt\b|\bjudge\b|\bunion\b|\bstrike\b|\bbullish|\bbearish|\banalysts?\b|\bupgrade|\bdowngrade|"
+                  r"\bprice target|\brating\b|wall street|\binvestors?\b|\bsales\b|\bdemand\b|\borders\b|\bshipments?\b|\bsupply\b|\boutage|\bban(?:s|ned)?\b|\bdeals?\b", re.I)
+
+
+def noise_reason(topic_id, headline):
+    """산업 토픽 기사가 회사 본업·주가와 무관하면 이유, 아니면 None"""
+    if NOISE_RE.search(headline):
+        return "생활·엔터·공시 잡음"
+    retail = topic_id in RETAIL_TOPICS
+    if retail and (RETAIL_NOISE.search(headline)
+                   or (_PRICE.search(headline) and not _PRICE_OK.search(headline) and not _BIZ.search(headline))):
+        return "쇼핑·할인"
+    c = NAME_CLASH.get(topic_id)
+    if c is not None and c.search(headline):
+        return "이름만 같음"
+    if retail:
+        names = _ANYNAME[topic_id].findall(headline)
+        if names and len(_INCID[topic_id].findall(headline)) >= len(names) and not _BIZ.search(headline):
+            return "회사가 주어가 아님"
+    return None
+
 for _t in TOPICS:
     _t.setdefault("section", "산업")
     _t["_kw"] = re.compile("|".join(_t["keywords"]), re.I)
@@ -1116,9 +1225,12 @@ def scan_topic(topic, start, end, finnhub_token, pool, feed_items=()):
         raw = [a for a in raw if not topic["_exclude"].search(a["headline"])]
 
     s_ts, e_ts = int(start.timestamp()), int(end.timestamp())
-    seen, arts = set(), []
+    seen, arts, noise = set(), [], 0
     for a in raw:
         if not a["headline"] or not (s_ts <= a["published"] <= e_ts):
+            continue
+        if topic["section"] == "산업" and noise_reason(topic["id"], a["headline"]):
+            noise += 1      # 회사 이름만 스친 기사 (쇼핑·사용법·엔터·지분 공시·동명이인 등)
             continue
         if a["via"] not in FEED_VIAS and not topic["_kw"].search(a["headline"] + " " + a["summary"]):
             continue
@@ -1155,7 +1267,7 @@ def scan_topic(topic, start, end, finnhub_token, pool, feed_items=()):
     stories.sort(key=lambda s: (not s["is_opinion"], vrank[s["verdict"]], s["n_sources"], s["first_seen"]),
                  reverse=True)
     return {"id": topic["id"], "section": topic["section"], "group": topic["group"], "name": topic["name"],
-            "count": len(stories), "stories": stories}
+            "count": len(stories), "stories": stories, "hidden_noise": noise}
 
 
 # ─────────────────────────────────────────────────────────────────────

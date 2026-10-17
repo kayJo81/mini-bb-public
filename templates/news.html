@@ -533,7 +533,7 @@ function render(){
     // 최신순: 첫 보도(가장 빠른 기사) 시각 기준 (검증순은 수집 단계의 기본 순서: 검증 등급 → 출처 수)
     if(st.sort==='time')list.sort((a,b)=>b.first_seen-a.first_seen);
     if(!list.length&&all)continue;
-    html+=`<div class="sec"><div class="sec-h">${esc(t.name)} <span class="g">${esc(t.group)} · ${list.length}건</span></div>`;
+    html+=`<div class="sec"><div class="sec-h">${esc(t.name)} <span class="g">${esc(t.group)} · ${list.length}건${t.hidden_noise?` <span title="회사 이름만 스친 기사(할인 판매·사용법·영화·스포츠·기관 지분 공시·이름만 같은 것)는 수집 단계에서 뺐어요">· 무관 기사 ${t.hidden_noise}건 제외</span>`:''}</span></div>`;
     html+=list.length?list.map(x=>card(x)).join(''):`<div class="empty">${t.id==='earnings'?'최근 12시간 안에 발표된 기술주 실적이 없습니다 (실적이 나오면 여기에 표시됩니다)':'조건에 맞는 뉴스가 없습니다'}</div>`;
     html+='</div>';
   }
