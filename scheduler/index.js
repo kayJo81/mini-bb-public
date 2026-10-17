@@ -8,7 +8,7 @@ const WORKFLOW = "briefing.yml";
 // (종가 PDF가 들어가서 장 마감 뒤여야 함). 두 시각 중 맞지 않는 쪽은 평소 수집으로 실행
 const REPORT_CRON = "30 20,21 * * *";   // 20:30 UTC(서머타임) / 21:30 UTC(겨울) — 맞는 쪽만 메일, 다른 쪽은 평소 수집
 // 크론의 요일 이름(MON-FRI·SUN)은 실행되지 않는 일이 있어(10/13~16 랩 미실행) 매일 실행시키고 요일은 코드에서 확인
-const LAB_CRON = "0 22 * * *";          // UTC 월~금 22:00 = KST 화~토 07:00 (미국 장 마감 뒤): 미니 블벅 랩 갱신
+const LAB_CRON = "0 22 * * *";          // UTC 일~금 22:00 = KST 월~토 07:00: 미니 블벅 랩 갱신 (화~토는 미국 장 마감 뒤, 월은 주말 뉴스·새 주 일정 반영한 아침 프리필)
 const WEEKLY_CRON = "0 11 * * *";       // UTC 일요일 11:00 = KST 일요일 20:00: 주간 전략
 
 async function dispatch(env, report, workflow = WORKFLOW, inputs = null) {
@@ -35,7 +35,7 @@ export default {
       return;
     }
     if (event.cron === LAB_CRON) {
-      if (dow >= 1 && dow <= 5) ctx.waitUntil(dispatch(env, false, "lab.yml", { days: "4" }));
+      if (dow <= 5) ctx.waitUntil(dispatch(env, false, "lab.yml", { days: "4" }));
       return;
     }
     const edt = /EDT/.test(now.toLocaleString("en-US", { timeZone: "America/New_York", timeZoneName: "short" }));
