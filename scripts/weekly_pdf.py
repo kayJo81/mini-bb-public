@@ -66,9 +66,14 @@ def macro(mon, fri):
         print(f"[weekly] treasury: {ex}")
         au = []
     for x in au:
-        d = date.fromisoformat(x["auctionDate"][:10])
+        # 입찰일 필드 이름이 바뀜(auctionDate → competitiveAuctionCloseDate, 마감 시각 따로) — 둘 다 받고, 이상한 항목은 건너뜀
+        try:
+            d = date.fromisoformat((x.get("auctionDate") or x.get("competitiveAuctionCloseDate") or "")[:10])
+            hm = datetime.strptime(x.get("competitiveAuctionCloseTime") or "01:00 PM", "%I:%M %p")
+        except (ValueError, TypeError):
+            continue
         if mon <= d <= fri:
-            t = datetime(d.year, d.month, d.day, 13, 0, tzinfo=ET)
+            t = datetime(d.year, d.month, d.day, hm.hour, hm.minute, tzinfo=ET)
             out.append({"day": d.isoformat(), "kst": t.astimezone(KST).strftime("%m/%d %H:%M"), "ts": t.timestamp(), "who": "🇺🇸 미 국채",
                         "title": f"{x['securityTerm']} {x.get('securityType', '')} 입찰", "star": bool(STRONG_BOND.search(x["securityTerm"])),
                         "kind": "국채 입찰", "fc": "", "prev": ""})
