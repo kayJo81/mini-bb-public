@@ -15,68 +15,23 @@
   "2026-10-13",
   "2026-10-14",
   "2026-10-15",
-  "2026-10-16"
+  "2026-10-16",
+  "2026-10-19"
  ],
  "seen": [],
  "pending": [
   {
-   "sym": "MBLY",
+   "sym": "CRWV",
    "dir": "롱",
    "b": "pos_dn",
    "verdict": "근거 약함",
-   "signal_date": "2026-10-16",
-   "edge": 0.75,
-   "z": 1.79,
-   "head": "Mobileye Shares Rise 4.3% as Citi Initiates Coverage With Buy Rating and $11 Price Target"
-  },
-  {
-   "sym": "TSLA",
-   "dir": "롱",
-   "b": "pos_up",
-   "verdict": "근거 약함",
-   "signal_date": "2026-10-16",
-   "edge": 0.1,
-   "z": 3.18,
-   "head": "Tesla Roadster probably won't drive an earnings beat, but the big unveil did achieve 2 things"
+   "signal_date": "2026-10-19",
+   "edge": 0.53,
+   "z": 3.73,
+   "head": "Nebius Stock Fell 12% in a Day as CoreWeave’s Debt Scare Spread. Here’s Why Its Balance Sheet Isn’t CoreWeave’s Yet"
   }
  ],
  "open": [
-  {
-   "sym": "TSM",
-   "dir": "롱",
-   "b": "pos_dn",
-   "verdict": "근거 약함",
-   "signal_date": "2026-10-12",
-   "edge": 0.75,
-   "z": 2.54,
-   "head": "SpaceX’s Terafab Probably Won’t Deliver Very High Profits, Despite Taiwan Semiconductor’s Limited Role",
-   "entry_date": "2026-10-13",
-   "entry": 439.52,
-   "bench_entry": 739.52,
-   "size": 5000.0,
-   "now": 412.61,
-   "ret": -6.32,
-   "bench_ret": -4.22,
-   "asof": "2026-10-16"
-  },
-  {
-   "sym": "IREN",
-   "dir": "롱",
-   "b": "pos_dn",
-   "verdict": "근거 약함",
-   "signal_date": "2026-10-12",
-   "edge": 0.75,
-   "z": 1.99,
-   "head": "Nvidia-Backed Neoclouds Face a Test as IREN, CoreWeave and Nebius Stocks Slide",
-   "entry_date": "2026-10-13",
-   "entry": 33.31,
-   "bench_entry": 739.52,
-   "size": 5000.0,
-   "now": 26.99,
-   "ret": -19.17,
-   "bench_ret": -4.22,
-   "asof": "2026-10-16"
-  },
   {
    "sym": "OKLO",
    "dir": "롱",
@@ -90,10 +45,10 @@
    "entry": 31.44,
    "bench_entry": 738.0,
    "size": 5000.0,
-   "now": 27.97,
-   "ret": -11.24,
-   "bench_ret": -4.02,
-   "asof": "2026-10-16"
+   "now": 27.24,
+   "ret": -13.56,
+   "bench_ret": -2.86,
+   "asof": "2026-10-19"
   },
   {
    "sym": "ASML",
@@ -108,10 +63,46 @@
    "entry": 1615.765,
    "bench_entry": 718.54,
    "size": 5000.0,
-   "now": 1641.52,
-   "ret": 1.39,
-   "bench_ret": -1.42,
-   "asof": "2026-10-16"
+   "now": 1647.12,
+   "ret": 1.74,
+   "bench_ret": -0.23,
+   "asof": "2026-10-19"
+  },
+  {
+   "sym": "MBLY",
+   "dir": "롱",
+   "b": "pos_dn",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-16",
+   "edge": 0.75,
+   "z": 1.79,
+   "head": "Mobileye Shares Rise 4.3% as Citi Initiates Coverage With Buy Rating and $11 Price Target",
+   "entry_date": "2026-10-19",
+   "entry": 7.345,
+   "bench_entry": 719.615,
+   "size": 5000.0,
+   "now": 7.19,
+   "ret": -2.31,
+   "bench_ret": -0.37,
+   "asof": "2026-10-19"
+  },
+  {
+   "sym": "TSLA",
+   "dir": "롱",
+   "b": "pos_up",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-16",
+   "edge": 0.1,
+   "z": 3.18,
+   "head": "Tesla Roadster probably won't drive an earnings beat, but the big unveil did achieve 2 things",
+   "entry_date": "2026-10-19",
+   "entry": 357.485,
+   "bench_entry": 719.615,
+   "size": 5000.0,
+   "now": 368.06,
+   "ret": 2.76,
+   "bench_ret": -0.37,
+   "asof": "2026-10-19"
   }
  ],
  "closed": [
@@ -135,9 +126,51 @@
    "exit_date": "2026-10-16",
    "exit": 824.13,
    "pnl": -1263.95
+  },
+  {
+   "sym": "TSM",
+   "dir": "롱",
+   "b": "pos_dn",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-12",
+   "edge": 0.75,
+   "z": 2.54,
+   "head": "SpaceX’s Terafab Probably Won’t Deliver Very High Profits, Despite Taiwan Semiconductor’s Limited Role",
+   "entry_date": "2026-10-13",
+   "entry": 439.52,
+   "bench_entry": 739.52,
+   "size": 5000.0,
+   "now": 412.61,
+   "ret": -4.59,
+   "bench_ret": -3.06,
+   "asof": "2026-10-16",
+   "exit_date": "2026-10-19",
+   "exit": 420.22,
+   "pnl": -229.56
+  },
+  {
+   "sym": "IREN",
+   "dir": "롱",
+   "b": "pos_dn",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-12",
+   "edge": 0.75,
+   "z": 1.99,
+   "head": "Nvidia-Backed Neoclouds Face a Test as IREN, CoreWeave and Nebius Stocks Slide",
+   "entry_date": "2026-10-13",
+   "entry": 33.31,
+   "bench_entry": 739.52,
+   "size": 5000.0,
+   "now": 26.99,
+   "ret": -16.95,
+   "bench_ret": -3.06,
+   "asof": "2026-10-16",
+   "exit_date": "2026-10-19",
+   "exit": 27.73,
+   "pnl": -847.59
   }
  ],
- "cash": 78736.04545454546,
+ "cash": 77658.90144481983,
  "curve": [
   [
    "2026-10-09",
@@ -168,6 +201,11 @@
    "2026-10-16",
    96969.11,
    99030.74
+  ],
+  [
+   "2026-10-19",
+   97090.39,
+   99226.75
   ]
  ],
  "picks_log": [
@@ -210,6 +248,13 @@
    "chosen": [
     "MBLY",
     "TSLA"
+   ],
+   "pool": 2
+  },
+  {
+   "date": "2026-10-19",
+   "chosen": [
+    "CRWV"
    ],
    "pool": 2
   }
