@@ -95,7 +95,7 @@ jobs:
         continue-on-error: true
         run: python kr_news.py --out public/briefings/kr_news.json
 
-      # FinancialJuice 공개 피드는 최근 100건만 주므로 실행마다 모아 둔다 (일일 PDF용, 최대 30시간)
+      # FinancialJuice 공개 피드는 최근 100건만 주므로 실행마다 모아 둔다 (⚡ 속보 화면·메일 PDF용, 최대 30시간)
       - uses: actions/cache@v4
         with:
           path: .cache/fj.json
@@ -187,18 +187,6 @@ jobs:
       - name: Build PDFs
         if: ${{ inputs.report }}
         run: python scripts/daily_pdf.py public/briefings/live.json --out reports
-
-      # 월스트리트견문 실시간 속보 직전 18시간 전체 (한국어 번역) — 실패해도 나머지 PDF 메일은 보냄
-      - name: Build WallstreetCN PDF
-        if: ${{ inputs.report }}
-        continue-on-error: true
-        run: python scripts/wscn_pdf.py --out reports --cache .cache/ko.json
-
-      # FinancialJuice + 뉴스 소스(WSJ·CNBC·블룸버그·로이터·연준 …) 직전 18시간 헤드라인
-      - name: Build FinancialJuice PDF
-        if: ${{ inputs.report }}
-        continue-on-error: true
-        run: python scripts/fj_pdf.py --out reports --store .cache/fj.json --cache .cache/ko.json
 
       # ⚡ 실시간 속보 (FinancialJuice·월스트리트견문·시나재경) 직전 24시간 — 터미널 속보 화면과 같은 자료(이 실행의 briefings/flash.json)
       - name: Build flash PDF
