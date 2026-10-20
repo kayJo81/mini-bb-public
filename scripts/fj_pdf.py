@@ -3,7 +3,6 @@ FinancialJuice 스타일 속보 모음 — 직전 18시간 헤드라인을 PDF�
 
   python scripts/fj_pdf.py --accumulate --store .cache/fj.json        # 15분 수집마다: FJ 공개 피드 누적
   python scripts/fj_pdf.py --out reports --store .cache/fj.json --cache .cache/ko.json   # 05:30: PDF 생성
-  python scripts/fj_pdf.py --publish public/briefings/fj.json --store .cache/fj.json --cache .cache/ko.json  # 화면용(⚡ 속보)
 
   · FinancialJuice 공개 피드는 최근 100건만 주므로 수집 때마다 모아 두고(최대 30시간), PDF 때 합친다
   · FinancialJuice 가 모아 보여주는 '뉴스 소스'(WSJ·CNBC·연준·블룸버그·로이터 …)는 각 언론사 RSS 에서 직접 가져온다
@@ -215,25 +214,6 @@ def page(items, cut, cache, original=False, title="FinancialJuice + 뉴스 소�
             f'{"".join(rows)}</body></html>')
 
 
-def publish(path, store, cache_path):
-    """터미널 '⚡ 속보' 화면용: 누적한 FinancialJuice 헤드라인(최대 30시간) + 한국어 번역 → JSON"""
-    try:
-        fj = json.load(open(store, encoding="utf-8"))
-    except Exception:
-        fj = []
-    try:
-        cache = json.load(open(cache_path, encoding="utf-8"))
-    except Exception:
-        cache = {}
-    translate([x["headline"] for x in fj], cache)
-    os.makedirs(os.path.dirname(cache_path) or ".", exist_ok=True)
-    json.dump(cache, open(cache_path, "w", encoding="utf-8"), ensure_ascii=False)
-    items = [{"ts": x["ts"], "h": x["headline"], "ko": cache.get(x["headline"]), "u": x.get("url") or ""} for x in fj]
-    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    json.dump({"at": int(time.time()), "items": items}, open(path, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-    print(f"[fj] 화면용 {len(items)}건 (번역 {sum(1 for x in items if x['ko'])}) → {path}")
-
-
 def build(out, store, cache_path):
     cut = time.time() - HOURS * 3600
     try:
@@ -274,11 +254,8 @@ if __name__ == "__main__":
     ap.add_argument("--dump", default="", help="뉴스 수집이 남긴 FinancialJuice 목록 (있으면 다시 요청하지 않음)")
     ap.add_argument("--out", default="reports")
     ap.add_argument("--cache", default=".cache/ko.json")
-    ap.add_argument("--publish", default="", help="화면용 JSON 경로 (예: public/briefings/fj.json)")
     a = ap.parse_args()
     if a.accumulate:
         accumulate(a.store, a.dump)
-    elif a.publish:
-        publish(a.publish, a.store, a.cache)
     else:
         build(a.out, a.store, a.cache)

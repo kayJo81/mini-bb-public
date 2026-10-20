@@ -117,6 +117,12 @@ body.fj .filters,body.fj .main,body.fj .sections{display:none}
 .fj-t{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;color:#374151;padding-top:2px}
 .card.fj-i .hl{font-size:15px;line-height:1.45;font-weight:600;color:var(--ink,#111827);text-decoration:none;overflow-wrap:anywhere}
 .card.fj-i .orig{font-size:12px;color:var(--sub);margin-top:2px;overflow-wrap:anywhere}
+.fl-c{flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap}
+.fl-c button{border:1px solid var(--bd);background:#fff;border-radius:999px;padding:4px 11px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;color:#374151}
+.fl-c button.on{background:#111827;color:#fff;border-color:#111827}.fl-c button i{font-style:normal;font-weight:500;opacity:.7;margin-left:4px;font-size:12px}
+.fl-s{display:inline-block;font-size:10.5px;font-weight:700;color:#fff;background:var(--c);border-radius:4px;padding:1px 5px;margin-right:5px;vertical-align:2px}
+.fl-tag{display:inline-block;font-size:10.5px;font-weight:600;color:#6b7280;background:#f3f4f6;border-radius:4px;padding:1px 5px;margin-right:5px;vertical-align:2px}
+.card.fj-i.imp .hl{color:#b91c1c}
 .card.fj-i.new .fj-t{color:#dc2626}.card.fj-i.new .fj-t::after{content:' ●';font-size:9px}
 @media (max-width:480px){.btn,#koBtn{padding:7px 10px}.btn .lg{display:none}}
 /* 📑 리포트 */
@@ -290,7 +296,7 @@ body{font-size:15px}
   <span id="visits"></span>
   <span id="gen"></span>
   <button type="button" id="koBtn" title="헤드라인 한국어 번역 켜기/끄기">가 한국어</button>
-  <button type="button" class="btn" id="fjBtn" title="FinancialJuice 실시간 속보 (30초마다 갱신)">⚡ 속보</button>
+  <button type="button" class="btn" id="fjBtn" title="실시간 속보: FinancialJuice·월스트리트견문·시나재경 (30초마다 갱신)">⚡ 속보</button>
   <a class="btn" href="https://mini-bbterminal-kr.pages.dev" target="_blank" rel="noopener" title="한국 증시용 미니 블벅터 (장중 테마)">🇰🇷 한국 증시</a>
   <a class="btn" id="labLink" href="https://mini-bblab.pages.dev" target="_blank" rel="noopener" title="뉴스 기반 롱/숏 후보 탐색">🧪 랩</a>
   <button class="btn" id="rbtn" title="새로고침">&#x21bb;<span class="lg"> 새로고침</span></button>
@@ -305,7 +311,7 @@ body{font-size:15px}
   </div>
   <div id="themesView" hidden><iframe id="themesFrame" title="장중 테마" loading="lazy"></iframe></div>
   <div id="repView" hidden></div>
-  <div id="fjView" hidden><div class="fj-h"><div><b>⚡ FinancialJuice 속보</b> <span id="fjSub">불러오는 중…</span></div><input id="fjQ" type="search" placeholder="속보 검색 (영문·한글)"><button type="button" class="btn" id="fjClose">✕ 닫기</button></div><div class="fj-l" id="fjList"></div></div>
+  <div id="fjView" hidden><div class="fj-h"><div><b>⚡ 실시간 속보</b> <span id="fjSub">불러오는 중…</span></div><input id="fjQ" type="search" placeholder="속보 검색 (한글·영문·중문)"><button type="button" class="btn" id="fjClose">✕ 닫기</button><div class="fl-c" id="flChips"></div></div><div class="fj-l" id="fjList"></div></div>
   <div class="mv" id="moves" hidden></div>
   <div class="mv" id="midterms" hidden></div>
   <div class="filters">
@@ -507,7 +513,7 @@ function render(){
     `<button type="button" class="stab2 ${st.section==='리포트'?'on':''}" style="--sc:#0f766e" data-sec="리포트" aria-pressed="${st.section==='리포트'}"><span class="t">📑 리포트</span><span class="d">IB 매크로·전략 / 산업별 투자의견·목표가</span><span class="n">${REP?`${(REP.macro||[]).length+(REP.calls||[]).length+(REP.ratings||[]).length}건`:'15분마다 갱신'}</span></button>`;
   const fjOn=st.section==='속보';document.body.classList.toggle('fj',fjOn);document.getElementById('fjView').hidden=!fjOn;
   document.getElementById('fjBtn').classList.toggle('on',fjOn);
-  if(fjOn){document.body.classList.remove('theme','rep');document.getElementById('themesView').hidden=true;document.getElementById('repView').hidden=true;renderFJ();return;}
+  if(fjOn){document.body.classList.remove('theme','rep');document.getElementById('themesView').hidden=true;document.getElementById('repView').hidden=true;renderFlash();return;}
   const thOn=st.section==='테마',tv=document.getElementById('themesView');
   document.body.classList.toggle('theme',thOn);tv.hidden=!thOn;
   if(thOn){const f=document.getElementById('themesFrame');if(!f.src)f.src='themes?embed=1';return;}
@@ -616,7 +622,7 @@ function card(s,cat){
 }
 
 document.getElementById('rbtn').onclick=load;
-document.getElementById('koBtn').onclick=()=>{st.ko=!st.ko;save();document.getElementById('koBtn').classList.toggle('on',st.ko);watchCards();renderMoves();if(st.section==='속보')renderFJ();};
+document.getElementById('koBtn').onclick=()=>{st.ko=!st.ko;save();document.getElementById('koBtn').classList.toggle('on',st.ko);watchCards();renderMoves();if(st.section==='속보')renderFlash();};
 document.querySelector('.filters').onclick=e=>{
   const c=e.target.closest('.chip');if(!c)return;
   if(c.id==='hideOp'){st.hideOp=!st.hideOp;c.classList.toggle('on',st.hideOp);save();}
@@ -725,63 +731,83 @@ function renderReports(){
 }
 document.getElementById('repView').addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b)return;const k=b.dataset.r;
   if(k==='ALL')rsel.clear();else rsel.has(k)?rsel.delete(k):rsel.add(k);renderReports();});
-// ── ⚡ 속보: FinancialJuice 헤드라인 — 15분 수집본(briefings/fj.json, 30시간·번역 포함) + 실시간(브라우저가 직접, 30초) ──
-let FJ=[],fjAt=0,fjLast=0,fjSeen=0,fjMark=0;
-try{fjSeen=+(localStorage.getItem('mbb_fj_seen')||0);}catch(e){}
-// 실시간: FinancialJuice 공개 RSS 는 다른 사이트에서 읽는 걸 허용(CORS) → 보는 사람 브라우저가 직접 받음 (안 되면 api/fj)
+// ── ⚡ 속보: FinancialJuice·월스트리트견문·시나재경 — 15분 수집본(briefings/flash.json, 한국어 번역 포함) + 실시간(30초) ──
+const FSRC={fj:['FinancialJuice','FJ','#1d4ed8'],wscn:['월스트리트견문','월가견문','#b91c1c'],sina:['시나재경','시나','#c2410c']};
+let FL=[],flLast=0,fjSeen=0,fjMark=0,flSrc='ALL',flBuild=null,flBuildAt=0;
+try{fjSeen=+(localStorage.getItem('mbb_fj_seen')||0);flSrc=localStorage.getItem('mbb_flash_src')||'ALL';}catch(e){}
+const getJ=u=>fetch(u,{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
+const oneLine=t=>String(t||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+// FinancialJuice·월스트리트견문은 다른 사이트에서 읽기를 허용(CORS) → 보는 사람 브라우저가 직접 받음, 시나재경은 api/sina 경유
 async function fjLive(){
   try{
     const r=await fetch('https://www.financialjuice.com/feed.ashx?xy=1',{cache:'no-store'});
     const x=new DOMParser().parseFromString(await r.text(),'text/xml');
     const items=[...x.querySelectorAll('item')].map(i=>({ts:Math.floor(Date.parse(i.querySelector('pubDate')?.textContent||'')/1000),
-      h:(i.querySelector('title')?.textContent||'').replace(/^FinancialJuice:\s*/,'').trim(),u:(i.querySelector('link')?.textContent||'').trim()})).filter(i=>i.h&&i.ts>0);
-    if(items.length)return {at:Math.floor(Date.now()/1000),items};
+      h:(i.querySelector('title')?.textContent||'').replace(/^FinancialJuice:\s*/,'').trim(),u:(i.querySelector('link')?.textContent||'').trim(),s:'fj'})).filter(i=>i.h&&i.ts>0);
+    if(items.length)return items;
   }catch(e){}
-  return STATIC?fetch('api/fj',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null):null;
+  const d=STATIC?await getJ('api/fj'):null;
+  return ((d||{}).items||[]).map(x=>({...x,s:'fj'}));
 }
-let fjBuild=null,fjBuildAt=0;
-async function loadFJ(){
-  fjLast=Date.now();
-  // 15분 수집본(번역 포함)은 5분마다만 다시 받고, 실시간 피드는 매번
-  if(!fjBuild||Date.now()-fjBuildAt>5*60e3){const a=await fetch('briefings/fj.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);if(a){fjBuild=a;fjBuildAt=Date.now();}}
-  const a=fjBuild,b=await fjLive();
-  if(!a&&!b)return;
+async function wscnLive(){
+  const d=await getJ('https://api-one.wallstcn.com/apiv1/content/lives?channel=global-channel&limit=50');
+  return (((d||{}).data||{}).items||[]).map(it=>({ts:+it.display_time||0,h:oneLine(it.title||it.content_text).slice(0,160),
+    u:it.uri||'https://wallstreetcn.com/live',s:'wscn',imp:(+it.score||1)>=2})).filter(x=>x.ts&&x.h);
+}
+async function sinaLive(){const d=STATIC?await getJ('api/sina'):null;return (d||{}).items||[];}
+async function loadFlash(){
+  flLast=Date.now();
+  // 수집본(번역 포함)은 5분마다만 다시 받고, 실시간 피드는 매번
+  if(!flBuild||Date.now()-flBuildAt>5*60e3){const a=await getJ('briefings/flash.json');if(a){flBuild=a;flBuildAt=Date.now();}}
+  const live=await Promise.all([fjLive(),wscnLive(),sinaLive()]);
   const m=new Map();
-  for(const x of [...((a||{}).items||[]),...((b||{}).items||[])]){const o=m.get(x.h);m.set(x.h,{h:x.h,u:x.u||(o&&o.u)||'',ts:o?Math.min(o.ts,x.ts):x.ts});
-    if(x.ko&&!tr.get(x.h))tr.set(x.h,x.ko);}
-  FJ=[...m.values()].sort((p,q)=>q.ts-p.ts);fjAt=Math.max((a||{}).at||0,(b||{}).at||0);
-  if(st.section==='속보')renderFJ();else fjBadge();
+  for(const x of [...((flBuild||{}).items||[]),...live.flat()]){
+    const k=x.s+'|'+x.h,o=m.get(k);
+    m.set(k,{h:x.h,s:x.s,u:x.u||(o&&o.u)||'',ts:o?Math.min(o.ts,x.ts):x.ts,imp:!!(x.imp||(o&&o.imp)),tag:x.tag||(o&&o.tag)||''});
+    if(x.ko&&!tr.get(x.h))tr.set(x.h,x.ko);
+  }
+  if(!m.size)return;
+  FL=[...m.values()].sort((p,q)=>q.ts-p.ts);
+  if(st.section==='속보')renderFlash();else fjBadge();
 }
+const flPass=x=>flSrc==='ALL'||(flSrc==='imp'?x.imp:x.s===flSrc);
 function fjBadge(){
-  const n=FJ.filter(x=>x.ts>fjSeen).length,b=document.getElementById('fjBtn');
+  const n=FL.filter(x=>x.ts>fjSeen&&flPass(x)).length,b=document.getElementById('fjBtn');
   b.innerHTML='⚡ 속보'+(st.section!=='속보'&&fjSeen&&n?`<span class="nb">${n>99?'99+':n}</span>`:'');
 }
-function renderFJ(){
-  if(!fjMark)fjMark=fjSeen||((FJ[0]||{}).ts||0);           // 이번에 처음 본 뒤로 새로 들어온 것에 ● 표시
+function renderFlash(){
+  if(!fjMark)fjMark=fjSeen||((FL[0]||{}).ts||0);           // 이번에 처음 본 뒤로 새로 들어온 것에 ● 표시
+  const cnt=k=>FL.filter(x=>k==='ALL'||(k==='imp'?x.imp:x.s===k)).length;
+  document.getElementById('flChips').innerHTML=[['ALL','전체'],['fj',FSRC.fj[0]],['wscn',FSRC.wscn[0]],['sina',FSRC.sina[0]],['imp','★ 중요']]
+    .map(([k,n])=>`<button type="button" data-f="${k}" class="${flSrc===k?'on':''}">${n}<i>${cnt(k)}</i></button>`).join('');
   const q=document.getElementById('fjQ').value.trim().toLowerCase();
-  const list=q?FJ.filter(x=>x.h.toLowerCase().includes(q)||(tr.get(x.h)||'').toLowerCase().includes(q)):FJ;
-  document.getElementById('fjSub').textContent=FJ.length?`최근 30시간 ${FJ.length}건${q?` · 검색 ${list.length}건`:''} · 30초마다 갱신 · ${fmt(new Date((FJ[0].ts)*1000)).slice(6)} 최신`:'아직 받은 속보가 없습니다';
+  const list=FL.filter(x=>flPass(x)&&(!q||x.h.toLowerCase().includes(q)||(tr.get(x.h)||'').toLowerCase().includes(q)));
+  document.getElementById('fjSub').textContent=FL.length?`${q?`검색 ${list.length}건 · `:''}30초마다 갱신 · ${fmt(new Date(FL[0].ts*1000)).slice(6)} 최신`:'아직 받은 속보가 없습니다';
   let h='',day='';
-  for(const x of list.slice(0,500)){
-    const d=fmt(new Date(x.ts*1000));
+  for(const x of list.slice(0,400)){
+    const d=fmt(new Date(x.ts*1000)),src=FSRC[x.s]||[x.s,x.s,'#6b7280'];
     if(d.slice(0,5)!==day){day=d.slice(0,5);h+=`<div class="fj-d">${day.replace('-','/')}</div>`;}
-    h+=`<div class="card fj-i${x.ts>fjMark?' new':''}" data-h="${esc(x.h)}"><span class="fj-t">${d.slice(6)}</span><div><a class="hl" href="${safeUrl(x.u)}" target="_blank" rel="noopener">${esc(x.h)}</a><div class="orig"></div></div></div>`;
+    h+=`<div class="card fj-i${x.ts>fjMark?' new':''}${x.imp?' imp':''}" data-h="${esc(x.h)}"><span class="fj-t">${d.slice(6)}</span><div>`+
+      `${flSrc==='ALL'||flSrc==='imp'?`<span class="fl-s" style="--c:${src[2]}">${esc(src[1])}</span>`:''}${x.tag?`<span class="fl-tag">${esc(x.tag)}</span>`:''}`+
+      `<a class="hl" href="${safeUrl(x.u)}" target="_blank" rel="noopener">${esc(x.h)}</a><div class="orig"></div></div></div>`;
   }
   document.getElementById('fjList').innerHTML=h||'<div class="empty">조건에 맞는 속보가 없습니다</div>';
   document.querySelectorAll('#fjView .card').forEach(c=>{applyKo(c);if(st.ko&&!tr.has(c.dataset.h)){if(io)io.observe(c);else pending.add(c.dataset.h);}});
   schedule();
-  if(FJ.length){fjSeen=FJ[0].ts;try{localStorage.setItem('mbb_fj_seen',fjSeen);}catch(e){}}
+  if(FL.length){fjSeen=FL[0].ts;try{localStorage.setItem('mbb_fj_seen',fjSeen);}catch(e){}}
   fjBadge();
 }
-document.getElementById('fjQ').addEventListener('input',renderFJ);
+document.getElementById('fjQ').addEventListener('input',renderFlash);
+document.getElementById('flChips').addEventListener('click',e=>{const b=e.target.closest('button[data-f]');if(!b)return;
+  flSrc=b.dataset.f;try{localStorage.setItem('mbb_flash_src',flSrc);}catch(e){}renderFlash();});
 document.getElementById('fjClose').onclick=()=>document.getElementById('fjBtn').click();
 document.getElementById('fjBtn').onclick=()=>{
   if(st.section==='속보')st.section=st.back||'산업';else{st.back=st.section;st.section='속보';fjMark=0;}
-  st.sel.clear();save();if(data)render();else if(st.section==='속보')renderFJ();
-  window.scrollTo({top:0});if(st.section==='속보'&&Date.now()-fjLast>20e3)loadFJ();
+  st.sel.clear();save();if(data)render();else if(st.section==='속보')renderFlash();
+  window.scrollTo({top:0});if(st.section==='속보'&&Date.now()-flLast>20e3)loadFlash();
 };
 if(st.section==='속보'){document.body.classList.add('fj');document.getElementById('fjView').hidden=false;document.getElementById('fjBtn').classList.add('on');}
-loadFJ();setInterval(()=>{if(st.section==='속보'||Date.now()-fjLast>5*60e3)loadFJ();},30e3);
+loadFlash();setInterval(()=>{if(st.section==='속보'||Date.now()-flLast>5*60e3)loadFlash();},30e3);
 
 function loadReports(){fetch('briefings/reports.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{REP=d;if(data)render();}).catch(()=>{});}
 loadReports();setInterval(loadReports,5*60e3);
