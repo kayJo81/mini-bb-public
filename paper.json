@@ -16,40 +16,23 @@
   "2026-10-14",
   "2026-10-15",
   "2026-10-16",
-  "2026-10-19"
+  "2026-10-19",
+  "2026-10-20"
  ],
  "seen": [],
  "pending": [
   {
-   "sym": "CRWV",
+   "sym": "GM",
    "dir": "롱",
    "b": "pos_dn",
    "verdict": "근거 약함",
-   "signal_date": "2026-10-19",
+   "signal_date": "2026-10-20",
    "edge": 0.53,
-   "z": 3.73,
-   "head": "Nebius Stock Fell 12% in a Day as CoreWeave’s Debt Scare Spread. Here’s Why Its Balance Sheet Isn’t CoreWeave’s Yet"
+   "z": 10.66,
+   "head": "Elice Plunges in Trading Debut; General Motors Falls on Forecast | Stock Movers"
   }
  ],
  "open": [
-  {
-   "sym": "OKLO",
-   "dir": "롱",
-   "b": "pos_dn",
-   "verdict": "근거 약함",
-   "signal_date": "2026-10-13",
-   "edge": 0.75,
-   "z": 1.73,
-   "head": "OKLO Builds on Groves Progress to Expand Isotope Business",
-   "entry_date": "2026-10-14",
-   "entry": 31.44,
-   "bench_entry": 738.0,
-   "size": 5000.0,
-   "now": 27.24,
-   "ret": -13.56,
-   "bench_ret": -2.86,
-   "asof": "2026-10-19"
-  },
   {
    "sym": "ASML",
    "dir": "롱",
@@ -63,10 +46,10 @@
    "entry": 1615.765,
    "bench_entry": 718.54,
    "size": 5000.0,
-   "now": 1647.12,
-   "ret": 1.74,
-   "bench_ret": -0.23,
-   "asof": "2026-10-19"
+   "now": 1630.84,
+   "ret": 0.73,
+   "bench_ret": -0.33,
+   "asof": "2026-10-20"
   },
   {
    "sym": "MBLY",
@@ -81,10 +64,10 @@
    "entry": 7.345,
    "bench_entry": 719.615,
    "size": 5000.0,
-   "now": 7.19,
-   "ret": -2.31,
-   "bench_ret": -0.37,
-   "asof": "2026-10-19"
+   "now": 7.3,
+   "ret": -0.81,
+   "bench_ret": -0.48,
+   "asof": "2026-10-20"
   },
   {
    "sym": "TSLA",
@@ -99,10 +82,28 @@
    "entry": 357.485,
    "bench_entry": 719.615,
    "size": 5000.0,
-   "now": 368.06,
-   "ret": 2.76,
-   "bench_ret": -0.37,
-   "asof": "2026-10-19"
+   "now": 373.71,
+   "ret": 4.34,
+   "bench_ret": -0.48,
+   "asof": "2026-10-20"
+  },
+  {
+   "sym": "CRWV",
+   "dir": "롱",
+   "b": "pos_dn",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-19",
+   "edge": 0.53,
+   "z": 3.73,
+   "head": "Nebius Stock Fell 12% in a Day as CoreWeave’s Debt Scare Spread. Here’s Why Its Balance Sheet Isn’t CoreWeave’s Yet",
+   "entry_date": "2026-10-20",
+   "entry": 59.21,
+   "bench_entry": 715.25,
+   "size": 5000.0,
+   "now": 62.13,
+   "ret": 4.73,
+   "bench_ret": 0.13,
+   "asof": "2026-10-20"
   }
  ],
  "closed": [
@@ -168,9 +169,30 @@
    "exit_date": "2026-10-19",
    "exit": 27.73,
    "pnl": -847.59
+  },
+  {
+   "sym": "OKLO",
+   "dir": "롱",
+   "b": "pos_dn",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-13",
+   "edge": 0.75,
+   "z": 1.73,
+   "head": "OKLO Builds on Groves Progress to Expand Isotope Business",
+   "entry_date": "2026-10-14",
+   "entry": 31.44,
+   "bench_entry": 738.0,
+   "size": 5000.0,
+   "now": 27.24,
+   "ret": -12.8,
+   "bench_ret": -2.96,
+   "asof": "2026-10-19",
+   "exit_date": "2026-10-20",
+   "exit": 27.48,
+   "pnl": -639.77
   }
  ],
- "cash": 77658.90144481983,
+ "cash": 77019.13045245342,
  "curve": [
   [
    "2026-10-09",
@@ -206,6 +228,11 @@
    "2026-10-19",
    97090.39,
    99226.75
+  ],
+  [
+   "2026-10-20",
+   97468.66,
+   99213.22
   ]
  ],
  "picks_log": [
@@ -257,6 +284,13 @@
     "CRWV"
    ],
    "pool": 2
+  },
+  {
+   "date": "2026-10-20",
+   "chosen": [
+    "GM"
+   ],
+   "pool": 1
   }
  ],
  "status": "진행 중"
