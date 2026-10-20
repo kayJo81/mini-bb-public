@@ -36,8 +36,12 @@ def _fix(s):
 
 def translate_batch(lines):
     """줄 단위 일괄 번역. 줄 수가 어긋나면 None."""
-    r = requests.post(URL, params={"client": "gtx", "sl": "auto", "tl": "ko", "dt": "t"},
-                      data={"q": "\n".join(lines)}, headers=HDR, timeout=20)
+    for wait in (4, 12, 0):                              # 429(요청 과다)는 잠깐 쉬었다 두 번 더
+        r = requests.post(URL, params={"client": "gtx", "sl": "auto", "tl": "ko", "dt": "t"},
+                          data={"q": "\n".join(lines)}, headers=HDR, timeout=20)
+        if r.status_code != 429 or not wait:
+            break
+        time.sleep(wait)
     if r.status_code != 200:
         raise RuntimeError(f"HTTP {r.status_code}")
     out = "".join(seg[0] for seg in r.json()[0] if seg and seg[0])

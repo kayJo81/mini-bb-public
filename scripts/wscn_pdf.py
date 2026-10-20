@@ -26,6 +26,9 @@ from translate_ko import CJK, MAX_CHARS, translate_batch  # noqa: E402
 URL = "https://api-one.wallstcn.com/apiv1/content/lives?channel=global-channel&limit=100"
 HDR = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
 HOURS = 18
+# 구글 번역 실패 시 대체: 터미널 번역 API (Workers AI 무료 한도 때문에 한 번에 최대 200문장)
+FALLBACK_URL = os.environ.get("TRANSLATE_FALLBACK", "https://mini-bbterminal.pages.dev/api/translate")
+FALLBACK_MAX = 200
 
 CSS = """
 body{font-family:'Noto Sans CJK KR','Noto Sans KR',sans-serif;color:#111827;font-size:9.5pt;margin:0}
@@ -95,7 +98,30 @@ def translate(texts, cache):
     else:
         if batch:
             flush(batch)
+    left = [t for t in todo if t not in cache]
+    if left:
+        ok += fallback(left, cache)
     print(f"[wscn] 속보 {len(texts)}건, 새로 번역 {ok}/{len(todo)}")
+
+
+def fallback(texts, cache, limit=FALLBACK_MAX):
+    """구글 번역이 막히면(429 등) 터미널의 /api/translate(Workers AI)로 앞쪽(보통 최신) 일부만 대신 번역"""
+    ok = 0
+    for i in range(0, min(len(texts), limit), 25):
+        b = texts[i:i + 25]
+        try:
+            ko = requests.post(FALLBACK_URL, json={"texts": b}, headers=HDR, timeout=60).json().get("ko") or []
+        except Exception as ex:
+            print(f"[wscn] 대체 번역 중단: {ex}")
+            break
+        if not any(ko):
+            break
+        for src, k in zip(b, ko):
+            if k and len(CJK.findall(k)) <= len(k) * 0.15:
+                cache[src] = k
+                ok += 1
+    print(f"[wscn] 대체 번역(Workers AI) {ok}/{len(texts)}")
+    return ok
 
 
 def page(items, cut, cache, original=False):
