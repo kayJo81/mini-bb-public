@@ -290,7 +290,7 @@ body{font-size:15px}
   <span id="visits"></span>
   <span id="gen"></span>
   <button type="button" id="koBtn" title="헤드라인 한국어 번역 켜기/끄기">가 한국어</button>
-  <button type="button" class="btn" id="fjBtn" title="FinancialJuice 실시간 속보 (1분마다 갱신)">⚡ 속보</button>
+  <button type="button" class="btn" id="fjBtn" title="FinancialJuice 실시간 속보 (30초마다 갱신)">⚡ 속보</button>
   <a class="btn" href="https://mini-bbterminal-kr.pages.dev" target="_blank" rel="noopener" title="한국 증시용 미니 블벅터 (장중 테마)">🇰🇷 한국 증시</a>
   <a class="btn" id="labLink" href="https://mini-bblab.pages.dev" target="_blank" rel="noopener" title="뉴스 기반 롱/숏 후보 탐색">🧪 랩</a>
   <button class="btn" id="rbtn" title="새로고침">&#x21bb;<span class="lg"> 새로고침</span></button>
@@ -725,13 +725,26 @@ function renderReports(){
 }
 document.getElementById('repView').addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b)return;const k=b.dataset.r;
   if(k==='ALL')rsel.clear();else rsel.has(k)?rsel.delete(k):rsel.add(k);renderReports();});
-// ── ⚡ 속보: FinancialJuice 헤드라인 — 15분 수집본(briefings/fj.json, 30시간·번역 포함) + 실시간(api/fj, 1분) ──
+// ── ⚡ 속보: FinancialJuice 헤드라인 — 15분 수집본(briefings/fj.json, 30시간·번역 포함) + 실시간(브라우저가 직접, 30초) ──
 let FJ=[],fjAt=0,fjLast=0,fjSeen=0,fjMark=0;
 try{fjSeen=+(localStorage.getItem('mbb_fj_seen')||0);}catch(e){}
+// 실시간: FinancialJuice 공개 RSS 는 다른 사이트에서 읽는 걸 허용(CORS) → 보는 사람 브라우저가 직접 받음 (안 되면 api/fj)
+async function fjLive(){
+  try{
+    const r=await fetch('https://www.financialjuice.com/feed.ashx?xy=1',{cache:'no-store'});
+    const x=new DOMParser().parseFromString(await r.text(),'text/xml');
+    const items=[...x.querySelectorAll('item')].map(i=>({ts:Math.floor(Date.parse(i.querySelector('pubDate')?.textContent||'')/1000),
+      h:(i.querySelector('title')?.textContent||'').replace(/^FinancialJuice:\s*/,'').trim(),u:(i.querySelector('link')?.textContent||'').trim()})).filter(i=>i.h&&i.ts>0);
+    if(items.length)return {at:Math.floor(Date.now()/1000),items};
+  }catch(e){}
+  return STATIC?fetch('api/fj',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null):null;
+}
+let fjBuild=null,fjBuildAt=0;
 async function loadFJ(){
   fjLast=Date.now();
-  const get=u=>fetch(u,{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
-  const [a,b]=await Promise.all([get('briefings/fj.json'),STATIC?get('api/fj'):null]);
+  // 15분 수집본(번역 포함)은 5분마다만 다시 받고, 실시간 피드는 매번
+  if(!fjBuild||Date.now()-fjBuildAt>5*60e3){const a=await fetch('briefings/fj.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);if(a){fjBuild=a;fjBuildAt=Date.now();}}
+  const a=fjBuild,b=await fjLive();
   if(!a&&!b)return;
   const m=new Map();
   for(const x of [...((a||{}).items||[]),...((b||{}).items||[])]){const o=m.get(x.h);m.set(x.h,{h:x.h,u:x.u||(o&&o.u)||'',ts:o?Math.min(o.ts,x.ts):x.ts});
@@ -747,7 +760,7 @@ function renderFJ(){
   if(!fjMark)fjMark=fjSeen||((FJ[0]||{}).ts||0);           // 이번에 처음 본 뒤로 새로 들어온 것에 ● 표시
   const q=document.getElementById('fjQ').value.trim().toLowerCase();
   const list=q?FJ.filter(x=>x.h.toLowerCase().includes(q)||(tr.get(x.h)||'').toLowerCase().includes(q)):FJ;
-  document.getElementById('fjSub').textContent=FJ.length?`최근 30시간 ${FJ.length}건${q?` · 검색 ${list.length}건`:''} · 1분마다 갱신 · ${fmt(new Date((FJ[0].ts)*1000)).slice(6)} 최신`:'아직 받은 속보가 없습니다';
+  document.getElementById('fjSub').textContent=FJ.length?`최근 30시간 ${FJ.length}건${q?` · 검색 ${list.length}건`:''} · 30초마다 갱신 · ${fmt(new Date((FJ[0].ts)*1000)).slice(6)} 최신`:'아직 받은 속보가 없습니다';
   let h='',day='';
   for(const x of list.slice(0,500)){
     const d=fmt(new Date(x.ts*1000));
@@ -768,7 +781,7 @@ document.getElementById('fjBtn').onclick=()=>{
   window.scrollTo({top:0});if(st.section==='속보'&&Date.now()-fjLast>20e3)loadFJ();
 };
 if(st.section==='속보'){document.body.classList.add('fj');document.getElementById('fjView').hidden=false;document.getElementById('fjBtn').classList.add('on');}
-loadFJ();setInterval(()=>{if(st.section==='속보'||Date.now()-fjLast>5*60e3)loadFJ();},60e3);
+loadFJ();setInterval(()=>{if(st.section==='속보'||Date.now()-fjLast>5*60e3)loadFJ();},30e3);
 
 function loadReports(){fetch('briefings/reports.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{REP=d;if(data)render();}).catch(()=>{});}
 loadReports();setInterval(loadReports,5*60e3);
