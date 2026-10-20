@@ -52,7 +52,7 @@ th{color:var(--sub);font-weight:600;font-size:12px}td.r,th.r{text-align:right;fo
 <div class="wrap">
 <header><div><h1>미니 블벅 <b>랩</b> · 심층 뉴스</h1><div class="hsub">요청하신 주제를 깊게 정리한 기사 모음</div></div><a class="link" id="back" href="./">← 랩 메인</a></header>
 <div id="app"><div class="card note">불러오는 중…</div></div>
-<p class="hsub">투자 권유 아님 · 각 기사 끝에 출처 · <span class="badge ok">복수 확인</span> 여러 매체가 같은 내용 보도 · <span class="badge one">단일 출처</span> 한 곳만 보도 · <span class="badge est">추정</span> 계산·해석</p>
+<p class="hsub">투자 권유 아님 · 각 기사 끝에 출처 · <span class="badge ok">복수 확인</span> 여러 매체가 같은 내용 보도 · <span class="badge one">단일 출처</span> 한 곳만 보도 · <span class="badge est">추정</span> 계산·해석<span id="visits"></span></p>
 </div>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -76,6 +76,16 @@ get('index.json').then(r=>r.json()).then(L=>{
       <h1>${esc(a.title)}</h1><p class="lede">${esc(a.sub)}</p>
       <div class="req"><div class="k">📝 요청 내용</div>${esc(a.request)}</div>${(a.tilts||[]).length?`<div class="req" style="border-left-color:#16a34a"><div class="k" style="color:#16a34a">🧭 포트폴리오 반영 (<a href="sim">가상 운용</a>)</div>${a.tilts.map(t=>`<div>${t.dir>0?'비중↑':'비중↓·숏'} <b>${t.syms.map(esc).join(', ')}</b> · ~${esc(t.until||'')} — ${esc(t.why||'')}</div>`).join('')}</div>`:''}${h}</article>`;});
 }).catch(e=>{document.getElementById('app').innerHTML=`<div class="card note">불러오지 못했어요 (${esc(e.message)})</div>`;});
+// 방문자 수: 미국 증시 터미널과 같은 집계(api/visit)에 합산 — 브라우저당 하루 1번 (실시간 기사 2분 새로고침은 안 셈)
+(async()=>{
+  const today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+  let seen=null;try{seen=localStorage.getItem('mbb_visit');}catch(e){}
+  try{
+    const v=await (await fetch('https://mini-bbterminal.pages.dev/api/visit',{method:seen===today?'GET':'POST',cache:'no-store'})).json();
+    if(seen!==today){try{localStorage.setItem('mbb_visit',today);}catch(e){}}
+    if(v.today!=null)document.getElementById('visits').textContent=` · 방문 오늘 ${v.today.toLocaleString()} · 누적 ${v.total.toLocaleString()}`;
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
