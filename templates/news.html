@@ -124,8 +124,9 @@ body.fj .filters,body.fj .main,body.fj .sections{display:none}
 .fl-tag{display:inline-block;font-size:10.5px;font-weight:600;color:#6b7280;background:#f3f4f6;border-radius:4px;padding:1px 5px;margin-right:5px;vertical-align:2px}
 .card.fj-i.imp .hl{color:#b91c1c}
 .card.fj-i.new .fj-t{color:#dc2626}.card.fj-i.new .fj-t::after{content:' ●';font-size:9px}
-@media (max-width:480px){#bar{gap:6px}.btn,#koBtn{padding:7px 9px}.btn .lg{display:none}}
-@media (max-width:385px){#bar{gap:5px}.btn{padding:7px 8px}#rbtn{display:none}}
+@media (max-width:480px){#bar{gap:6px}.btn,#koBtn{padding:7px 9px}.btn .lg{display:none}
+  .navbox{flex:1 0 100%;gap:4px;padding:3px}.navbox .btn{flex:1 1 auto;min-width:0;padding:7px 4px}}
+@media (max-width:385px){.navbox .btn{font-size:13px}}
 /* 📑 리포트 */
 .rp-card{background:#fff;border:.5px solid var(--bd);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);padding:12px 14px;margin:0 0 12px}
 .rp-h{font-weight:800;font-size:16px;margin-bottom:6px;display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
@@ -154,7 +155,10 @@ body.fj .filters,body.fj .main,body.fj .sections{display:none}
 .stab2.on .t,.stab2.on .d,.stab2.on .n{color:#fff}
 .stab2.on .t::before{content:"✓ "}
 
-.filters{display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.filters{display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap;background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:10px 12px}
+.filters .flbl:first-child{margin-left:0}
+.navbox{display:flex;align-items:center;gap:5px;padding:4px;border:1px solid var(--bd);border-radius:13px;background:#f8fafc;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.navbox .btn{white-space:nowrap;text-align:center}
 .chip{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:.5px solid var(--bd);background:#fff;color:#4b5563;user-select:none}
 .chip.on{background:#111;color:#fff;border-color:#111}
 .flbl{font-size:10px;color:var(--sub);font-weight:600;margin:0 2px 0 8px}
@@ -297,11 +301,13 @@ body{font-size:15px}
   <span id="visits"></span>
   <span id="gen"></span>
   <button type="button" id="koBtn" title="헤드라인 한국어 번역 켜기/끄기">가 한국어</button>
+  <nav class="navbox" aria-label="화면 이동">
   <button type="button" class="btn" id="fjBtn" title="실시간 속보: FinancialJuice·월스트리트견문·시나재경 (30초마다 갱신)">⚡ 속보</button>
   <button type="button" class="btn" id="usBtn" title="미국 증시 뉴스 (시장·산업·매크로·지정학·장중 테마·리포트)">🇺🇸 미국<span class="lg"> 증시</span></button>
   <a class="btn" href="https://mini-bbterminal-kr.pages.dev" target="_blank" rel="noopener" title="한국 증시용 미니 블벅터 (장중 테마)">🇰🇷 한국<span class="lg"> 증시</span></a>
   <a class="btn" id="labLink" href="https://mini-bblab.pages.dev" target="_blank" rel="noopener" title="뉴스 기반 롱/숏 후보 탐색">🧪 랩</a>
   <button class="btn" id="rbtn" title="새로고침">&#x21bb;<span class="lg"> 새로고침</span></button>
+  </nav>
   <a class="btn" id="dashLink" href="/">&larr; 대시보드</a>
 </div>
 
