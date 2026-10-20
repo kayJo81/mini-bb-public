@@ -13,9 +13,11 @@ export async function onRequestGet({ request, waitUntil }) {
   const key = new Request(new URL("/api/fj", request.url).toString());
   const hit = await cache.match(key);
   if (hit) return hit;
-  let items = [];
+  let items = [], diag = null;
   try {
-    const xml = await (await fetch(FJ, { headers: HDR })).text();
+    const r = await fetch(FJ, { headers: HDR });
+    const xml = await r.text();
+    diag = { status: r.status, len: xml.length, head: xml.slice(0, 80) };
     items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((m) => ({
       ts: Math.floor(Date.parse(tag(m[1], "pubDate")) / 1000),
       h: tag(m[1], "title").replace(/^FinancialJuice:\s*/, ""),
@@ -24,7 +26,7 @@ export async function onRequestGet({ request, waitUntil }) {
   } catch {
     items = [];
   }
-  const res = Response.json({ at: Math.floor(Date.now() / 1000), items },
+  const res = Response.json({ at: Math.floor(Date.now() / 1000), items, ...(items.length ? {} : { diag }) },
     { headers: { "cache-control": items.length ? "public, max-age=60" : "no-store" } });
   if (items.length) waitUntil(cache.put(key, res.clone()));
   return res;
