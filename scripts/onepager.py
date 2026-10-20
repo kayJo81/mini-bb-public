@@ -45,7 +45,7 @@ def bars(d, acc):
         else:
             hl = b.get("hl")
             out.append(f'<rect x="{x:.1f}" y="{y(b["v"]):.1f}" width="{bw:.1f}" height="{base - y(b["v"]):.1f}" rx="4" fill="{acc if hl else "#cbd5e1"}"/>')
-            lab = f'{b["v"]:g}'
+            lab = f'{b["v"]:{d.get("fmt", "g")}}'
             ty = y(b["v"]) - 6
         out.append(f'<text x="{cx:.1f}" y="{ty:.1f}" text-anchor="middle" class="cv">{d.get("pre", "")}{lab}{d.get("unit", "")}</text>')
         out.append(f'<text x="{cx:.1f}" y="{base + 14}" text-anchor="middle" class="cx">{e(b["l"])}</text>')
@@ -56,9 +56,10 @@ def bars(d, acc):
         ly = lambda v: 18 + (top - 40) * (hi - v) / (hi - lo)
         path = " ".join(f'{"M" if i == 0 else "L"}{x:.1f},{ly(v):.1f}' for i, (x, v) in enumerate(pts))
         out.append(f'<path d="{path}" fill="none" stroke="#111827" stroke-width="1.6"/>')
-        for x, v in pts:
+        labs = d.get("line_lab") or [None] * len(pts)
+        for k, (x, v) in enumerate(pts):
             out.append(f'<circle cx="{x:.1f}" cy="{ly(v):.1f}" r="3" fill="#fff" stroke="#111827" stroke-width="1.5"/>'
-                       f'<text x="{x:.1f}" y="{ly(v) - 7:.1f}" text-anchor="middle" class="cl">{v:.1f}%</text>')
+                       f'<text x="{x:.1f}" y="{ly(v) - 7:.1f}" text-anchor="middle" class="cl">{labs[k] or f"{v:.1f}%"}</text>')
     defs = (f'<defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
             f'<line x1="0" y1="0" x2="0" y2="6" stroke="{acc}" stroke-width="2" opacity=".45"/></pattern></defs>')
     return f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg">{defs}{"".join(out)}</svg>'
@@ -102,6 +103,20 @@ ART = {
     <path d="M-11,14 L-22,36 L-11,32Z M11,14 L22,36 L11,32Z" fill="#94a3b8"/>
     <path d="M-8,34 L8,34 L4,80 L0,92 L-4,80Z" fill="url(#fl)"/>
   </g></svg>""",
+    # 서버 랙·LED·GPU 칩·올라가는 화살표
+    "server": """<svg viewBox="0 0 260 150" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="ch" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#047857"/></linearGradient></defs>
+  <g stroke="#10b981" stroke-width="1" opacity=".22" fill="none">{grid}</g>
+  <rect x="44" y="14" width="96" height="124" rx="8" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+  {units}
+  <g transform="translate(190 92)">
+    <g stroke="#6ee7b7" stroke-width="2" opacity=".8">{pins}</g>
+    <rect x="-30" y="-30" width="60" height="60" rx="8" fill="url(#ch)"/>
+    <rect x="-17" y="-17" width="34" height="34" rx="4" fill="#064e3b" stroke="#a7f3d0" stroke-width="1"/>
+    <text x="0" y="5" text-anchor="middle" font-size="12" font-weight="800" fill="#d1fae5" font-family="sans-serif">AI</text>
+  </g>
+  <path d="M156,46 L188,22 M174,20 L188,22 L186,36" stroke="#34d399" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>""",
     # 화면·재생 버튼·필름 구멍·내려가는 주가선
     "stream": """<svg viewBox="0 0 260 150" xmlns="http://www.w3.org/2000/svg">
   <g fill="#fff" opacity=".08">{film}</g>
@@ -123,7 +138,14 @@ def art(kind):
     rnd = random.Random(7)
     stars = "".join(f'<circle cx="{rnd.uniform(0, 260):.0f}" cy="{rnd.uniform(0, 150):.0f}" r="{rnd.choice([0.6, 0.8, 1.1, 1.5])}" opacity="{rnd.uniform(.35, .95):.2f}"/>' for _ in range(60))
     film = "".join(f'<rect x="{x}" y="{y}" width="9" height="7" rx="1.5"/>' for x in range(4, 260, 16) for y in (4, 139))
-    return ART[kind].replace("{stars}", stars).replace("{film}", film)
+    grid = "".join(f'<path d="M{x},0 V150"/>' for x in range(0, 261, 20)) + "".join(f'<path d="M0,{y} H260"/>' for y in range(0, 151, 20))
+    units = "".join(f'<rect x="52" y="{22 + i * 22}" width="80" height="16" rx="3" fill="#1e293b"/>'
+                    + "".join(f'<rect x="{60 + j * 7}" y="{28 + i * 22}" width="4" height="4" rx="1" fill="#334155"/>' for j in range(6))
+                    + f'<circle cx="114" cy="{30 + i * 22}" r="2.2" fill="#34d399" opacity="{rnd.uniform(.5, 1):.2f}"/>'
+                    + f'<circle cx="122" cy="{30 + i * 22}" r="2.2" fill="{rnd.choice(["#34d399", "#fbbf24"])}"/>' for i in range(5))
+    pins = "".join(f'<path d="M{a},-38 V-30 M{a},30 V38 M-38,{a} H-30 M30,{a} H38"/>' for a in range(-21, 22, 10))
+    return (ART[kind].replace("{stars}", stars).replace("{film}", film).replace("{grid}", grid)
+            .replace("{units}", units).replace("{pins}", pins))
 
 
 CSS = """
@@ -204,7 +226,7 @@ def page(d):
 <div class="row">{charts}</div>
 <div class="two"><div class="card"><h2>{e(d["guide"]["t"])}<span>{e(d["guide"].get("s", ""))}</span></h2><table>{gd}</table></div>
   <div class="card"><h2>좋았던 점 · 약한 고리</h2><ul>{pos}</ul><ul class="warn" style="margin-top:1.2mm">{neg}</ul></div></div>
-<div class="card"><h2>어닝콜 핵심 발언<span>{e(d["quote_src"])}</span></h2><div class="q">{qs}</div></div>
+<div class="card"><h2>{e(d.get("quote_t", "어닝콜 핵심 발언"))}<span>{e(d["quote_src"])}</span></h2><div class="q">{qs}</div></div>
 <div class="two"><div class="card"><h2>다음 체크포인트</h2><ul>{chk}</ul></div>
   <div class="bl"><span>ONE-LINE TAKE</span>{d["take"]}</div></div>
 <div class="ft">{d["foot"]} · 투자 권유 아님 · 미니 블벅 랩 심층 뉴스 전문: mini-bblab.pages.dev/deep?id={e(d["article"])}</div>
