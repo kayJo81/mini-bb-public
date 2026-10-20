@@ -105,7 +105,7 @@ body.theme .filters,body.theme .main{display:none}
 body.rep .filters,body.rep .main{display:none}
 body.fj .filters,body.fj .main,body.fj .sections{display:none}
 /* ⚡ 속보 (FinancialJuice) */
-#fjBtn{position:relative}#fjBtn.on{background:#111827;color:#fff;border-color:#111827}
+#fjBtn{position:relative}#fjBtn.on,#usBtn.on{background:#111827;color:#fff;border-color:#111827}
 #fjBtn .nb{display:inline-block;min-width:18px;margin-left:5px;padding:0 5px;border-radius:9px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center}
 .fj-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;background:#fff;border:.5px solid var(--bd);border-radius:14px;padding:10px 14px;margin:0 0 10px}
 .fj-h b{font-size:16px}.fj-h span{font-size:12px;color:var(--sub)}
@@ -124,7 +124,8 @@ body.fj .filters,body.fj .main,body.fj .sections{display:none}
 .fl-tag{display:inline-block;font-size:10.5px;font-weight:600;color:#6b7280;background:#f3f4f6;border-radius:4px;padding:1px 5px;margin-right:5px;vertical-align:2px}
 .card.fj-i.imp .hl{color:#b91c1c}
 .card.fj-i.new .fj-t{color:#dc2626}.card.fj-i.new .fj-t::after{content:' ●';font-size:9px}
-@media (max-width:480px){.btn,#koBtn{padding:7px 10px}.btn .lg{display:none}}
+@media (max-width:480px){#bar{gap:6px}.btn,#koBtn{padding:7px 9px}.btn .lg{display:none}}
+@media (max-width:385px){#bar{gap:5px}.btn{padding:7px 8px}#rbtn{display:none}}
 /* 📑 리포트 */
 .rp-card{background:#fff;border:.5px solid var(--bd);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);padding:12px 14px;margin:0 0 12px}
 .rp-h{font-weight:800;font-size:16px;margin-bottom:6px;display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
@@ -297,7 +298,8 @@ body{font-size:15px}
   <span id="gen"></span>
   <button type="button" id="koBtn" title="헤드라인 한국어 번역 켜기/끄기">가 한국어</button>
   <button type="button" class="btn" id="fjBtn" title="실시간 속보: FinancialJuice·월스트리트견문·시나재경 (30초마다 갱신)">⚡ 속보</button>
-  <a class="btn" href="https://mini-bbterminal-kr.pages.dev" target="_blank" rel="noopener" title="한국 증시용 미니 블벅터 (장중 테마)">🇰🇷 한국 증시</a>
+  <button type="button" class="btn" id="usBtn" title="미국 증시 뉴스 (시장·산업·매크로·지정학·장중 테마·리포트)">🇺🇸 미국<span class="lg"> 증시</span></button>
+  <a class="btn" href="https://mini-bbterminal-kr.pages.dev" target="_blank" rel="noopener" title="한국 증시용 미니 블벅터 (장중 테마)">🇰🇷 한국<span class="lg"> 증시</span></a>
   <a class="btn" id="labLink" href="https://mini-bblab.pages.dev" target="_blank" rel="noopener" title="뉴스 기반 롱/숏 후보 탐색">🧪 랩</a>
   <button class="btn" id="rbtn" title="새로고침">&#x21bb;<span class="lg"> 새로고침</span></button>
   <a class="btn" id="dashLink" href="/">&larr; 대시보드</a>
@@ -512,7 +514,7 @@ function render(){
     `<button type="button" class="stab2 go ${st.section==='테마'?'on':''}" style="--sc:#ea580c" data-sec="테마" aria-pressed="${st.section==='테마'}"><span class="t">🔥 장중 테마</span><span class="d">미국 당일 테마·이슈 테마·옵션 수급</span><span class="n" id="themeTop">${THEME_TOP||'15분마다 갱신'}</span></button>`+
     `<button type="button" class="stab2 ${st.section==='리포트'?'on':''}" style="--sc:#0f766e" data-sec="리포트" aria-pressed="${st.section==='리포트'}"><span class="t">📑 리포트</span><span class="d">IB 매크로·전략 / 산업별 투자의견·목표가</span><span class="n">${REP?`${(REP.macro||[]).length+(REP.calls||[]).length+(REP.ratings||[]).length}건`:'15분마다 갱신'}</span></button>`;
   const fjOn=st.section==='속보';document.body.classList.toggle('fj',fjOn);document.getElementById('fjView').hidden=!fjOn;
-  document.getElementById('fjBtn').classList.toggle('on',fjOn);
+  document.getElementById('fjBtn').classList.toggle('on',fjOn);document.getElementById('usBtn').classList.toggle('on',!fjOn);
   if(fjOn){document.body.classList.remove('theme','rep');document.getElementById('themesView').hidden=true;document.getElementById('repView').hidden=true;renderFlash();return;}
   const thOn=st.section==='테마',tv=document.getElementById('themesView');
   document.body.classList.toggle('theme',thOn);tv.hidden=!thOn;
@@ -807,6 +809,13 @@ document.getElementById('fjBtn').onclick=()=>{
   window.scrollTo({top:0});if(st.section==='속보'&&Date.now()-flLast>20e3)loadFlash();
 };
 if(st.section==='속보'){document.body.classList.add('fj');document.getElementById('fjView').hidden=false;document.getElementById('fjBtn').classList.add('on');}
+else document.getElementById('usBtn').classList.add('on');
+// 🇺🇸 미국 증시: 속보 화면에서 분야별 뉴스로 (이미 보고 있으면 맨 위로)
+document.getElementById('usBtn').onclick=()=>{
+  if(st.section==='속보'){st.section=st.back||'산업';st.sel.clear();save();if(data)render();else{document.body.classList.remove('fj');
+    document.getElementById('fjView').hidden=true;document.getElementById('fjBtn').classList.remove('on');document.getElementById('usBtn').classList.add('on');}fjBadge();}
+  window.scrollTo({top:0});
+};
 loadFlash();setInterval(()=>{if(st.section==='속보'||Date.now()-flLast>5*60e3)loadFlash();},30e3);
 
 function loadReports(){fetch('briefings/reports.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{REP=d;if(data)render();}).catch(()=>{});}
