@@ -1,0 +1,40 @@
+# 실적 원페이퍼(A4 한 장 요약, 차트·일러스트) → PDF·PNG → 메일 (본문에 이미지, PDF 첨부) — 수동 실행용
+#  · 내용: lab/onepager/<id>.json (심층 뉴스 기사에서 뽑은 숫자·발언), 그리는 코드: scripts/onepager.py
+# 필요한 저장소 Secrets: GMAIL_USER, GMAIL_APP_PASSWORD, 선택 MAIL_TO
+name: onepager
+
+on:
+  workflow_dispatch:
+    inputs:
+      ids:
+        description: "보낼 원페이퍼 id (쉼표로 구분, 예: spacex-3q26,netflix-3q26). 비우면 전부"
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk >/dev/null
+          pip install -q playwright
+          python -m playwright install --with-deps chromium >/dev/null
+      - name: Build and mail
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+        run: python scripts/onepager.py --out reports_onepager --mail --ids "${{ inputs.ids }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: onepager
+          path: reports_onepager/*
+          retention-days: 14
