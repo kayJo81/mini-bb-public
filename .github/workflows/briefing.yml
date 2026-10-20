@@ -106,6 +106,11 @@ jobs:
         continue-on-error: true
         run: python scripts/fj_pdf.py --accumulate --store .cache/fj.json --dump .cache/fj_latest.json
 
+      # ⚡ 속보 화면: 누적한 FinancialJuice 헤드라인(30시간) + 한국어 번역 → briefings/fj.json (최신분은 화면이 /api/fj 로 1분마다 보충)
+      - name: Publish FinancialJuice feed
+        continue-on-error: true
+        run: python scripts/fj_pdf.py --publish public/briefings/fj.json --store .cache/fj.json --cache .cache/ko.json
+
       - name: Translate headlines (한국어)
         continue-on-error: true
         run: python scripts/translate_ko.py public/briefings/live.json --cache .cache/ko.json

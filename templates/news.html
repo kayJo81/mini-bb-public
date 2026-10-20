@@ -103,6 +103,22 @@ a.stab2{text-decoration:none}
 body.market .filters,body.market .main{display:none}
 body.theme .filters,body.theme .main{display:none}
 body.rep .filters,body.rep .main{display:none}
+body.fj .filters,body.fj .main,body.fj .sections{display:none}
+/* ⚡ 속보 (FinancialJuice) */
+#fjBtn{position:relative}#fjBtn.on{background:#111827;color:#fff;border-color:#111827}
+#fjBtn .nb{display:inline-block;min-width:18px;margin-left:5px;padding:0 5px;border-radius:9px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center}
+.fj-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;background:#fff;border:.5px solid var(--bd);border-radius:14px;padding:10px 14px;margin:0 0 10px}
+.fj-h b{font-size:16px}.fj-h span{font-size:12px;color:var(--sub)}
+.fj-h input{flex:1;min-width:150px;max-width:280px;border:.5px solid var(--bd);border-radius:9px;padding:6px 10px;font:inherit;font-size:14px}
+.fj-l{background:#fff;border:.5px solid var(--bd);border-radius:14px;padding:4px 14px}
+.fj-d{font-size:12px;font-weight:700;color:var(--sub);padding:8px 0 4px;border-bottom:.5px solid var(--bd)}
+.card.fj-i{display:grid;grid-template-columns:46px 1fr;gap:8px;border:0;border-bottom:.5px dashed var(--bd);border-radius:0;box-shadow:none;padding:8px 0;margin:0;background:none}
+.card.fj-i:last-child{border-bottom:0}
+.fj-t{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;color:#374151;padding-top:2px}
+.card.fj-i .hl{font-size:15px;line-height:1.45;font-weight:600;color:var(--ink,#111827);text-decoration:none;overflow-wrap:anywhere}
+.card.fj-i .orig{font-size:12px;color:var(--sub);margin-top:2px;overflow-wrap:anywhere}
+.card.fj-i.new .fj-t{color:#dc2626}.card.fj-i.new .fj-t::after{content:' ●';font-size:9px}
+@media (max-width:480px){.btn,#koBtn{padding:7px 10px}.btn .lg{display:none}}
 /* 📑 리포트 */
 .rp-card{background:#fff;border:.5px solid var(--bd);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);padding:12px 14px;margin:0 0 12px}
 .rp-h{font-weight:800;font-size:16px;margin-bottom:6px;display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
@@ -274,9 +290,10 @@ body{font-size:15px}
   <span id="visits"></span>
   <span id="gen"></span>
   <button type="button" id="koBtn" title="헤드라인 한국어 번역 켜기/끄기">가 한국어</button>
+  <button type="button" class="btn" id="fjBtn" title="FinancialJuice 실시간 속보 (1분마다 갱신)">⚡ 속보</button>
   <a class="btn" href="https://mini-bbterminal-kr.pages.dev" target="_blank" rel="noopener" title="한국 증시용 미니 블벅터 (장중 테마)">🇰🇷 한국 증시</a>
   <a class="btn" id="labLink" href="https://mini-bblab.pages.dev" target="_blank" rel="noopener" title="뉴스 기반 롱/숏 후보 탐색">🧪 랩</a>
-  <button class="btn" id="rbtn">&#x21bb; 새로고침</button>
+  <button class="btn" id="rbtn" title="새로고침">&#x21bb;<span class="lg"> 새로고침</span></button>
   <a class="btn" id="dashLink" href="/">&larr; 대시보드</a>
 </div>
 
@@ -288,6 +305,7 @@ body{font-size:15px}
   </div>
   <div id="themesView" hidden><iframe id="themesFrame" title="장중 테마" loading="lazy"></iframe></div>
   <div id="repView" hidden></div>
+  <div id="fjView" hidden><div class="fj-h"><div><b>⚡ FinancialJuice 속보</b> <span id="fjSub">불러오는 중…</span></div><input id="fjQ" type="search" placeholder="속보 검색 (영문·한글)"><button type="button" class="btn" id="fjClose">✕ 닫기</button></div><div class="fj-l" id="fjList"></div></div>
   <div class="mv" id="moves" hidden></div>
   <div class="mv" id="midterms" hidden></div>
   <div class="filters">
@@ -332,8 +350,8 @@ let st={section:'산업',sel:new Set(),verdict:'ALL',region:'ALL',hideOp:true,q:
 let raw=null,data=null,pollT=null;
 const STATIC=!!window.MBB_STATIC;   // 정적 배포(Cloudflare Pages): briefings/*.json 을 직접 읽음
 
-try{const s=JSON.parse(localStorage.getItem('mbb')||'{}');st.hideOp=s.hideOp??true;st.ko=s.ko??true;st.sort=s.sort||'time';st.section=s.section||'산업';}catch(e){}
-const save=()=>{try{localStorage.setItem('mbb',JSON.stringify({hideOp:st.hideOp,ko:st.ko,sort:st.sort,section:st.section}));}catch(e){}};
+try{const s=JSON.parse(localStorage.getItem('mbb')||'{}');st.hideOp=s.hideOp??true;st.ko=s.ko??true;st.sort=s.sort||'time';st.section=s.section||'산업';st.back=s.back||'산업';}catch(e){}
+const save=()=>{try{localStorage.setItem('mbb',JSON.stringify({hideOp:st.hideOp,ko:st.ko,sort:st.sort,section:st.section,back:st.back}));}catch(e){}};
 const fmt=d=>{const p=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d).map(x=>[x.type,x.value]));return `${p.month}-${p.day} ${p.hour}:${p.minute}`;};
 const esc=s=>(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // 링크는 http·https 주소만 (javascript: 같은 주소가 섞여 들어와도 실행되지 않게)
@@ -487,6 +505,9 @@ function render(){
     // 장중 테마: 이 화면 안에 테마(themes?embed=1)를 펼쳐 보여 줌
     `<button type="button" class="stab2 go ${st.section==='테마'?'on':''}" style="--sc:#ea580c" data-sec="테마" aria-pressed="${st.section==='테마'}"><span class="t">🔥 장중 테마</span><span class="d">미국 당일 테마·이슈 테마·옵션 수급</span><span class="n" id="themeTop">${THEME_TOP||'15분마다 갱신'}</span></button>`+
     `<button type="button" class="stab2 ${st.section==='리포트'?'on':''}" style="--sc:#0f766e" data-sec="리포트" aria-pressed="${st.section==='리포트'}"><span class="t">📑 리포트</span><span class="d">IB 매크로·전략 / 산업별 투자의견·목표가</span><span class="n">${REP?`${(REP.macro||[]).length+(REP.calls||[]).length+(REP.ratings||[]).length}건`:'15분마다 갱신'}</span></button>`;
+  const fjOn=st.section==='속보';document.body.classList.toggle('fj',fjOn);document.getElementById('fjView').hidden=!fjOn;
+  document.getElementById('fjBtn').classList.toggle('on',fjOn);
+  if(fjOn){document.body.classList.remove('theme','rep');document.getElementById('themesView').hidden=true;document.getElementById('repView').hidden=true;renderFJ();return;}
   const thOn=st.section==='테마',tv=document.getElementById('themesView');
   document.body.classList.toggle('theme',thOn);tv.hidden=!thOn;
   if(thOn){const f=document.getElementById('themesFrame');if(!f.src)f.src='themes?embed=1';return;}
@@ -595,7 +616,7 @@ function card(s,cat){
 }
 
 document.getElementById('rbtn').onclick=load;
-document.getElementById('koBtn').onclick=()=>{st.ko=!st.ko;save();document.getElementById('koBtn').classList.toggle('on',st.ko);watchCards();renderMoves();};
+document.getElementById('koBtn').onclick=()=>{st.ko=!st.ko;save();document.getElementById('koBtn').classList.toggle('on',st.ko);watchCards();renderMoves();if(st.section==='속보')renderFJ();};
 document.querySelector('.filters').onclick=e=>{
   const c=e.target.closest('.chip');if(!c)return;
   if(c.id==='hideOp'){st.hideOp=!st.hideOp;c.classList.toggle('on',st.hideOp);save();}
@@ -704,6 +725,51 @@ function renderReports(){
 }
 document.getElementById('repView').addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b)return;const k=b.dataset.r;
   if(k==='ALL')rsel.clear();else rsel.has(k)?rsel.delete(k):rsel.add(k);renderReports();});
+// ── ⚡ 속보: FinancialJuice 헤드라인 — 15분 수집본(briefings/fj.json, 30시간·번역 포함) + 실시간(api/fj, 1분) ──
+let FJ=[],fjAt=0,fjLast=0,fjSeen=0,fjMark=0;
+try{fjSeen=+(localStorage.getItem('mbb_fj_seen')||0);}catch(e){}
+async function loadFJ(){
+  fjLast=Date.now();
+  const get=u=>fetch(u,{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
+  const [a,b]=await Promise.all([get('briefings/fj.json'),STATIC?get('api/fj'):null]);
+  if(!a&&!b)return;
+  const m=new Map();
+  for(const x of [...((a||{}).items||[]),...((b||{}).items||[])]){const o=m.get(x.h);m.set(x.h,{h:x.h,u:x.u||(o&&o.u)||'',ts:o?Math.min(o.ts,x.ts):x.ts});
+    if(x.ko&&!tr.get(x.h))tr.set(x.h,x.ko);}
+  FJ=[...m.values()].sort((p,q)=>q.ts-p.ts);fjAt=Math.max((a||{}).at||0,(b||{}).at||0);
+  if(st.section==='속보')renderFJ();else fjBadge();
+}
+function fjBadge(){
+  const n=FJ.filter(x=>x.ts>fjSeen).length,b=document.getElementById('fjBtn');
+  b.innerHTML='⚡ 속보'+(st.section!=='속보'&&fjSeen&&n?`<span class="nb">${n>99?'99+':n}</span>`:'');
+}
+function renderFJ(){
+  if(!fjMark)fjMark=fjSeen||((FJ[0]||{}).ts||0);           // 이번에 처음 본 뒤로 새로 들어온 것에 ● 표시
+  const q=document.getElementById('fjQ').value.trim().toLowerCase();
+  const list=q?FJ.filter(x=>x.h.toLowerCase().includes(q)||(tr.get(x.h)||'').toLowerCase().includes(q)):FJ;
+  document.getElementById('fjSub').textContent=FJ.length?`최근 30시간 ${FJ.length}건${q?` · 검색 ${list.length}건`:''} · 1분마다 갱신 · ${fmt(new Date((FJ[0].ts)*1000)).slice(6)} 최신`:'아직 받은 속보가 없습니다';
+  let h='',day='';
+  for(const x of list.slice(0,500)){
+    const d=fmt(new Date(x.ts*1000));
+    if(d.slice(0,5)!==day){day=d.slice(0,5);h+=`<div class="fj-d">${day.replace('-','/')}</div>`;}
+    h+=`<div class="card fj-i${x.ts>fjMark?' new':''}" data-h="${esc(x.h)}"><span class="fj-t">${d.slice(6)}</span><div><a class="hl" href="${safeUrl(x.u)}" target="_blank" rel="noopener">${esc(x.h)}</a><div class="orig"></div></div></div>`;
+  }
+  document.getElementById('fjList').innerHTML=h||'<div class="empty">조건에 맞는 속보가 없습니다</div>';
+  document.querySelectorAll('#fjView .card').forEach(c=>{applyKo(c);if(st.ko&&!tr.has(c.dataset.h)){if(io)io.observe(c);else pending.add(c.dataset.h);}});
+  schedule();
+  if(FJ.length){fjSeen=FJ[0].ts;try{localStorage.setItem('mbb_fj_seen',fjSeen);}catch(e){}}
+  fjBadge();
+}
+document.getElementById('fjQ').addEventListener('input',renderFJ);
+document.getElementById('fjClose').onclick=()=>document.getElementById('fjBtn').click();
+document.getElementById('fjBtn').onclick=()=>{
+  if(st.section==='속보')st.section=st.back||'산업';else{st.back=st.section;st.section='속보';fjMark=0;}
+  st.sel.clear();save();if(data)render();else if(st.section==='속보')renderFJ();
+  window.scrollTo({top:0});if(st.section==='속보'&&Date.now()-fjLast>20e3)loadFJ();
+};
+if(st.section==='속보'){document.body.classList.add('fj');document.getElementById('fjView').hidden=false;document.getElementById('fjBtn').classList.add('on');}
+loadFJ();setInterval(()=>{if(st.section==='속보'||Date.now()-fjLast>5*60e3)loadFJ();},60e3);
+
 function loadReports(){fetch('briefings/reports.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{REP=d;if(data)render();}).catch(()=>{});}
 loadReports();setInterval(loadReports,5*60e3);
 </script>
