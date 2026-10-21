@@ -49,15 +49,15 @@ def bars(d, acc):
             ty = y(b["v"]) - 6
         out.append(f'<text x="{cx:.1f}" y="{ty:.1f}" text-anchor="middle" class="cv">{d.get("pre", "")}{lab}{d.get("unit", "")}</text>')
         out.append(f'<text x="{cx:.1f}" y="{base + 14}" text-anchor="middle" class="cx">{e(b["l"])}</text>')
-        if d.get("line"):
-            pts.append((cx, d["line"][i]))
+        if d.get("line") and d["line"][i] is not None:   # None = 그 막대엔 이익률 점 없음(예: 가이던스 미제시)
+            pts.append((cx, d["line"][i], i))
     if pts:   # 이익률 꺾은선 (오른쪽 축 없이 점 위에 값)
         lo, hi = min(p[1] for p in pts) - 4, max(p[1] for p in pts) + 3
         ly = lambda v: 18 + (top - 40) * (hi - v) / (hi - lo)
-        path = " ".join(f'{"M" if i == 0 else "L"}{x:.1f},{ly(v):.1f}' for i, (x, v) in enumerate(pts))
+        path = " ".join(f'{"M" if i == 0 else "L"}{x:.1f},{ly(v):.1f}' for i, (x, v, _) in enumerate(pts))
         out.append(f'<path d="{path}" fill="none" stroke="#111827" stroke-width="1.6"/>')
-        labs = d.get("line_lab") or [None] * len(pts)
-        for k, (x, v) in enumerate(pts):
+        labs = d.get("line_lab") or [None] * len(items)
+        for x, v, k in pts:
             out.append(f'<circle cx="{x:.1f}" cy="{ly(v):.1f}" r="3" fill="#fff" stroke="#111827" stroke-width="1.5"/>'
                        f'<text x="{x:.1f}" y="{ly(v) - 7:.1f}" text-anchor="middle" class="cl">{labs[k] or f"{v:.1f}%"}</text>')
     defs = (f'<defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
