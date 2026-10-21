@@ -120,67 +120,66 @@
     "rows": [
       [
         "2026년 설비투자",
-        "$20B",
-        "종전 $25B 이상에서 하향 (CFO)"
+        "약 $20B",
+        "종전 $25B 이상 · 2028년 수백억 달러 (머스크)"
       ],
       [
-        "옵티머스 주 2만 대",
-        "최소 1년+",
-        "외부 납품 2027년 말 (머스크)"
+        "옵티머스",
+        "주 2만 대까지 1년+",
+        "외부 납품 내년 말 · 데모 영상 1~2개월"
+      ],
+      [
+        "로보택시",
+        "다음 달 댈러스",
+        "연말 24시간 운행 · 매출 기여 내년 2Q부터"
       ],
       [
         "개인 차 무감독 FSD",
-        "2027년 2Q쯤",
-        "아쇼크 엘루스와미 (섁뉴스 요약)"
-      ],
-      [
-        "사이버캡",
-        "댈러스 다음",
-        "오스틴 10배 · 일반 판매 2027년경"
+        "내년 2Q쯤",
+        "EU 전체 승인 늦어도 1분기 (머스크)"
       ]
     ]
   },
   "good": [
-    "조정 EPS·총마진·<b>FCF</b> 모두 예상 상회 (FCF +$1.5B vs −$4.5B)",
-    "자동차 마진 18.1% 반등, <b>4년 만의 최대 대기 주문</b>",
-    "옵티머스·세미 생산 시작, 에너지 수주 역대 최대"
+    "조정 EPS·총마진·<b>FCF</b> 예상 상회 (FCF +$1.5B vs −$4.5B)",
+    "\"수요가 생산을 크게 웃돈다\" — <b>4년 만의 최대 대기 주문</b>",
+    "메가팩 2027년분 거의 매진, FSD 연 반복매출 약 $1B(CFO \"맞다\")"
   ],
   "bad": [
-    "영업이익 −56% — 연구개발비 +69%",
-    "에너지 매출 $2.88B(−16%), 예상보다 23% 적음",
-    "옵티머스 '기대 낮춰라' — 시간외 +2% → −2.7%"
+    "영업이익 −56% — 연구개발비 +69%, 비용 증가 지속",
+    "에너지 매출 −16%, 마진 개선은 관세 환급·보증비 환입 덕",
+    "옵티머스 \"기대 낮춰라\" — 시간외 +2% → −2.7%"
   ],
-  "quote_src": "야후 파이낸스·악시오스 인용 원문 (공식 녹취록 대조 예정)",
+  "quote_src": "마켓비트 전체 녹취록(AI 받아쓰기) 대조",
   "quotes": [
     {
       "who": "일론 머스크 CEO · 수요",
-      "en": "The biggest driver of demand is full-self driving.",
-      "ko": "차량 수요를 가장 크게 끌어올리는 건 FSD"
-    },
-    {
-      "who": "일론 머스크 CEO · 로보택시",
-      "en": "The Cybercab fleet in Austin has grown by a factor of 10",
-      "ko": "오스틴 사이버캡 차량 수가 10배로 늘었다"
-    },
-    {
-      "who": "일론 머스크 CEO · 옵티머스",
-      "en": "…it takes us probably at least a year—maybe a little longer—to get to that annualized rate",
-      "ko": "주 2만 대(연 100만 대) 속도까지 최소 1년, 어쩌면 조금 더",
-      "tag": "단일 출처"
+      "en": "It is exceeding our production by a significant margin. … The biggest driver for demand is Full Self-Driving.",
+      "ko": "수요가 생산을 크게 웃돈다 — 최대 동력은 FSD"
     },
     {
       "who": "바이바브 타네자 CFO · 설비투자",
-      "en": "…managing our capital deployment efficiently, and plan to fund [capex] primarily from our cash flows from operations",
-      "ko": "설비투자 전망 $20B로 하향, 주로 영업현금흐름으로 충당",
-      "tag": "단일 출처"
+      "en": "We are revising our CapEx guidance to be approximately $20 billion for the current year",
+      "ko": "올해 설비투자 전망 약 $20B로 하향 — 주로 영업현금흐름으로 충당"
+    },
+    {
+      "who": "일론 머스크 CEO · 옵티머스",
+      "en": "…at least a year, maybe a little longer, to get to that annualized rate, to get to 20,000 units a week.",
+      "ko": "주 2만 대까지 최소 1년 — \"기대를 좀 낮추고 싶다\", 외부 납품 내년 말"
+    },
+    {
+      "who": "라스 모라비 · 사이버캡",
+      "en": "we are trying to get Cybercabs to customers by the end of this year, 2026.",
+      "ko": "사이버캡 고객 인도 올해 말 목표 — 대부분은 테슬라 소유 운송 서비스"
     }
   ],
   "watch": [
-    "<b>투자 하향 이유</b> — 효율인지, AI·옵티머스 지연인지",
-    "<b>마진 지속성</b> — 18.1% 유지, 배터리 제약",
-    "<b>로보택시·FSD</b> — 댈러스, NHTSA(10/30), EU 승인",
-    "<b>스페이스X 합병</b> — 12/3 주총 전후 공시"
+    "<b>투자 하향 이유</b> — 올해 $20B, 2028년 수백억 달러로 재확대",
+    "<b>마진 지속성</b> — 일회성 뺀 에너지·자동차 마진",
+    "<b>로보택시</b> — 댈러스, 24시간 운행, NHTSA(10/30)",
+    "<b>스페이스X 합병</b> — 콜에선 질문 안 받음, 12/3 주총 전후"
   ],
-  "take": "숫자는 예상보다 좋았지만, 콜에서 나온 건 <u>더 적은 투자와 더 느린 옵티머스 일정</u>. 다음 분기 승부처는 마진 유지와 투자 하향의 이유.",
-  "foot": "출처: 테슬라 SEC 8-K 3분기 업데이트(숫자 대조 완료) · 예상치 테슬라 회사 집계(10/19)·팩트셋·블룸버그 · 어닝콜 보도(야후 파이낸스·악시오스·섁뉴스) · 시간외 주가 야후 파이낸스"
+  "take": "숫자는 예상보다 좋았지만, 콜에서 나온 건 <u>더 적은 올해 투자와 더 느린 옵티머스 일정</u>. 다음 분기 승부처는 일회성 뺀 마진과 로보택시 매출.",
+  "foot": "출처: 테슬라 SEC 8-K 3분기 업데이트(숫자 대조 완료) · 예상치 테슬라 회사 집계(10/19)·팩트셋·블룸버그 · 어닝콜 마켓비트 전체 녹취록 · 시간외 주가 야후 파이낸스",
+  "quote_t": "어닝콜 핵심 발언(녹취록)"
 }

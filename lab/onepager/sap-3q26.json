@@ -4,11 +4,11 @@
   "name": "SAP",
   "ticker": "SAP · 2026년 3분기",
   "eyebrow": "실적 원페이퍼 · 2026.10.22 (독일 10/21 22:05 CEST 발표)",
-  "plain": "수주잔고(CCB) 환율 제외 +26% 유지, 클라우드 매출 66.7억 유로(+26%)·조정 영업이익 30.3억(+18%)으로 예상 상회. 연간 클라우드는 '범위 상단'으로 좁혔지만 올리진 않음 — ADR 시간외 +4%.",
-  "lede": "걱정하던 <b>수주잔고 둔화는 없었어요</b>(환율 제외 +26%). 분기 매출 <b>100억</b>·조정 영업이익 <b>30억 유로</b>를 처음 넘었지만, 클라우드엔 <b>일회성 매출</b>이 섞였고 가이던스는 '범위 상단' 표현에 그쳤어요.",
+  "plain": "수주잔고(CCB) 환율 제외 +26% 유지, 클라우드 66.7억 유로(+26%)·조정 영업이익 30.3억(+18%) 예상 상회. 콜에서 CFO가 일회성 약 1%p·4분기 클라우드 약 23%·2027년 가속 '더 어려워짐'을 언급 — ADR 시간외 +8%→+2%.",
+  "lede": "걱정하던 <b>수주잔고 둔화는 없었어요</b>(환율 제외 +26%). 하지만 콜에서 CFO가 <b>일회성 약 1%p</b>, 4분기 클라우드 <b>약 23%</b>, 2027년 가속은 <b>'더 어려워졌다'</b>고 말해 시간외 상승이 식었어요.",
   "chips": [
     {
-      "t": "ADR 시간외 +4%",
+      "t": "ADR 시간외 +2%",
       "k": "up"
     },
     {
@@ -92,7 +92,7 @@
         "+26%",
         "+26%"
       ],
-      "cap": "3분기엔 '재무 위기 고객의 매출 따라잡기' 일회성 포함(금액 미공개)"
+      "cap": "3분기 클라우드엔 '재무 위기 고객의 매출 따라잡기' 일회성 약 1%p 포함(CFO, 콜)"
     },
     {
       "type": "hbars",
@@ -160,47 +160,43 @@
   "good": [
     "CCB 환율 제외 <b>+26%</b> 유지 — 둔화 우려 해소",
     "분기 매출 <b>100억</b>·조정 영업이익 <b>30억 유로</b> 첫 돌파",
-    "자사주 누적 <b>42억 유로</b>, 4분기 환율 순풍"
+    "2년간 최대 <b>30억 유로</b> AI 효율화 계획"
   ],
   "bad": [
-    "클라우드에 <b>일회성 매출</b> 포함, 규모 미공개",
-    "가이던스는 숫자 상향 없이 '범위 상단'만",
-    "클라우드 매출총이익률 74.3%(−0.8%p)"
+    "일회성 <b>약 1%p</b> — 빼면 클라우드 약 24%",
+    "4분기 클라우드 <b>약 23%</b>로 둔화 예고",
+    "2027년 가속 '더 어려워짐', 매출채권 증가"
   ],
-  "quote_t": "회사 발언",
-  "quote_src": "실적 발표문·분기 보고서 (콜 녹취록은 나오면 기사에 추가)",
+  "quote_t": "어닝콜 핵심 발언(녹취록)",
+  "quote_src": "웹캐스트 자동 받아쓰기 전체 녹취록(Gloomberb) · 인베스팅닷컴 녹취록 교차 확인",
   "quotes": [
     {
-      "who": "크리스티안 클라인 CEO · 수주",
-      "en": "Q3 was an outstanding quarter, with current cloud backlog up 26% at constant currencies.",
-      "ko": "3분기는 뛰어난 분기였다 — 현재 클라우드 수주잔고가 환율 제외 26% 늘었다",
-      "tag": "보도자료"
+      "who": "도미닉 아삼 CFO · 일회성",
+      "en": "…helped by several one-off positive effects, which added approximately one percentage points of growth in Q3.",
+      "ko": "여러 일회성 효과가 3분기 클라우드 성장률을 약 1%p 높였다"
     },
     {
-      "who": "크리스티안 클라인 CEO · AI",
-      "en": "They see that Joule Work makes the business case for their transformation more attractive than ever.",
-      "ko": "고객들은 Joule Work 덕분에 전환의 사업성이 그 어느 때보다 좋아졌다고 본다",
-      "tag": "보도자료"
+      "who": "도미닉 아삼 CFO · 수주잔고",
+      "en": "I'd say the upper end of that range might be 24% or so.",
+      "ko": "'살짝 둔화' 범위의 상단은 24% 정도 — 23%가 고정값은 아니다"
     },
     {
-      "who": "도미닉 아삼 CFO · 이정표",
-      "en": "For the first time, SAP crossed €10 billion in total quarterly revenue and €3 billion of non-IFRS operating profit…",
-      "ko": "처음으로 분기 총매출 100억 유로, 조정 영업이익 30억 유로를 넘었다",
-      "tag": "보도자료"
+      "who": "도미닉 아삼 CFO · 2027년",
+      "en": "…we're still planning for total revenue growth to accelerate in 2027, but must be cognizant of all the factors…",
+      "ko": "2027년 매출 성장 가속은 여전히 계획하지만, 더 어렵게 만드는 요인들을 의식해야 한다"
     },
     {
-      "who": "분기 보고서 · 일회성 효과",
-      "en": "Cloud revenue growth was positively impacted by several quarter-specific effects…",
-      "ko": "클라우드 성장률은 이번 분기만의 효과(주로 고객의 여러 분기치 매출 따라잡기) 덕을 봤다",
-      "tag": "보도자료"
+      "who": "크리스티안 클라인 CEO · AI 효율화",
+      "en": "…up to 3 billion efficiency gains over the course of the next two years.",
+      "ko": "사내 AI 프로그램으로 앞으로 2년간 최대 30억 유로 효율화"
     }
   ],
   "watch": [
-    "<b>어닝콜 녹취</b> — 일회성 규모, 4분기 CCB, 가이던스 '상단'의 이유",
+    "<b>4분기 수주</b> — 연간의 약 50%, CCB 24% 안팎(상단) 유지 여부",
     "<b>독일 첫 반응</b> — 10/22 16:00 KST Xetra 개장",
-    "<b>1월 4분기 실적</b> — 2027년 매출 성장 가속 약속",
-    "<b>Joule·AI 수익화</b> — AI 계약 비중·사용량 숫자"
+    "<b>AI 수익화</b> — 어시스턴트 40·에이전트 300개, 다음 주 테크에드",
+    "<b>1월 실적</b> — 2027년 매출 가속 약속, 서비스 매출 감소 폭"
   ],
-  "take": "수주잔고가 버텨 <u>최악(둔화)</u>은 피했다. 다만 일회성이 섞인 클라우드와 '상단' 표현뿐인 가이던스라 시간외 상승은 고점(+7.9%)의 절반쯤으로 식었다.",
-  "foot": "출처: SAP 3분기 실적 발표문·분기 보고서 전문(PR Newswire) · 지난 분기 SEC 6-K · 예상치: finanzen.ch·ad-hoc-news·BofA·뉴스스쿼크 · 시간외: 야후 파이낸스·인베스팅닷컴"
+  "take": "수주잔고는 버텼지만 CFO가 <u>일회성 1%p·4분기 23%·2027년 '더 어려움'</u>을 직접 말해, 시간외 상승은 +8%에서 +2%대로 식었다.",
+  "foot": "출처: SAP 3분기 실적 발표문·분기 보고서(PR Newswire) · 어닝콜 녹취록(Gloomberb 자동 받아쓰기·인베스팅닷컴) · 예상치: finanzen.ch·ad-hoc-news·BofA·뉴스스쿼크 · 시간외: 야후 파이낸스"
 }

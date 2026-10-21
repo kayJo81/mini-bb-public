@@ -155,47 +155,48 @@
   },
   "good": [
     "매출 가이던스 상단 넘고 광고 <b>+26%</b>(단가 +14%)",
-    "4분기 가이던스 중간값 <b>예상 상회</b>, RL 손실 축소 시작",
-    "소송비 제외 영업이익 <b>+11%</b>, 직원 −15%로 효율화"
+    "뮤즈 6주 만에 <b>1,000만 명</b>·쇼핑 평균 $200+, 2027년부터 AI 매출",
+    "RL 손실 축소(2027년 ~$15B), 소송비 제외 영업이익 <b>+11%</b>"
   ],
   "bad": [
-    "FCF <b>−$2.1B</b> 첫 마이너스, 4분기 설비투자 $49~59B 남음",
-    "뉴멕시코 <b>$25B</b> 판결(항소)은 가이던스 밖",
-    "2027년 설비투자·비용 숫자 미제시, C주로 희석 가능성"
+    "FCF <b>−$2.1B</b> 첫 마이너스, 뮤즈 서비스 비용은 계속 증가",
+    "2027년 비용·설비투자 숫자는 1월로, 뮤즈 단위 비용 비공개",
+    "뉴멕시코 <b>$25B</b> 판결(항소) 가이던스 밖, C주 희석 가능성"
   ],
-  "quote_src": "야후 파이낸스 실시간 블로그 기준 (공식 녹취록 대조 예정)",
+  "quote_src": "Gloomberb 전체 녹취록(비공식) 원문",
   "quotes": [
     {
-      "who": "마크 저커버그 CEO · 뮤즈 수익성",
-      "en": "If compute efficiency continues to improve quickly… Muse will be highly profitable over multiple years.",
-      "ko": "컴퓨팅 효율이 계속 빠르게 좋아지면 뮤즈는 여러 해에 걸쳐 크게 수익을 낸다",
-      "tag": "단일 출처"
+      "who": "마크 저커버그 CEO · 뮤즈",
+      "en": "In just a month and a half, more than 10 million people in the U.S. and Canada have set up Muse personal agents.",
+      "ko": "한 달 반 만에 미국·캐나다 1,000만 명 넘게 설정 — 약 25%가 매일 사용",
+      "tag": "녹취록"
     },
     {
-      "who": "마크 저커버그 CEO · 리얼리티 랩스",
-      "en": "…with operating loss coming down to around $15 billion next year, and trending toward profitability from there.",
-      "ko": "내년 영업손실 약 150억 달러로 줄고 그 뒤 흑자 쪽으로",
-      "tag": "단일 출처"
+      "who": "마크 저커버그 CEO · 수익화",
+      "en": "I think that we are going to work on monetization somewhat sooner on this than our normal playbook",
+      "ko": "평소 방식보다 좀 더 일찍 수익화 — 거래 수수료·유료 구독",
+      "tag": "녹취록"
     },
     {
-      "who": "수전 리 CFO · 기업용 AI",
-      "en": "We really don't believe that traditional enterprise companies have this locked down.",
-      "ko": "기존 기업용 회사들이 시장을 장악했다고 보지 않는다 — 투자는 수요 확인 뒤 확대",
-      "tag": "단일 출처"
+      "who": "경영진 답변 · 2027년(JP모건 질문)",
+      "en": "we don't have anything more specific or quantitative to share until we get to the Q4 call",
+      "ko": "2027년 비용·설비투자 숫자는 4분기 콜(1월)에 — 계획은 아직 초기",
+      "tag": "녹취록"
     },
     {
-      "who": "마크 저커버그 CEO · 장기 베팅",
-      "en": "These are long-term bets… over time the business takes care of itself.",
-      "ko": "이건 장기 베팅이고, 계속하면 사업은 알아서 따라온다",
-      "tag": "단일 출처"
+      "who": "수전 리 CFO · C주",
+      "en": "We don't have any specific financing plans to announce at this time",
+      "ko": "C주로 당장 증자할 계획은 없다 — 자금원 다양화를 위한 틀",
+      "tag": "녹취록"
     }
   ],
   "watch": [
-    "<b>1월 4분기 실적</b> — 2027년 설비투자·비용 첫 숫자(예상 $193~205B)",
-    "<b>C주 1월 19일 효력</b> — 1월 말 거래 시작, 이후 증자·주식 보상 규모",
-    "<b>뮤즈 수익화</b> — 유료 구독·쇼핑 수수료·API 매출 첫 숫자",
-    "<b>소송</b> — 뉴멕시코 $25B 항소, 주 검찰총장 합의 법원 승인"
+    "<b>1월 4분기 콜</b> — 2027년 설비투자·비용 첫 숫자(예상 $193~205B)",
+    "<b>뮤즈 수익화</b> — 수수료·구독 시작, 10배 효율 개선 증거",
+    "<b>C주 1월 말 거래</b> — 이후 증자·주식 보상 규모",
+    "<b>소송</b> — 뉴멕시코 $25B 항소, 주 검찰총장 합의 승인"
   ],
   "take": "핵심 광고는 <u>AI 덕에 더 강해졌다</u>. 이제 시장은 뮤즈가 2027년 투자를 정당화할 매출을 낼지, 그 돈을 C주로 조달할지를 본다.",
-  "foot": "출처: 메타 SEC 8-K 실적 발표문·본문(숫자 대조 완료) · 7월 발표문·녹취록 · 어닝콜은 야후 파이낸스 실시간 블로그(비공식) · 컨센서스 블룸버그·마켓비트·잭스 · 뉴멕시코 판결 NBC·CBS·WP · 시간외 야후 파이낸스"
+  "foot": "출처: 메타 SEC 8-K 실적 발표문·본문(숫자 대조 완료) · 어닝콜 Gloomberb 전체 녹취록(비공식, 음성 인식) · 컨센서스 블룸버그·마켓비트·잭스 · 뉴멕시코 판결 NBC·CBS·WP · 시간외 야후 파이낸스",
+  "quote_t": "어닝콜 핵심 발언(녹취록)"
 }

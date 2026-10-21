@@ -1,0 +1,71 @@
+{
+ "meta-3q26": {
+  "url": "https://gloom.sh/stocks/meta/transcripts/q3-2026",
+  "kind": "html",
+  "title": "Meta Platforms Q3 2026 Earnings Call (비공식 음성 인식 녹취록)",
+  "when": "2026-10-21 16:30 ET · 10-22 05:30 KST"
+ },
+ "lrcx-1q27": {
+  "url": "https://www.marketbeat.com/earnings/reports/2026-10-21-lam-research-co-stock/",
+  "kind": "html",
+  "title": "Lam Research September 2026 Quarter Earnings Call (MarketBeat)",
+  "when": "2026-10-21 17:00 ET · 10-22 06:00 KST"
+ },
+ "ibm-3q26": {
+  "url": "https://www.marketbeat.com/earnings/reports/2026-10-21-international-business-machines-co-stock/",
+  "kind": "html",
+  "title": "IBM Q3 2026 Earnings Call (MarketBeat · 화자 이름은 IBM 진행 순서로 보완)",
+  "when": "2026-10-21 17:00 ET · 10-22 06:00 KST",
+  "speakers": {
+   "Speaker 1": "Olympia McNerney -- Global Head of Investor Relations, IBM",
+   "Speaker 2": "Arvind Krishna -- Chairman, President and CEO, IBM",
+   "Speaker 3": "Jim Kavanaugh -- SVP and CFO, IBM",
+   "Speaker 4": "Amit Daryanani -- Analyst, Evercore ISI",
+   "Speaker 5": "Wamsi Mohan -- Analyst, Bank of America",
+   "Speaker 6": "Ben Reitzes -- Analyst, Melius Research",
+   "Speaker 7": "Raimo Lenschow -- Analyst, Barclays",
+   "Speaker 8": "Brent Thill -- Analyst, Jefferies",
+   "Speaker 9": "Fatima Boolani -- Analyst, Citi",
+   "Speaker 10": "Brian Essex -- Analyst, J.P. Morgan",
+   "Speaker 11": "Matt Swanson -- Analyst, RBC Capital Markets"
+  }
+ },
+ "sap-3q26": {
+  "url": "https://gloom.sh/stocks/sap/transcripts/q3-2026",
+  "kind": "html",
+  "title": "SAP Q3 2026 Earnings Call (비공식 자동 받아쓰기)",
+  "when": "2026-10-21 23:00 CEST · 10-22 06:00 KST"
+ },
+ "tesla-3q26": {
+  "url": "https://www.marketbeat.com/earnings/reports/2026-10-21-tesla-inc-stock/",
+  "kind": "html",
+  "title": "Tesla Q3 2026 Earnings Call (MarketBeat AI 받아쓰기 · 화자 이름은 진행 순서로 보완, 애널리스트는 이름만)",
+  "when": "2026-10-21 17:30 ET · 10-22 06:30 KST",
+  "speakers": {
+   "Speaker 1": "Elon Musk -- CEO, Tesla",
+   "Speaker 2": "Vaibhav Taneja -- CFO, Tesla",
+   "Speaker 3": "Ashok Elluswamy -- AI, Tesla",
+   "Speaker 4": "Lars Moravy -- Vehicle Engineering, Tesla",
+   "Speaker 5": "Tom -- Analyst, RBC Capital Markets",
+   "Speaker 6": "Emmanuel -- Analyst, Wolfe Research",
+   "Speaker 7": "Andrew -- Analyst, Morgan Stanley",
+   "Speaker 8": "Edison -- Analyst, Deutsche Bank",
+   "Speaker 9": "Konstantinos -- Optimus Engineering, Tesla",
+   "Speaker 10": "Alex -- Analyst, Bank of America",
+   "Speaker 11": "Pierre -- Analyst, New Street Research",
+   "Speaker 12": "Colin -- Analyst, Oppenheimer",
+   "Operator": "Travis Axelrod -- Head of Investor Relations, Tesla"
+  }
+ },
+ "txn-3q26": {
+  "url": "https://gloom.sh/stocks/txn/transcripts/q3-2026",
+  "kind": "html",
+  "title": "Texas Instruments Q3 2026 Earnings Call (비공식 자동 받아쓰기)",
+  "when": "2026-10-21 15:30 CT · 10-22 05:30 KST",
+  "speakers": {
+   "Unidentified Management": "Julie Knecht (추정) -- CFO · 원 녹취록 표기 'Unidentified Management'",
+   "Chris Queso": "Chris Caso -- Analyst, Wolfe Research",
+   "Torres Zvamberg": "Tore Svanberg -- Analyst, Stifel"
+  }
+ }
+}

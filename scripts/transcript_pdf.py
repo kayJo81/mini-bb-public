@@ -59,28 +59,45 @@ def fetch(url):
 
 
 def extract(page_html):
-    """웹페이지 → [(kind, text)] — 본문은 <p> 글자가 가장 많은 덩어리"""
+    """웹페이지 → [(kind, text)] — 본문은 <p> 글자의 85% 이상을 담은 가장 안쪽 덩어리"""
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(page_html, "lxml")
-    for t in soup(["script", "style", "nav", "header", "footer", "aside", "form", "noscript", "figure"]):
+    for t in soup(["script", "style", "nav", "header", "footer", "aside", "noscript", "figure"]):   # form은 남김(ASP.NET 페이지는 본문 전체가 form 안)
         t.decompose()
-    best, score = None, 0
-    for el in soup.find_all(["article", "div", "section", "main"]):
-        n = sum(len(p.get_text(" ", strip=True)) for p in el.find_all("p", recursive=False))
-        if n > score:
-            best, score = el, n
-    if not best:
-        return []
+    plen = lambda el: sum(len(p.get_text(" ", strip=True)) for p in el.find_all("p"))
+    root = soup.body or soup
+    total = plen(root)
+    best = root
+    for el in root.find_all(["article", "div", "section", "main"]):
+        if plen(el) >= total * 0.85 and len(list(el.parents)) > len(list(best.parents)):
+            best = el
     out = []
-    for el in best.find_all(["h2", "h3", "p"], recursive=False):
+    is_spk = lambda el: el.name == "div" and "speaker" in " ".join(el.get("class") or [])
+    for el in best.find_all(["h2", "h3", "p", "div"]):
+        if is_spk(el):                                   # 마켓비트 형식: <div class="…speaker…">이름<div>직함</div></div>
+            for t in el.find_all("time"):
+                t.decompose()
+            sub = el.find(class_=re.compile("title|role"))
+            role = sub.get_text(" ", strip=True) if sub else ""
+            if sub:
+                sub.extract()
+            name = re.sub(r"\s+", " ", el.get_text(" ", strip=True))
+            if name:
+                out.append(("sp", f"{name} -- {role}" if role else name))
+            continue
+        if el.name == "div" or el.find(["p", "h2", "h3"]):
+            continue
         txt = re.sub(r"\s+", " ", el.get_text(" ", strip=True))
         if not txt:
             continue
-        strong = el.find(["strong", "b"])
+        first = el.find(["strong", "b", "span"])
+        bold = first is not None and (first.name in ("strong", "b") or re.search(r"bold|semibold", " ".join(first.get("class") or [])))
         if el.name in ("h2", "h3"):
             out.append(("h", txt))
-        elif strong and len(txt) < 120 and strong.get_text(strip=True) and txt.startswith(strong.get_text(strip=True)):
-            out.append(("sp", txt))          # 'Name -- Title' 화자 줄 (모틀리풀 형식)
+        elif bold and len(txt) < 120 and txt.startswith(first.get_text(strip=True)):
+            name = first.get_text(" ", strip=True)       # 화자 줄: 굵은 이름 + 직함 (모틀리풀·글룸 형식)
+            role = re.sub(r"^\s*(--|—|-|,)\s*", "", txt[len(name):].strip())
+            out.append(("sp", f"{name} -- {role}" if role else name))
         else:
             out.append(("p", txt))
     return out
@@ -154,6 +171,8 @@ def build(i, out):
         os.remove(tmp)
     else:
         items = extract(r.text)
+        ren = t.get("speakers") or {}      # 출처가 'Speaker 3'처럼만 적은 경우 이름으로 바꿈
+        items = [(k, ren.get(x.split(" -- ")[0], x) if k == "sp" else x) for k, x in items]
         words = sum(len(x[1].split()) for x in items)
         if words < 3000:     # 녹취록 전체가 아니면(차단·요약 페이지) 만들지 않음
             print(f"::warning::{i}: 녹취록 본문이 너무 짧음({words}단어) — 건너뜀")

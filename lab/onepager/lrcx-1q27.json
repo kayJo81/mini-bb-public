@@ -169,40 +169,40 @@
     "현금흐름 강함: 영업현금 $3.5B, 자사주 $1.0B 매입"
   ],
   "bad": [
-    "12월 가이던스 +5%로 성장 둔화 — '$9B+' 기대엔 미달",
-    "중국 비중 <b>35%</b>로 반등 — 11/10 수출 통제 재적용 위험",
-    "세율 11%→16.5% — EPS가 이익보다 덜 늘어"
+    "12월 가이던스 +5% — 공급 제약으로 일부 3월로 밀림",
+    "12월 중국 비중 '크게 하락' 예고, 수출 통제는 콜에서 언급 없음",
+    "세율 16.5%가 '그 이후에도' 유지 — EPS 증가 제약"
   ],
-  "quote_t": "회사 발언(슬라이드·보도자료)",
-  "quote_src": "실적 발표문·콜 슬라이드 원문 (콜 녹취록은 게시 후 대조 예정)",
+  "quote_t": "어닝콜 핵심 발언(녹취록)",
+  "quote_src": "마켓비트 전체 녹취록 (10/21 콜, 준비 발언·Q&A)",
   "quotes": [
     {
-      "who": "팀 아처 CEO · 실적 발표문",
-      "en": "…deliver record revenue, profit, and earnings per share in the September quarter",
-      "ko": "9월 분기 매출·이익·EPS 모두 사상 최대"
+      "who": "더그 베팅거 CFO · 12월 가이던스",
+      "en": "this revenue guide would have been a bit higher if not for some near-term supply chain constraints",
+      "ko": "공급망 제약만 없었으면 86억보다 조금 높았다 — 못 낸 물량은 3월 분기로"
     },
     {
-      "who": "콜 슬라이드 · WFE 전망",
-      "en": "WFE: CY26 mid-$150B range | Preliminary CY27 >$200B",
-      "ko": "2026년 1,500억 달러 중반, 2027년 잠정 2,000억 달러 초과"
+      "who": "팀 아처 CEO · WFE 전망",
+      "en": "Our preliminary 2027 WFE outlook is for more than $200 billion of spending, with percentage growth led by DRAM",
+      "ko": "2027년 WFE 2,000억 달러 초과, 성장률은 DRAM > 파운드리·로직 > 낸드"
     },
     {
-      "who": "콜 슬라이드 · 공급 제약",
-      "en": "Cleanroom space availability and supply chain constraints … limiting industry's ability to fully meet end demand",
-      "ko": "클린룸·부품 부족으로 업계가 수요를 다 못 채운다"
+      "who": "베팅거 CFO · 중국 (TD코웬 질문)",
+      "en": "I expect that in December we'll be meaningfully down, driven by the domestic customers in China.",
+      "ko": "12월엔 중국 현지 고객 감소로 중국 비중이 크게 낮아진다 (9월 35%)"
     },
     {
-      "who": "콜 슬라이드 · 투자 사이클",
-      "en": "Early stages of a multiyear investment cycle, with customer visibility extending through 2028",
-      "ko": "여러 해 투자 사이클의 초기, 고객 계획이 2028년까지 보인다"
+      "who": "베팅거 CFO · 제약 없는 수요 (번스타인)",
+      "en": "I am not going to put a number on what the unconstrained demand would be. It would be higher.",
+      "ko": "제약이 없다면 2027년 수요는 2,000억보다 더 높다 — 숫자는 1월 콜에서"
     }
   ],
   "watch": [
-    "<b>11/10 수출 통제</b> — '50% 자회사 규칙' 재적용 시 중국(35%) 영향",
-    "<b>공급 제약 해소 속도</b> — 클린룸·부품 부족이 풀리면 2027년 성장 가속",
+    "<b>11/10 수출 통제</b> — 콜에서 언급 없던 '50% 자회사 규칙' 재적용 여부",
+    "<b>공급 제약 해소</b> — 아처 \"곧 따라잡는다\", 밀린 물량이 3월에 나오는지",
     "<b>삼성전자(10/29)·SK하이닉스 실적</b> — 2027년 메모리 투자 숫자",
     "<b>낸드 26%</b> — SLC 증설이 업그레이드 뒤를 잇는지"
   ],
   "take": "숫자와 2027년 그림은 좋지만, 시장은 '90억+'를 기대했다. 다음 승부처는 <u>공급 제약이 풀리는 속도 vs 중국 수출 통제</u>.",
-  "foot": "출처: 램리서치 실적 발표문·콜 슬라이드(숫자 대조) · 예상치 인베스팅닷컴·잭스 · 시간외 퍼블릭닷컴"
+  "foot": "출처: 램리서치 실적 발표문·콜 슬라이드(숫자 대조) · 녹취록 마켓비트 · 예상치 인베스팅닷컴·잭스 · 시간외 퍼블릭닷컴"
 }
