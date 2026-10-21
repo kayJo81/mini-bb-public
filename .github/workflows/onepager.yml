@@ -9,6 +9,10 @@ on:
       ids:
         description: "보낼 원페이퍼 id (쉼표로 구분, 예: spacex-3q26,netflix-3q26). 비우면 전부"
         default: ""
+      transcripts:
+        description: "어닝콜 녹취록 PDF도 함께 (lab/onepager/transcripts.json 의 출처에서 받아 만듦)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -25,14 +29,14 @@ jobs:
       - name: Install
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk >/dev/null
-          pip install -q playwright
+          pip install -q playwright requests beautifulsoup4 lxml pypdf
           python -m playwright install --with-deps chromium >/dev/null
       - name: Build and mail
         env:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
-        run: python scripts/onepager.py --out reports_onepager --mail --ids "${{ inputs.ids }}"
+        run: python scripts/onepager.py --out reports_onepager --mail --ids "${{ inputs.ids }}" ${{ inputs.transcripts && '--transcripts' || '' }}
       - uses: actions/upload-artifact@v4
         with:
           name: onepager

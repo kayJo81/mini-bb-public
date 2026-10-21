@@ -264,29 +264,31 @@ def mail(made):
         return
     to = [x.strip() for x in (os.environ.get("MAIL_TO") or user).split(",") if x.strip()]
     msg = EmailMessage()
-    msg["Subject"] = "[미니 블벅 랩] 실적 원페이퍼 — " + " · ".join(d["name"] for d, _ in made)
+    tr = {base: base + "_녹취록.pdf" for _, base in made if os.path.exists(base + "_녹취록.pdf")}   # transcript_pdf.py 결과
+    msg["Subject"] = ("[미니 블벅 랩] 어닝콜 원페이퍼·녹취록 — " if tr else "[미니 블벅 랩] 실적 원페이퍼 — ") + " · ".join(d["name"] for d, _ in made)
     msg["From"], msg["To"] = user, ", ".join(to)
     msg.set_content("실적 원페이퍼\n\n" + "\n".join(f"· {d['name']}: {d['plain']}" for d, _ in made)
-                    + "\n\n첨부: 원페이퍼 PDF (A4 한 장)\n심층 뉴스 전문: https://mini-bblab.pages.dev/deep")
+                    + f"\n\n첨부: 원페이퍼 PDF (A4 한 장){' · 어닝콜 녹취록 PDF ' + str(len(tr)) + '개' if tr else ''}\n심층 뉴스 전문: https://mini-bblab.pages.dev/deep")
     body = ['<div style="font-family:Apple SD Gothic Neo,Malgun Gothic,sans-serif;max-width:760px;margin:0 auto;color:#111827">',
             '<h2 style="font-size:18px;margin:8px 0">📄 실적 원페이퍼</h2>']
     for n, (d, _) in enumerate(made):
         body.append(f'<p style="font-size:14px;margin:14px 0 6px"><b>{e(d["name"])}</b> — {e(d["plain"])}</p>'
                     f'<a href="https://mini-bblab.pages.dev/deep?id={e(d["article"])}"><img src="cid:op{n}" alt="{e(d["name"])} 원페이퍼" '
                     f'style="width:100%;max-width:760px;border:1px solid #e5e7eb;border-radius:8px"></a>')
-    body.append('<p style="font-size:12px;color:#6b7280">A4 PDF 첨부 · 이미지를 누르면 심층 뉴스 전문 · 투자 권유 아님</p></div>')
+    body.append(f'<p style="font-size:12px;color:#6b7280">A4 원페이퍼 PDF{" · 어닝콜 녹취록 PDF(한국어 요약 표지 + 영어 원문)" if tr else ""} 첨부 · 이미지를 누르면 심층 뉴스 전문 · 투자 권유 아님</p></div>')
     msg.add_alternative("".join(body), subtype="html")
     htmlpart = msg.get_payload()[1]
     for n, (d, base) in enumerate(made):
         with open(base + ".png", "rb") as fh:
             htmlpart.add_related(fh.read(), maintype="image", subtype="png", cid=f"<op{n}>", filename=os.path.basename(base) + ".png")
     for d, base in made:
-        with open(base + ".pdf", "rb") as fh:
-            msg.add_attachment(fh.read(), maintype="application", subtype="pdf", filename=os.path.basename(base) + ".pdf")
+        for f in [base + ".pdf"] + ([tr[base]] if base in tr else []):
+            with open(f, "rb") as fh:
+                msg.add_attachment(fh.read(), maintype="application", subtype="pdf", filename=os.path.basename(f))
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=60) as s:
         s.login(user, pw)
         s.send_message(msg)
-    print(f"[mail] 원페이퍼 {len(made)}개 → {', '.join(to)}")
+    print(f"[mail] 원페이퍼 {len(made)}개·녹취록 {len(tr)}개 → {', '.join(to)}")
 
 
 if __name__ == "__main__":
@@ -294,8 +296,16 @@ if __name__ == "__main__":
     ap.add_argument("--ids", default="", help="쉼표로 구분 (비우면 lab/onepager/*.json 전부)")
     ap.add_argument("--out", default="reports_onepager")
     ap.add_argument("--mail", action="store_true")
+    ap.add_argument("--transcripts", action="store_true", help="transcripts.json 의 녹취록 PDF도 만들어 함께 첨부")
     a = ap.parse_args()
     ids = [x for x in a.ids.split(",") if x] or sorted(os.path.basename(f)[:-5] for f in glob.glob(os.path.join(SRC, "*.json")))
     made = render(ids, a.out)
+    if a.transcripts:
+        from transcript_pdf import build as build_transcript
+        for i in ids:
+            try:
+                build_transcript(i, a.out)
+            except Exception as ex:
+                print(f"::warning::{i}: 녹취록 PDF 실패 — {ex}")
     if a.mail and made:
         mail(made)
