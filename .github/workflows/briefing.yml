@@ -188,7 +188,7 @@ jobs:
         if: ${{ inputs.report }}
         run: python scripts/daily_pdf.py public/briefings/live.json --out reports
 
-      # ⚡ 실시간 속보 (FinancialJuice·월스트리트견문·시나재경) 직전 24시간 — 터미널 속보 화면과 같은 자료(이 실행의 briefings/flash.json)
+      # ⚡ 실시간 속보 (FinancialJuice·월스트리트견문·시나재경) 직전 12시간 — 터미널 속보 화면과 같은 자료(이 실행의 briefings/flash.json)
       - name: Build flash PDF
         if: ${{ inputs.report }}
         continue-on-error: true

@@ -1,5 +1,5 @@
 """
-⚡ 실시간 속보(FinancialJuice·월스트리트견문·시나재경) 직전 24시간 → PDF (미국 장 마감 30분 뒤 일일 메일 첨부용)
+⚡ 실시간 속보(FinancialJuice·월스트리트견문·시나재경) 직전 12시간 → PDF (미국 장 마감 30분 뒤 일일 메일 첨부용)
 
   python scripts/flash_pdf.py public/briefings/flash.json --out reports --cache .cache/ko.json
 
@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from daily_pdf import KST, render_pdfs  # noqa: E402
 from wscn_pdf import translate  # noqa: E402
 
-HOURS = 24
+HOURS = 12
 SRC = {"fj": ("FinancialJuice", "#1d4ed8"), "wscn": ("월스트리트견문", "#b91c1c"), "sina": ("시나재경", "#c2410c")}
 
 CSS = """

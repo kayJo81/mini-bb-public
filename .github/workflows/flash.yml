@@ -1,0 +1,48 @@
+# ⚡ 실시간 속보 PDF(직전 12시간)만 바로 만들어 메일 — 수동 실행용
+#  · 매일 자동으로는 briefing.yml 일일 PDF 메일에 함께 들어간다
+#  · 자료: 터미널이 15분마다 올리는 briefings/flash.json(번역 포함)을 그대로 받아 씀
+# 필요한 저장소 Secrets: GMAIL_USER, GMAIL_APP_PASSWORD, 선택 MAIL_TO
+name: flash
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk >/dev/null
+          pip install -q -r requirements.txt playwright
+          python -m playwright install --with-deps chromium >/dev/null
+      - uses: actions/cache/restore@v4
+        with:
+          path: .cache/ko.json
+          key: ko-${{ github.run_id }}
+          restore-keys: ko-
+      - name: Build flash PDF
+        run: |
+          curl -sSf https://mini-bbterminal.pages.dev/briefings/flash.json -o flash.json
+          python scripts/flash_pdf.py flash.json --out reports_flash --cache .cache/ko.json
+          echo "미니 블벅터 · ⚡ 실시간 속보 직전 12시간 · $(TZ=Asia/Seoul date '+%m/%d %H:%M') KST" > reports_flash/summary.txt
+          echo "[미니 블벅터] ⚡ 실시간 속보 12시간 PDF ($(TZ=Asia/Seoul date '+%m/%d %H:%M') KST)" > reports_flash/subject.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flash-pdf
+          path: reports_flash/*.pdf
+          retention-days: 7
+      - name: Send mail
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+        run: python scripts/send_mail.py reports_flash
