@@ -40,5 +40,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: onepager
-          path: reports_onepager/*
+          # 녹취록 PDF는 저작권이 원 출처에 있어 공개 저장소의 실행 결과에 올리지 않음(메일로만)
+          path: |
+            reports_onepager/*
+            !reports_onepager/*_녹취록.pdf
           retention-days: 14
