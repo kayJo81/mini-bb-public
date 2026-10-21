@@ -17,40 +17,43 @@
   "2026-10-15",
   "2026-10-16",
   "2026-10-19",
-  "2026-10-20"
+  "2026-10-20",
+  "2026-10-21"
  ],
  "seen": [],
  "pending": [
   {
-   "sym": "GM",
+   "sym": "ISRG",
    "dir": "롱",
    "b": "pos_dn",
    "verdict": "근거 약함",
-   "signal_date": "2026-10-20",
+   "signal_date": "2026-10-21",
    "edge": 0.53,
-   "z": 10.66,
-   "head": "Elice Plunges in Trading Debut; General Motors Falls on Forecast | Stock Movers"
-  }
- ],
- "open": [
+   "z": 13.39,
+   "head": "Intuitive Surgical's Q3 Earnings Beat Estimates on Strong System Sales"
+  },
   {
-   "sym": "ASML",
+   "sym": "SMCI",
    "dir": "롱",
    "b": "pos_up",
    "verdict": "근거 약함",
-   "signal_date": "2026-10-14",
-   "edge": 0.22,
-   "z": 7.03,
-   "head": "Dow Jones Futures Rise, Techs Fall With ASML, BofA, Dell, HPE Early Movers; CPI Inflation Due",
-   "entry_date": "2026-10-15",
-   "entry": 1615.765,
-   "bench_entry": 718.54,
-   "size": 5000.0,
-   "now": 1630.84,
-   "ret": 0.73,
-   "bench_ret": -0.33,
-   "asof": "2026-10-20"
+   "signal_date": "2026-10-21",
+   "edge": 0.05,
+   "z": 8.14,
+   "head": "Super Micro Surges 12% as Preliminary Revenue Tops Guidance Range; Dell Jumps 7%, Hewlett Packard Enterprise Climbs 5%"
   },
+  {
+   "sym": "NVDA",
+   "dir": "롱",
+   "b": "pos_up",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-21",
+   "edge": 0.05,
+   "z": 2.19,
+   "head": "CrowdStrike Gains 3.6% on Expanded NVIDIA AI Agent Security Deal: “Setting the Standard”"
+  }
+ ],
+ "open": [
   {
    "sym": "MBLY",
    "dir": "롱",
@@ -64,10 +67,10 @@
    "entry": 7.345,
    "bench_entry": 719.615,
    "size": 5000.0,
-   "now": 7.3,
-   "ret": -0.81,
-   "bench_ret": -0.48,
-   "asof": "2026-10-20"
+   "now": 7.02,
+   "ret": -4.62,
+   "bench_ret": 0.58,
+   "asof": "2026-10-21"
   },
   {
    "sym": "TSLA",
@@ -82,10 +85,10 @@
    "entry": 357.485,
    "bench_entry": 719.615,
    "size": 5000.0,
-   "now": 373.71,
-   "ret": 4.34,
-   "bench_ret": -0.48,
-   "asof": "2026-10-20"
+   "now": 386.47,
+   "ret": 7.91,
+   "bench_ret": 0.58,
+   "asof": "2026-10-21"
   },
   {
    "sym": "CRWV",
@@ -100,10 +103,28 @@
    "entry": 59.21,
    "bench_entry": 715.25,
    "size": 5000.0,
-   "now": 62.13,
-   "ret": 4.73,
-   "bench_ret": 0.13,
-   "asof": "2026-10-20"
+   "now": 61.82,
+   "ret": 4.21,
+   "bench_ret": 1.19,
+   "asof": "2026-10-21"
+  },
+  {
+   "sym": "GM",
+   "dir": "롱",
+   "b": "pos_dn",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-20",
+   "edge": 0.53,
+   "z": 10.66,
+   "head": "Elice Plunges in Trading Debut; General Motors Falls on Forecast | Stock Movers",
+   "entry_date": "2026-10-21",
+   "entry": 76.71,
+   "bench_entry": 722.22,
+   "size": 5000.0,
+   "now": 76.11,
+   "ret": -0.98,
+   "bench_ret": 0.21,
+   "asof": "2026-10-21"
   }
  ],
  "closed": [
@@ -190,9 +211,30 @@
    "exit_date": "2026-10-20",
    "exit": 27.48,
    "pnl": -639.77
+  },
+  {
+   "sym": "ASML",
+   "dir": "롱",
+   "b": "pos_up",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-14",
+   "edge": 0.22,
+   "z": 7.03,
+   "head": "Dow Jones Futures Rise, Techs Fall With ASML, BofA, Dell, HPE Early Movers; CPI Inflation Due",
+   "entry_date": "2026-10-15",
+   "entry": 1615.765,
+   "bench_entry": 718.54,
+   "size": 5000.0,
+   "now": 1630.84,
+   "ret": 3.57,
+   "bench_ret": 0.73,
+   "asof": "2026-10-20",
+   "exit_date": "2026-10-21",
+   "exit": 1676.6899,
+   "pnl": 178.53
   }
  ],
- "cash": 77019.13045245342,
+ "cash": 77197.66312892556,
  "curve": [
   [
    "2026-10-09",
@@ -233,6 +275,11 @@
    "2026-10-20",
    97468.66,
    99213.22
+  ],
+  [
+   "2026-10-21",
+   97523.12,
+   99434.8
   ]
  ],
  "picks_log": [
@@ -291,6 +338,15 @@
     "GM"
    ],
    "pool": 1
+  },
+  {
+   "date": "2026-10-21",
+   "chosen": [
+    "ISRG",
+    "SMCI",
+    "NVDA"
+   ],
+   "pool": 5
   }
  ],
  "status": "진행 중"
