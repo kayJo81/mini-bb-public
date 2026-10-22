@@ -196,7 +196,7 @@ def news(D):
         items = []
         if S:
             dr = ", ".join(d["name"] for d in S.get("drivers", [])[:3])
-            items.append({"h": f"12시간 나스닥 선물 {pct(S['nq_pct'])} — 원인 유형: {dr or '뚜렷하지 않음'}",
+            items.append({"h": f"나스닥 선물 {pct(S['nq_pct'])} — 원인 유형: {dr or '뚜렷하지 않음'}",
                           "m": " · ".join(f"{l['name']} {pct(l['pct'], 1)}" for l in S.get("leaders", [])[:5])})
         Dy = mv.get("day") or {}
         hm = lambda t: datetime.fromtimestamp(t, KST).strftime("%H:%M")
