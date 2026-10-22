@@ -577,22 +577,26 @@ function render(){
 }
 
 // ── 헤드라인 한국어 번역: 화면에 보이는 카드만 20개씩 /api/translate 로 요청 ──
-const tr=new Map();            // 영문 → 한국어 (null = 번역 실패)
+const tr=new Map();            // 영문 → 한국어
+const trFail=new Map();        // 번역 실패한 문장 → 시각 (2분 뒤 다시 요청)
 const pending=new Set();
-let trTimer=null,trOff=false;  // trOff: 번역 기능을 쓸 수 없는 환경(서버 모드·한도 초과)
+let trTimer=null,trOff=false,trWait=0;  // trOff: 번역 API가 없는 환경(서버 모드), trWait: 오류 뒤 잠시 쉼
+const needKo=h=>st.ko&&!tr.has(h)&&Date.now()-(trFail.get(h)||0)>120e3;
 const io=('IntersectionObserver' in window)?new IntersectionObserver(es=>{
-  for(const e of es){if(!e.isIntersecting)continue;io.unobserve(e.target);const h=e.target.dataset.h;if(!tr.has(h))pending.add(h);}
+  for(const e of es){if(!e.isIntersecting)continue;io.unobserve(e.target);const h=e.target.dataset.h;if(needKo(h))pending.add(h);}
   schedule();
 },{rootMargin:'600px 0px'}):null;
-function schedule(){if(trTimer||trOff||!st.ko||!pending.size)return;trTimer=setTimeout(flush,120);}
+function schedule(){if(trTimer||trOff||!st.ko||!pending.size)return;trTimer=setTimeout(flush,Math.max(120,trWait-Date.now()));}
 async function flush(){
   trTimer=null;const batch=[...pending].slice(0,20);batch.forEach(h=>pending.delete(h));
   try{
     const r=await fetch('api/translate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({texts:batch})});
     const v=r.ok?await r.json():{};
-    if(!Array.isArray(v.ko)){trOff=true;document.getElementById('koBtn').title='번역을 사용할 수 없습니다';return;}
-    batch.forEach((h,i)=>{tr.set(h,v.ko[i]||null);document.querySelectorAll(`.card[data-h="${CSS.escape(h)}"]`).forEach(applyKo);});
-  }catch(e){batch.forEach(h=>pending.add(h));}
+    if(!r.ok&&r.status===404){trOff=true;document.getElementById('koBtn').title='번역을 사용할 수 없습니다';return;}
+    if(!Array.isArray(v.ko))throw new Error('translate');
+    batch.forEach((h,i)=>{if(v.ko[i]){tr.set(h,v.ko[i]);trFail.delete(h);}else trFail.set(h,Date.now());
+      document.querySelectorAll(`.card[data-h="${CSS.escape(h)}"]`).forEach(applyKo);});
+  }catch(e){batch.forEach(h=>pending.add(h));trWait=Date.now()+60e3;}   // 일시 오류: 1분 뒤 다시
   schedule();
 }
 function applyKo(c){
@@ -603,7 +607,7 @@ function applyKo(c){
   if(sm&&sm.dataset.ko)sm.textContent=st.ko?sm.dataset.ko:sm.dataset.orig;
 }
 function watchCards(){
-  document.querySelectorAll('#list .card').forEach(c=>{applyKo(c);if(st.ko&&!tr.has(c.dataset.h)){if(io)io.observe(c);else pending.add(c.dataset.h);}});
+  document.querySelectorAll('#list .card').forEach(c=>{applyKo(c);if(needKo(c.dataset.h)){if(io)io.observe(c);else pending.add(c.dataset.h);}});
   schedule();
 }
 
@@ -772,7 +776,7 @@ async function loadFlash(){
   for(const x of [...((flBuild||{}).items||[]),...live.flat()]){
     const k=x.s+'|'+x.h,o=m.get(k);
     m.set(k,{h:x.h,s:x.s,u:x.u||(o&&o.u)||'',ts:o?Math.min(o.ts,x.ts):x.ts,imp:!!(x.imp||(o&&o.imp)),tag:x.tag||(o&&o.tag)||''});
-    if(x.ko&&!tr.get(x.h))tr.set(x.h,x.ko);
+    if(x.ko&&!tr.get(x.h)){tr.set(x.h,x.ko);trFail.delete(x.h);}
   }
   if(!m.size)return;
   FL=[...m.values()].sort((p,q)=>q.ts-p.ts);
@@ -800,7 +804,7 @@ function renderFlash(){
       `<a class="hl" href="${safeUrl(x.u)}" target="_blank" rel="noopener">${esc(x.h)}</a><div class="orig"></div></div></div>`;
   }
   document.getElementById('fjList').innerHTML=h||'<div class="empty">조건에 맞는 속보가 없습니다</div>';
-  document.querySelectorAll('#fjView .card').forEach(c=>{applyKo(c);if(st.ko&&!tr.has(c.dataset.h)){if(io)io.observe(c);else pending.add(c.dataset.h);}});
+  document.querySelectorAll('#fjView .card').forEach(c=>{applyKo(c);if(needKo(c.dataset.h)){if(io)io.observe(c);else pending.add(c.dataset.h);}});
   schedule();
   if(FL.length){fjSeen=FL[0].ts;try{localStorage.setItem('mbb_fj_seen',fjSeen);}catch(e){}}
   fjBadge();
