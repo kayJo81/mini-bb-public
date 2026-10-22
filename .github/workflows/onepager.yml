@@ -13,6 +13,10 @@ on:
         description: "어닝콜 녹취록 PDF도 함께 (lab/onepager/transcripts.json 의 출처에서 받아 만듦)"
         type: boolean
         default: false
+      callmap:
+        description: "원페이퍼 대신 어닝콜 지도(lab/onepager/<id>-call.json) + 녹취록 한국어 번역 PDF"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -36,12 +40,17 @@ jobs:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
-        run: python scripts/onepager.py --out reports_onepager --mail --ids "${{ inputs.ids }}" ${{ inputs.transcripts && '--transcripts' || '' }}
+        run: |
+          if [ "${{ inputs.callmap }}" = "true" ]; then
+            python scripts/callmap.py --out reports_onepager --mail --ids "${{ inputs.ids }}"
+          else
+            python scripts/onepager.py --out reports_onepager --mail --ids "${{ inputs.ids }}" ${{ inputs.transcripts && '--transcripts' || '' }}
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: onepager
           # 녹취록 PDF는 저작권이 원 출처에 있어 공개 저장소의 실행 결과에 올리지 않음(메일로만)
           path: |
             reports_onepager/*
-            !reports_onepager/*_녹취록.pdf
+            !reports_onepager/*_녹취록*.pdf
           retention-days: 14

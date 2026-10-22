@@ -107,6 +107,7 @@ def translate(texts, cache):
 def fallback(texts, cache, limit=FALLBACK_MAX):
     """구글 번역이 막히면(429 등) 터미널의 /api/translate(Workers AI)로 앞쪽(보통 최신) 일부만 대신 번역"""
     ok = 0
+    texts = [t for t in texts if len(t) <= 300]   # 대체 번역 API는 300자에서 자름 — 긴 문단(녹취록 등)은 보내지 않음
     for i in range(0, min(len(texts), limit), 25):
         b = texts[i:i + 25]
         try:

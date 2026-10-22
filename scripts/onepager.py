@@ -257,25 +257,27 @@ def render(ids, out):
     return made
 
 
-def mail(made):
+def mail(made, tr=None, title=None, tr_label="어닝콜 녹취록 PDF"):
+    """made=[(원페이퍼 dict, 이미지·PDF 경로 base)], tr={base: 함께 붙일 PDF} — 없으면 <base>_녹취록.pdf 를 찾음"""
     user, pw = os.environ.get("GMAIL_USER", ""), os.environ.get("GMAIL_APP_PASSWORD", "").replace(" ", "")
     if not user or not pw:
         print("::warning::GMAIL_USER / GMAIL_APP_PASSWORD 비밀값이 없어 메일을 보내지 않습니다")
         return
     to = [x.strip() for x in (os.environ.get("MAIL_TO") or user).split(",") if x.strip()]
     msg = EmailMessage()
-    tr = {base: base + "_녹취록.pdf" for _, base in made if os.path.exists(base + "_녹취록.pdf")}   # transcript_pdf.py 결과
-    msg["Subject"] = ("[미니 블벅 랩] 어닝콜 원페이퍼·녹취록 — " if tr else "[미니 블벅 랩] 실적 원페이퍼 — ") + " · ".join(d["name"] for d, _ in made)
+    if tr is None:
+        tr = {base: base + "_녹취록.pdf" for _, base in made if os.path.exists(base + "_녹취록.pdf")}   # transcript_pdf.py 결과
+    msg["Subject"] = (title or ("[미니 블벅 랩] 어닝콜 원페이퍼·녹취록 — " if tr else "[미니 블벅 랩] 실적 원페이퍼 — ")) + " · ".join(d["name"] for d, _ in made)
     msg["From"], msg["To"] = user, ", ".join(to)
     msg.set_content("실적 원페이퍼\n\n" + "\n".join(f"· {d['name']}: {d['plain']}" for d, _ in made)
-                    + f"\n\n첨부: 원페이퍼 PDF (A4 한 장){' · 어닝콜 녹취록 PDF ' + str(len(tr)) + '개' if tr else ''}\n심층 뉴스 전문: https://mini-bblab.pages.dev/deep")
+                    + f"\n\n첨부: 원페이퍼 PDF (A4 한 장){' · ' + tr_label + ' ' + str(len(tr)) + '개' if tr else ''}\n심층 뉴스 전문: https://mini-bblab.pages.dev/deep")
     body = ['<div style="font-family:Apple SD Gothic Neo,Malgun Gothic,sans-serif;max-width:760px;margin:0 auto;color:#111827">',
             '<h2 style="font-size:18px;margin:8px 0">📄 실적 원페이퍼</h2>']
     for n, (d, _) in enumerate(made):
         body.append(f'<p style="font-size:14px;margin:14px 0 6px"><b>{e(d["name"])}</b> — {e(d["plain"])}</p>'
                     f'<a href="https://mini-bblab.pages.dev/deep?id={e(d["article"])}"><img src="cid:op{n}" alt="{e(d["name"])} 원페이퍼" '
                     f'style="width:100%;max-width:760px;border:1px solid #e5e7eb;border-radius:8px"></a>')
-    body.append(f'<p style="font-size:12px;color:#6b7280">A4 원페이퍼 PDF{" · 어닝콜 녹취록 PDF(한국어 요약 표지 + 영어 원문)" if tr else ""} 첨부 · 이미지를 누르면 심층 뉴스 전문 · 투자 권유 아님</p></div>')
+    body.append(f'<p style="font-size:12px;color:#6b7280">A4 원페이퍼 PDF{" · " + tr_label if tr else ""} 첨부 · 이미지를 누르면 심층 뉴스 전문 · 투자 권유 아님</p></div>')
     msg.add_alternative("".join(body), subtype="html")
     htmlpart = msg.get_payload()[1]
     for n, (d, base) in enumerate(made):

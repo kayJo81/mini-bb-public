@@ -42,6 +42,7 @@ ul{margin:0;padding-left:5mm}li{margin:.8mm 0}
 .sp{font-weight:800;color:var(--acc);margin:3.2mm 0 .6mm;page-break-after:avoid}
 .sp span{color:#6b7280;font-weight:600}
 .p{margin:0 0 1.6mm;text-align:justify}
+.en{margin:-1mm 0 2.2mm;font-size:7.6pt;color:#9ca3af;line-height:1.4;text-align:justify}
 .note{font-size:7.6pt;color:#9ca3af;margin-top:4mm;border-top:1px solid #e5e7eb;padding-top:2mm}
 """
 
@@ -106,7 +107,10 @@ def extract(page_html):
 SPEAKER = re.compile(r"^([A-Z][\w.'\- ]{2,60}?)(?:\s*(?:--|—|,)\s*([^:]{2,90}))?:\s+(.+)$")
 
 
-def body_html(items):
+def body_html(items, ko=None):
+    """ko: {영어 문단: 한국어 번역} — 있으면 번역을 본문으로, 원문은 아래 작게"""
+    ko = ko or {}
+    para = lambda txt: (f'<p class="p">{e(ko[txt])}</p><p class="en">{e(txt)}</p>' if ko.get(txt) else f'<p class="p">{e(txt)}</p>')
     rows = []
     for kind, txt in items:
         if kind == "h":
@@ -117,9 +121,9 @@ def body_html(items):
         else:
             m = SPEAKER.match(txt)
             if m and len(m.group(1).split()) <= 5:   # 'Name, Title: 발언' 형식이면 화자와 발언을 나눔
-                rows.append(f'<div class="sp">{e(m.group(1))} <span>{e(m.group(2) or "")}</span></div><p class="p">{e(m.group(3))}</p>')
+                rows.append(f'<div class="sp">{e(m.group(1))} <span>{e(m.group(2) or "")}</span></div>' + para(m.group(3)))
             else:
-                rows.append(f'<p class="p">{e(txt)}</p>')
+                rows.append(para(txt))
     return "".join(rows)
 
 
@@ -148,7 +152,7 @@ def render(doc, path):
         b.close()
 
 
-def build(i, out):
+def build(i, out, ko=False):
     d, t = load(i)
     if not t:
         print(f"[transcript] {i}: transcripts.json 에 없음 — 건너뜀")
@@ -156,7 +160,7 @@ def build(i, out):
     th = d["theme"]
     head = (f'<!doctype html><html lang="ko"><head><meta charset="utf-8"><style>:root{{--acc:{th["acc"]};--acc2:{th["acc2"]};'
             f'--soft:{th["soft"]};--hero:{th["hero"]}}}{CSS}</style></head><body>')
-    path = os.path.join(out, d["file"] + "_녹취록.pdf")
+    path = os.path.join(out, d["file"] + ("_녹취록_한글.pdf" if ko else "_녹취록.pdf"))
     r = fetch(t["url"])
     if t.get("kind") == "pdf" or "pdf" in r.headers.get("content-type", ""):
         from pypdf import PdfReader, PdfWriter
@@ -177,19 +181,37 @@ def build(i, out):
         if words < 3000:     # 녹취록 전체가 아니면(차단·요약 페이지) 만들지 않음
             print(f"::warning::{i}: 녹취록 본문이 너무 짧음({words}단어) — 건너뜀")
             return None
-        render(head + cover_html(d, t) + f'<div class="tr"><h2>녹취록 원문 — {e(t.get("title", ""))}</h2>{body_html(items)}</div></body></html>', path)
+        tr = translate_all([x for k, x in items if k == "p"]) if ko else None
+        h2 = f'녹취록 한국어 번역 — {e(t.get("title", ""))}' if ko else f'녹취록 원문 — {e(t.get("title", ""))}'
+        note = ('<p class="en">기계 번역(구글 번역 기반) · 문단마다 아래 회색 글씨가 영어 원문 · 번역이 어색하거나 숫자가 의심되면 원문 기준</p>' if ko else "")
+        render(head + cover_html(d, t) + f'<div class="tr"><h2>{h2}</h2>{note}{body_html(items, tr)}</div></body></html>', path)
     print(f"[transcript] {path} ({os.path.getsize(path) // 1024} KB)")
     return path
+
+
+def translate_all(texts):
+    """문단별 한국어 번역 {원문: 번역} — 구글 번역(번역 캐시 .cache/ko.json 공유), 실패한 문단은 원문만"""
+    from wscn_pdf import translate
+    cache_path = os.path.join(ROOT, ".cache", "ko.json")
+    try:
+        cache = json.load(open(cache_path, encoding="utf-8"))
+    except Exception:
+        cache = {}
+    translate(texts, cache)
+    done = {t: cache[t] for t in texts if cache.get(t)}
+    print(f"[transcript] 번역 {len(done)}/{len(texts)} 문단")
+    return done
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--ids", required=True)
     ap.add_argument("--out", default="reports_onepager")
+    ap.add_argument("--ko", action="store_true", help="한국어 번역본(번역 + 원문 작게)")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     for i in [x for x in a.ids.split(",") if x]:
         try:
-            build(i, a.out)
+            build(i, a.out, ko=a.ko)
         except Exception as ex:
             print(f"::warning::{i}: 녹취록 PDF 실패 — {ex}")
