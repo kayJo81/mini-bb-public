@@ -72,6 +72,17 @@ a{color:inherit}
 .dy-at .tr i{position:absolute;top:0;bottom:0;border-radius:2px}.dy-at .tr i.dn{right:50%;background:#ef4444}.dy-at .tr i.up{left:50%;background:#22c55e}
 .dy-sl{display:grid;gap:4px;margin-top:3px}.dy-r{border-left:2px solid var(--bd);padding-left:6px}
 .dy-h{font-size:11.5px;line-height:1.4;margin-top:1px}.dy-h .tm{font-family:var(--mono);font-size:10px;color:var(--sub)}.dy-h a{color:#111827;text-decoration:none}
+.wy-big{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;font-family:var(--mono);font-size:19px;font-weight:800}
+.wy-big small{font-family:inherit;font-size:11px;font-weight:600;color:var(--sub)}
+.wy-q{font-size:13px;font-weight:800;margin:8px 0 3px}.wy-q.sm{font-size:11.5px;color:#374151;margin-top:6px}
+.wy-l{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.wy-i{border-left:3px solid #ef4444;padding:2px 0 2px 8px}.wy-i.wy-up{border-left-color:#22c55e}
+.wy-h{display:flex;flex-wrap:wrap;align-items:center;gap:3px 8px}.wy-h b{font-size:13px}
+.wy-pp{font-family:var(--mono);font-size:12px;font-weight:800}.wy-when{font-size:10.5px;color:var(--sub)}
+.wy-when .dy-no{width:13px;height:13px;font-size:8.5px;margin:0 0 0 2px}
+.wy-n{font-size:12px;line-height:1.45;margin-top:1px}.wy-n a{color:#111827;text-decoration:none}
+.wy-l.sm .wy-h b{font-size:12px}.wy-l.sm .wy-n{font-size:11.5px}
+.wy-d{margin-top:6px}.wy-d summary{font-size:11.5px;font-weight:700;color:#374151;cursor:pointer}
 .dy-ph{font-size:10px;padding:1px 6px;border-radius:5px;background:#f3f4f6;color:#374151;font-weight:700}
 .dy-more{font-size:10.5px;margin-left:auto;color:#2563eb;text-decoration:none}
 .mv-tl .sn{font-size:9px;font-weight:800}
@@ -488,26 +499,26 @@ function renderMoves(){
   const mvs=ms=>(ms||[]).length?`<div class="dy-w">지수를 끈 종목: ${ms.map(x=>`${esc(x.name)} ${x.pct>0?'+':''}${x.pct}% (${x.pp>0?'+':''}${x.pp.toFixed(2)}%p)`).join(' · ')}</div>`:'';
   const day=()=>{
     if(!D)return timeline(m.timeline);
-    const sg=D.nq_pct<0?'하락':'상승',t=D.trigger;
-    const ndx=(m.indices||[]).find(i=>i.name==='나스닥100'),W0=(m.window||{}).start;
-    const head=`<div class="mv-row"><b style="font-size:12px">당일 방향${W0?` <small style="font-weight:500;color:var(--sub)">전일 종가(${hm(W0)}) 이후</small>`:''}</b>${ndx?`<span class="mv-chg ${cls(ndx.change_pct)}">나스닥100 지수 ${pct(ndx.change_pct)}</span>`:''}<span class="mv-chg ${cls(D.nq_pct)}">나스닥 선물 ${pct(D.nq_pct)}</span>${S?`<span class="mv-chg ${cls(S.es_pct)}">S&amp;P 선물 ${pct(S.es_pct)}</span>`:''}
-      ${ndx&&Math.abs(ndx.change_pct-D.nq_pct)>=0.15?`<span class="mv-note">지수와 선물 차이 ${Math.abs(ndx.change_pct-D.nq_pct).toFixed(2)}%p = 선물 시세 약 10분 지연·선물 기준가(16:00) 차이</span>`:''}
-      ${D.settle?`<span class="mv-note">방향 확정 ${hm(D.settle)} — 이후 시작 수준으로 못 돌아옴</span>`:Math.abs(D.nq_pct)<0.2?'<span class="mv-note">뚜렷한 방향 없음(보합)</span>':''}</div>`;
-    const trig=t?`<div class="dy-trig ${D.nq_pct<0?'dn':'up'}"><div class="dy-k">🎯 오늘 방향을 정한 계기</div>
-      <div class="mv-row"><span class="mv-time">${segNo.get(t.start)?`<i class="dy-no ${t.nq_pct<0?'dn':'up'}">${segNo.get(t.start)}</i>`:''}${hd(t.start)}–${hm(t.end)}</span><span class="dy-ph">${esc(t.phase||'')}</span><b class="dy-c">${esc(t.cause)}</b><span class="mv-chg ${cls(t.nq_pct)}">나스닥 선물 ${pct(t.nq_pct)}</span></div>
-      <div class="dy-s">${sg} 구간 합 ${pct(t.gross)} 중 <b>${t.share}%</b>${t.group_n>1?` (같은 원인 ${t.group_n}차례 · ${pct(t.group_pct)})`:''}${t.trig?` · 가장 가파른 15분 ${hm(t.trig[0])}~ (${pct(t.trig_pct)})`:''}</div>
-      ${t.why?`<div class="dy-w">근거(같은 시간 다른 자산): ${esc(t.why)}</div>`:''}${mvs(t.movers)}
-      ${(t.news||[]).length?`<div class="mv-lbl">🕒 그 무렵 처음 나온 뉴스 (원인 후보)</div><div class="mv-news">${t.news.map(n=>nlink(n.headline,n.url,n.source,n.first_seen)).join('')}</div>`:''}
-      ${(t.explain||[]).length?`<div class="mv-lbl">📰 언론이 설명한 이유</div><div class="mv-news">${t.explain.map(n=>nlink(n.headline,n.url,n.source,n.time)).join('')}</div>`:''}</div>`:'';
-    const am=Math.max(...(D.attrib||[]).map(a=>Math.abs(a.pct)),0.01);
-    const attrib=(D.attrib||[]).length?`<div class="mv-lbl">⚖️ 원인별 기여 — 구간 등락을 원인별로 더함 (합 ≈ ${pct(D.nq_pct)})</div><div class="dy-at">${D.attrib.map(a=>
-      `<span class="nm">${esc(a.name)}${a.n>1?` <small>${a.n}회</small>`:''}</span><span class="tr"><i class="${a.pct<0?'dn':'up'}" style="width:${(Math.abs(a.pct)/am*50).toFixed(1)}%"></i></span><b class="${cls(a.pct)}">${a.pct>0?'+':''}${a.pct.toFixed(2)}</b>`).join('')}</div>`:'';
-    const ctb=(D.contrib||[]).length?`<div class="mv-x"><span><b>지수를 끈 대형주</b></span>${D.contrib.map(c=>`<span>${esc(c.name)} <span class="${cls(c.pct)}">${pct(c.pct)}</span> <small style="color:var(--sub)">→ ${c.pp>0?'+':''}${c.pp.toFixed(2)}%p</small></span>`).join('')}</div>
-      <div class="mv-note">%p = 주가 변화 × 나스닥100 안 비중(근사) — 지수 등락 중 그 종목 몫</div>`:'';
-    const rows=seg.length?`<div class="mv-lbl">🕒 시간대별 변동 원인</div><div class="dy-sl">${seg.map((r,i)=>{const h=r.head;
-      return `<div class="dy-r"><div class="mv-row"><i class="dy-no ${r.nq_pct<0?'dn':'up'}">${i+1}</i><span class="mv-time">${hd(r.start)}–${hm(r.end)}</span><span class="dy-ph">${esc(r.phase||'')}</span><span class="mv-chg ${cls(r.nq_pct)}">${pct(r.nq_pct)}</span><b class="dy-c">${esc(r.cause)}</b>${r.detail?`<a class="dy-more" href="#mv-e-${r.start}">자세히 ↓</a>`:''}</div>
-        ${h?`<div class="dy-h"><span class="tm">${hm(h.time)}</span> <a href="${safeUrl(h.url)}" target="_blank" rel="noopener">${esc(tr2(h.headline))}</a> <span class="mv-src">· ${esc(h.source)}${h.kind==='explain'?' · 언론 설명':''}</span></div>`:`<div class="dy-w">이 시간대 기사는 아직 모으지 못함</div>`}${mvs(r.movers)}</div>`;}).join('')}</div>`:'';
-    return head+trig+attrib+ctb+(S?cross(S.cross):'')+timeline(m.timeline)+rows;};
+    const ref=D.ref_pct!=null?D.ref_pct:D.nq_pct,dn=ref<0,W0=(m.window||{}).start,I=n=>(m.indices||[]).find(i=>i.name===n);
+    const ndx=I('나스닥100'),spx=I('S&P 500');
+    // 맨 위 숫자: 정규장 중 = 지수 전일 종가 대비, 장 마감 뒤 = 종가 이후 선물
+    const big=D.mode==='regular'
+      ?`<div class="wy-big"><span class="${cls(ndx&&ndx.change_pct)}">나스닥100 ${pct(ndx&&ndx.change_pct)}</span><span class="${cls(spx&&spx.change_pct)}">S&amp;P 500 ${pct(spx&&spx.change_pct)}</span><small>정규장 · 전일 종가 대비</small></div>`
+      :`<div class="wy-big"><span class="${cls(D.nq_pct)}">나스닥 선물 ${pct(D.nq_pct)}</span>${D.es_pct!=null?`<span class="${cls(D.es_pct)}">S&amp;P 선물 ${pct(D.es_pct)}</span>`:''}<small>${D.mode==='after'?`장 마감(${hm(W0)}) 이후 선물`:'최근 12시간 선물'}</small></div>
+        ${D.mode==='after'&&ndx?`<div class="mv-note">직전 정규장 마감: 나스닥100 ${pct(ndx.change_pct)} · S&amp;P 500 ${pct(spx&&spx.change_pct)}</div>`:''}`;
+    const iss=D.issues||[],main=iss.filter(x=>x.pct*ref>0),opp=iss.filter(x=>x.pct*ref<0);
+    const one=(x,k)=>{const h=x.head;return `<li class="wy-i ${x.pct<0?'':'wy-up'}"><div class="wy-h"><b>${esc(x.name)}</b><span class="wy-pp ${cls(x.pp)}">${x.pp>0?'+':''}${x.pp.toFixed(2)}%p</span><span class="wy-when">${esc(x.phases.join('·'))} ${x.nos.map(n=>`<i class="dy-no ${x.pct<0?'dn':'up'}">${n}</i>`).join('')}</span></div>
+      ${h?`<div class="wy-n"><a href="${safeUrl(h.url)}" target="_blank" rel="noopener">${esc(tr2(h.headline))}</a> <span class="mv-src">· ${esc(h.source)} ${hd(h.time)}</span></div>`:'<div class="dy-w">이 시간대 기사를 아직 모으지 못함</div>'}
+      ${k<2?mvs(x.movers):''}</li>`;};
+    const why=(Math.abs(ref)<0.2&&!iss.length)?'<div class="mv-note">뚜렷한 방향 없이 보합</div>'
+      :`<div class="wy-q">${dn?'왜 빠졌나':'왜 올랐나'}</div><ol class="wy-l">${main.map(one).join('')||'<li class="dy-w">뚜렷한 원인 구간 없음</li>'}</ol>
+        ${opp.length?`<div class="wy-q sm">${dn?'받쳐 준 것':'끌어내린 것'}</div><ol class="wy-l sm">${opp.map((x,k)=>one(x,9)).join('')}</ol>`:''}
+        <div class="mv-note">%p = 맨 위 숫자 중 그 이슈 몫(구간 등락을 이슈별로 묶어 환산) · 원인은 같은 시간 다른 자산 움직임과 기사로 추정, 인과 확인 아님</div>`;
+    const ctb=(D.contrib||[]).length?`<div class="mv-x"><span><b>지수를 끈 대형주</b></span>${D.contrib.map(c=>`<span>${esc(c.name)} <span class="${cls(c.pct)}">${pct(c.pct)}</span> <small style="color:var(--sub)">${c.pp>0?'+':''}${c.pp.toFixed(2)}%p</small></span>`).join('')}</div>`:'';
+    const rows=seg.length?`<details class="wy-d"><summary>🕒 시간대별로 자세히 (${seg.length}구간)</summary><div class="dy-sl">${seg.map((r,i)=>{const h=r.head;
+      return `<div class="dy-r"><div class="mv-row"><i class="dy-no ${r.nq_pct<0?'dn':'up'}">${i+1}</i><span class="mv-time">${hd(r.start)}–${hm(r.end)}</span><span class="dy-ph">${esc(r.phase||'')}</span><span class="mv-chg ${cls(r.nq_pct)}">선물 ${pct(r.nq_pct)}</span><b class="dy-c">${esc(r.cause)}</b>${r.detail?`<a class="dy-more" href="#mv-e-${r.start}">자세히 ↓</a>`:''}</div>
+        ${h?`<div class="dy-h"><span class="tm">${hm(h.time)}</span> <a href="${safeUrl(h.url)}" target="_blank" rel="noopener">${esc(tr2(h.headline))}</a> <span class="mv-src">· ${esc(h.source)}${h.kind==='explain'?' · 언론 설명':''}</span></div>`:`<div class="dy-w">이 시간대 기사는 아직 모으지 못함</div>`}${mvs(r.movers)}</div>`;}).join('')}</div>${S?cross(S.cross):''}</details>`:'';
+    return big+why+ctb+timeline(m.timeline)+rows;};
   const sum=`<div class="mv-sum">${day()}</div>`;
   const evs=(m.events||[]).map(e=>{
     const exp=(e.explain||[]).length?`<div class="mv-lbl">📰 언론이 설명한 이유 (구간 뒤 시장 기사)</div><div class="mv-news">${e.explain.map(n=>nlink(n.headline,n.url,n.source,n.time)).join('')}</div>`:'';
@@ -557,7 +568,7 @@ function render(){
   renderMidterms();
   const secOf=t=>t.section||'산업';
   document.getElementById('secTabs').innerHTML=SECTIONS.map(([k,desc,c])=>{
-    const n=k==='시장'?(((raw.moves||{}).day)?`나스닥 선물 ${pct(raw.moves.day.nq_pct)} · ${(raw.moves.day.segments||[]).length}구간`:((raw.moves||{}).summary)?`나스닥 ${pct(raw.moves.summary.nq_pct)} · ${raw.moves.events.length}구간`:`급변 ${((raw.moves||{}).events||[]).length}회`)
+    const n=k==='시장'?(((raw.moves||{}).day)?`${raw.moves.day.mode==='regular'?'나스닥100':'나스닥 선물'} ${pct(raw.moves.day.ref_pct??raw.moves.day.nq_pct)} · 이슈 ${(raw.moves.day.issues||[]).length}개`:((raw.moves||{}).summary)?`나스닥 ${pct(raw.moves.summary.nq_pct)} · ${raw.moves.events.length}구간`:`급변 ${((raw.moves||{}).events||[]).length}회`)
       :data.topics.filter(t=>secOf(t)===k).reduce((a,t)=>a+t.stories.filter(passes).length,0)+'건';
     return `<button type="button" class="stab2 ${st.section===k?'on':''}" style="--sc:${c}" data-sec="${k}" aria-pressed="${st.section===k}">
       <span class="t">${k}</span><span class="d">${desc}</span><span class="n">${n}</span></button>`;

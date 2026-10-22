@@ -15,7 +15,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
 from elections import build_midterms  # noqa: E402
-from market_moves import build_moves, merge_archive, session_start  # noqa: E402
+from market_moves import build_moves, merge_archive, session_window  # noqa: E402
 from news_scanner import LIVE_SCAN_HOURS, WINDOW_HOURS, build_briefing, live_window  # noqa: E402
 
 
@@ -32,13 +32,13 @@ def main():
     os.makedirs(out_b, exist_ok=True)
     start, end = live_window(hours=LIVE_SCAN_HOURS)
     data = build_briefing(start, end, "live", token)
-    # 시장을 움직인 뉴스: '당일' = 전일 정규장 종가(16:00 ET) 이후 — 지수 전일비와 같은 기준 (실패하면 12시간)
-    #   뉴스는 이번 수집(14시간)에 지난 실행분 기억(MOVES_NEWS, 48시간)을 합쳐 앞선 구간에도 붙임
+    # 시장을 움직인 뉴스: 정규장 중엔 전일 종가 이후(지수 전일비 기준), 장 마감 뒤엔 마지막 종가 이후(선물) — 실패하면 12시간
+    #   뉴스는 이번 수집(14시간)에 지난 실행분 기억(MOVES_NEWS, 72시간)을 합쳐 앞선 구간에도 붙임
     try:
         e_ts = int(end.timestamp())
-        s_ts = session_start(e_ts) or e_ts - WINDOW_HOURS * 3600
+        s_ts, mode = session_window(e_ts) or (e_ts - WINDOW_HOURS * 3600, "window")
         topics = merge_archive(data.get("topics", []), os.environ.get("MOVES_NEWS"))
-        data["moves"] = build_moves(data, s_ts, e_ts, topics)
+        data["moves"] = build_moves(data, s_ts, e_ts, topics, mode)
     except Exception as ex:
         print(f"[build] moves 실패: {ex}")
     # 미국 중간선거: 여론조사 평균 + 예측시장 확률

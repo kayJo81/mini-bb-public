@@ -201,12 +201,20 @@ def news(D):
         Dy = mv.get("day") or {}
         hm = lambda t: datetime.fromtimestamp(t, KST).strftime("%H:%M")
         T = Dy.get("trigger")
+        if Dy.get("issues"):
+            ref = Dy.get("ref_pct", Dy.get("nq_pct", 0))
+            items.append({"h": f"{'나스닥100(전일 종가 대비)' if Dy.get('mode') == 'regular' else '나스닥 선물(장 마감 이후)'} {pct(ref)} — "
+                               f"{'왜 빠졌나' if ref < 0 else '왜 올랐나'}", "m": ""})
+            for x in Dy["issues"][:5]:
+                h_ = x.get("head") or {}
+                items.append({"h": f"{x['name']} {x['pp']:+.2f}%p ({'·'.join(x['phases'])})", "m": h_.get("headline", ""), "u": h_.get("url", "")})
+            T = None
         if T:
             ex = (T.get("explain") or T.get("news") or [{}])[0]
             items.append({"h": f"🎯 방향을 정한 계기: {hm(T['start'])}~{hm(T['end'])} {T['cause']} 나스닥 선물 {pct(T['nq_pct'])} "
                                f"({'하락' if T['nq_pct'] < 0 else '상승'} 구간 합의 {T['share']}%)",
                           "m": ex.get("headline", ""), "u": ex.get("url", "")})
-        if Dy.get("segments"):
+        if Dy.get("segments") and not Dy.get("issues"):
             for r in Dy["segments"]:
                 h_ = r.get("head") or {}
                 items.append({"h": f"{hm(r['start'])}~{hm(r['end'])} KST 나스닥 선물 {pct(r['nq_pct'])} · {r['cause']}",

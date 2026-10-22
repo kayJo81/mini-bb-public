@@ -130,9 +130,10 @@ def _chart(sym):
     return bars, r.get("meta", {})
 
 
-def session_start(now_ts):
-    """'당일' 시작 = 가장 최근 정규장 바로 앞 정규장의 종가 시각(16:00 ET).
-       나스닥100 지수 5분봉(정규장만 있음)의 날짜로 정해 휴장일·서머타임이 저절로 맞음 → 실패하면 None"""
+def session_window(now_ts):
+    """화면 기준 창: 정규장 중이면 전일 종가(16:00 ET) 이후 → 지수 전일비와 같은 기준,
+       장 마감 뒤(시간외·야간·프리마켓)면 마지막 종가 이후 → 선물 시세 변동.
+       나스닥100 지수 5분봉(정규장만 있음)으로 정해 휴장일·서머타임이 저절로 맞음 → (시작, 'regular'|'after') 또는 None"""
     try:
         bars, _ = _chart("%5ENDX")
     except Exception as ex:
@@ -143,13 +144,16 @@ def session_start(now_ts):
     days = sorted({day(t) for t, _ in bars})
     if len(days) < 2:
         return None
-    last_prev = max(t for t, _ in bars if day(t) == days[-2])
-    return last_prev + 5 * 60                    # 마지막 5분봉(15:55) 끝 = 16:00 종가
+    last = bars[-1][0]
+    close_of = lambda d: max(t for t, _ in bars if day(t) == d) + 5 * 60   # 마지막 5분봉(15:55) 끝 = 16:00 종가
+    if now_ts - last <= 20 * 60 and datetime.fromtimestamp(last, ET).time() < datetime.strptime("15:55", "%H:%M").time():
+        return close_of(days[-2]), "regular"
+    return close_of(days[-1]), "after"
 
 
-def merge_archive(topics, path, keep_h=48):
+def merge_archive(topics, path, keep_h=72):
     """구간 원인 짝짓기용 기사 기억: 이번 수집(14시간) + 지난 실행분을 합쳐 최근 keep_h 시간 유지
-       (당일 창은 전일 종가부터라 길게는 40시간 넘음 — 수집 창보다 앞선 구간에도 뉴스를 붙이려고)"""
+       (당일 창은 종가부터라 수집 창(14시간)보다 길 수 있음 — 앞선 구간에도 뉴스를 붙이려고, 주말 넘김 대비 72시간)"""
     import json
     import os
     import time
@@ -720,7 +724,29 @@ def _day(segs, nq, M, whole, start_ts, end_ts):
             "attrib": attrib, "segments": rows, "contrib": contrib[:5]}
 
 
-def build_moves(briefing, start_ts, end_ts, topics=None):
+def _issues(rows, k):
+    """같은 원인 구간을 묶어 '이슈' 목록: 이슈 이름 · 맨 위 숫자 기준 몫(%p) · 대표 기사 · 언제(장 구분)"""
+    by = {}
+    for i, r in enumerate(rows, 1):
+        b = by.setdefault(r["cause_key"], {"key": r["cause_key"], "name": r["cause"], "pct": 0.0, "nos": [], "phases": [], "top": r})
+        b["pct"] += r["nq_pct"]
+        b["nos"].append(i)
+        if r.get("phase") and r["phase"] not in b["phases"]:
+            b["phases"].append(r["phase"])
+        if abs(r["nq_pct"]) > abs(b["top"]["nq_pct"]) or (not b["top"].get("head") and r.get("head")):
+            b["top"] = r
+    out = []
+    for b in by.values():
+        t = b.pop("top")
+        if abs(b["pct"]) < 0.1:
+            continue
+        out.append({**b, "pct": round(b["pct"], 2), "pp": round(b["pct"] * k, 2), "head": t.get("head"), "why": t.get("why", ""),
+                    "start": t["start"], "end": t["end"], "movers": t.get("movers", [])})
+    out.sort(key=lambda b: -abs(b["pct"]))
+    return out
+
+
+def build_moves(briefing, start_ts, end_ts, topics=None, mode="window"):
     syms = {"NQ": "NQ%3DF", **CROSS, **{s: s for s in MEGA}}
     with ThreadPoolExecutor(8) as ex:
         fut = {k: ex.submit(_chart, v) for k, v in syms.items()}
@@ -765,6 +791,19 @@ def build_moves(briefing, start_ts, end_ts, topics=None):
         summary = {"nq_pct": whole["nq_pct"], "es_pct": wf.get("ES"), "cross": wf, "drivers": wd,
                    "leaders": [{"sym": s, "name": MEGA[s], "pct": v} for s, v in wl], "narratives": dn}
     day = _day(segs, nq, M, whole, start_ts, end_ts)
+    idx = [x for x in (_index_summary("%5EGSPC", "S&P 500"), _index_summary("%5ENDX", "나스닥100"),
+                       _index_summary("%5EIXIC", "나스닥 종합")) if x]
+    if day:
+        es = [c for t, c in bars.get("ES", []) if start_ts <= t <= end_ts]
+        day["mode"] = mode
+        day["es_pct"] = round((es[-1] / es[0] - 1) * 100, 2) if len(es) > 1 else None
+        ndx = next((x for x in idx if x["name"] == "나스닥100"), None)
+        # 맨 위 숫자: 정규장 중엔 지수 전일비, 장 마감 뒤엔 선물 — 이슈별 몫(%p)도 그 숫자에 맞춰 환산
+        ref = ndx["change_pct"] if mode == "regular" and ndx else day["nq_pct"]
+        day["ref_pct"] = ref
+        tot = sum(r["nq_pct"] for r in day["segments"])           # 구간 합에 맞춰 환산 → 이슈 몫을 더하면 맨 위 숫자와 거의 같음
+        k = ref / tot if tot and ref * tot > 0 and 0.5 <= ref / tot <= 2 else 1
+        day["issues"] = _issues(day["segments"], k)
     # 시간축: 나스닥 선물(15분) + 구간 + 이야기별 30분 기사 수 (기사가 4건 이상인 이야기, 많은 순 6개)
     ser = _series(NH, start_ts, end_ts)
     nb = len(next(iter(ser.values()))) if ser else 0
@@ -803,8 +842,7 @@ def build_moves(briefing, start_ts, end_ts, topics=None):
     span = [c for t, c in bars.get("ES", []) if start_ts <= t <= end_ts]
     print(f"[moves] 구간 {len(segs)}개(자세히 {len(events)}) · 원인 " + ", ".join(f'{x["nq_pct"]:+.2f} {x["cause"]}' for x in (day or {}).get("segments", [])))
     return {
-        "indices": [x for x in (_index_summary("%5EGSPC", "S&P 500"), _index_summary("%5ENDX", "나스닥100"),
-                                _index_summary("%5EIXIC", "나스닥 종합")) if x],
+        "indices": idx,
         "window": {"start": start_ts, "end": end_ts},
         "futures_window": {"nq_pct": whole["nq_pct"], "es_pct": round((span[-1] / span[0] - 1) * 100, 2) if len(span) > 1 else None},
         "summary": summary,
