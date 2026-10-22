@@ -79,19 +79,35 @@ async function llmTry(env, model, texts) {
   return arr.map((s) => (typeof s === "string" && s.trim()) || null);
 }
 
-// 구글 번역: 줄바꿈으로 묶어 한 번에 — 줄 수가 어긋나면 한 줄씩
+// 무료 기계번역 — Cloudflare 서버에서 막히는 곳이 있어 차례로 시도: 구글(두 주소)
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 Edg/124.0";
 async function gtBatch(texts) {
   const one = async (q) => {
-    const r = await fetch(GT, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" },
+    const r = await fetch(GT, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", "user-agent": UA },
       body: "q=" + encodeURIComponent(q) });
     if (!r.ok) throw new Error("google " + r.status);
     return ((await r.json())[0] || []).map((seg) => (seg && seg[0]) || "").join("");
   };
-  try {
-    const parts = (await one(texts.map((t) => t.replace(/\n/g, " ")).join("\n"))).split("\n");
-    if (parts.length === texts.length) return parts.map((p) => (p.trim() ? fix(p) : null));
-  } catch { /* 아래에서 한 줄씩 */ }
-  return Promise.all(texts.map((t) => one(t).then((x) => fix(x) || null).catch(() => null)));
+  const parts = (await one(texts.map((t) => t.replace(/\n/g, " ")).join("\n"))).split("\n");
+  if (parts.length !== texts.length) throw new Error("google lines");
+  return parts.map((p) => (p.trim() ? fix(p) : null));
+}
+async function gt2Batch(texts) {
+  return Promise.all(texts.map(async (t) => {
+    const r = await fetch("https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=auto&tl=ko&q=" + encodeURIComponent(t),
+      { headers: { "user-agent": UA } });
+    if (!r.ok) throw new Error("google2 " + r.status);
+    const j = await r.json(), x = Array.isArray(j) ? (Array.isArray(j[0]) ? j[0][0] : j[0]) : (j.sentences || []).map((s) => s.trans || "").join("");
+    return fix(String(x || "")) || null;
+  }));
+}
+async function mtBatch(texts) {
+  const errs = [];
+  for (const [name, fn] of [["google", gtBatch], ["google2", gt2Batch]]) {
+    try { const out = await fn(texts); if (out.some(Boolean)) return { name, out }; errs.push(name + ": 빈 결과"); }
+    catch (e) { errs.push(String(e && e.message || e).slice(0, 80)); }
+  }
+  return { name: null, out: [], err: errs.join(" | ") };
 }
 
 const dayKey = () => new Request(`https://translate.cache/quota/${new Date().toISOString().slice(0, 10)}`);
@@ -120,8 +136,13 @@ export async function onRequestPost({ request, env, waitUntil }) {
       }
     }
     const left = miss.filter((i, j) => !res[j]);
-    const g = left.length ? await gtBatch(left.map((i) => texts[i])) : [];
-    if (left.length) model = model ? model + "+google" : "google";
+    let g = [];
+    if (left.length) {
+      const mt = await mtBatch(left.map((i) => texts[i]));
+      g = mt.out;
+      model = (model ? model + "+" : "") + (mt.name || "none");
+      if (mt.err) err = (err ? err.slice(0, 200) + " || " : "") + mt.err;
+    }
     miss.forEach((i, j) => { ko[i] = res[j] || g[left.indexOf(i)] || null; });
     for (const i of miss) if (ko[i]) waitUntil(cache.put(keys[i], new Response(ko[i], { headers: { "cache-control": "max-age=2592000" } })));
   }
