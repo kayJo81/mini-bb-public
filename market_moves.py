@@ -19,10 +19,12 @@
 import math
 import re
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import requests
 
-CHART = "https://query1.finance.yahoo.com/v8/finance/chart/{sym}?interval=5m&range=2d&includePrePost=true"
+CHART = "https://query1.finance.yahoo.com/v8/finance/chart/{sym}?interval=5m&range=5d&includePrePost=true"
 HDR = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
 REV = 0.35          # 지그재그 방향 전환 되돌림(%)
 MIN_LEG = 0.45      # 보여 줄 최소 구간 크기(%)
@@ -128,6 +130,53 @@ def _chart(sym):
     return bars, r.get("meta", {})
 
 
+def session_start(now_ts):
+    """'당일' 시작 = 가장 최근 정규장 바로 앞 정규장의 종가 시각(16:00 ET).
+       나스닥100 지수 5분봉(정규장만 있음)의 날짜로 정해 휴장일·서머타임이 저절로 맞음 → 실패하면 None"""
+    try:
+        bars, _ = _chart("%5ENDX")
+    except Exception as ex:
+        print(f"[moves] session: {ex}")
+        return None
+    bars = [(t, c) for t, c in bars if t <= now_ts]
+    day = lambda t: (t - 4 * 3600) // 86400      # ET 날짜 근사(정규장 9:30~16:00 은 UTC-4·-5 어느 쪽이든 같은 날)
+    days = sorted({day(t) for t, _ in bars})
+    if len(days) < 2:
+        return None
+    last_prev = max(t for t, _ in bars if day(t) == days[-2])
+    return last_prev + 5 * 60                    # 마지막 5분봉(15:55) 끝 = 16:00 종가
+
+
+def merge_archive(topics, path, keep_h=48):
+    """구간 원인 짝짓기용 기사 기억: 이번 수집(14시간) + 지난 실행분을 합쳐 최근 keep_h 시간 유지
+       (당일 창은 전일 종가부터라 길게는 40시간 넘음 — 수집 창보다 앞선 구간에도 뉴스를 붙이려고)"""
+    import json
+    import os
+    import time
+    old = []
+    if path and os.path.exists(path):
+        try:
+            old = json.load(open(path, encoding="utf-8"))
+        except Exception as ex:
+            print(f"[moves] archive: {ex}")
+    cut = time.time() - keep_h * 3600
+    by = {}
+    for t in old + [{"id": t["id"], "name": t.get("name", ""), "stories": [
+            {k: s.get(k) for k in ("headline", "url", "first_seen", "is_opinion", "verdict")} |
+            {"sources": [{k: x.get(k) for k in ("headline", "name", "url", "published", "tier", "via")} for x in s["sources"][:4]]}
+            for s in t["stories"]]} for t in topics]:
+        d = by.setdefault(t["id"], {"id": t["id"], "name": t["name"], "stories": {}})
+        for s in t["stories"]:
+            if (s.get("first_seen") or 0) >= cut:
+                d["stories"][s["headline"]] = s           # 같은 제목은 최신 것으로
+    out = [{**d, "stories": sorted(d["stories"].values(), key=lambda s: s["first_seen"])} for d in by.values()]
+    if path:
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        json.dump(out, open(path, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+    print(f"[moves] 기사 기억 {sum(len(d['stories']) for d in out)}건 (지난 실행 {sum(len(d.get('stories', [])) for d in old)}건 포함)")
+    return out
+
+
 def _index_summary(sym, name):
     try:
         bars, meta = _chart(sym)
@@ -135,7 +184,7 @@ def _index_summary(sym, name):
         print(f"[moves] {sym}: {ex}")
         return None
     px = meta.get("regularMarketPrice") or (bars[-1][1] if bars else None)
-    prev = meta.get("chartPreviousClose") or meta.get("previousClose")
+    prev = meta.get("previousClose") or meta.get("chartPreviousClose")   # chartPreviousClose 는 조회 범위(5일) 시작 전 종가라 전일비가 아님
     if not px or not prev:
         return None
     return {"name": name, "price": round(px, 2), "change_pct": round((px / prev - 1) * 100, 2),
@@ -195,8 +244,14 @@ def _legs(nq, start_ts, end_ts, min_leg=MIN_LEG):
             raw.append((ext, pts[-1]))      # 마지막 고점·저점 뒤 진행 중인 움직임
         if raw[0][0][0] > pts[0][0]:
             raw.insert(0, (pts[0], raw[0][0]))   # 창 시작 ~ 첫 꼭짓점
-    out = []
+    # 장 구분 경계(정규장 개장·마감, 시간외 끝, 프리마켓 시작)에서 한 번 더 자름 — 장 마감 후 실적 반응이 야간 움직임과 섞이지 않게
+    cuts = []
     for (t0, c0), (t1, c1) in raw:
+        b = [t for t in _bounds(t0, t1) if t0 < t < t1]
+        knots = [(t0, c0)] + [(t, c) for t, c in pts if t in b] + [(t1, c1)]
+        cuts += list(zip(knots, knots[1:]))
+    out = []
+    for (t0, c0), (t1, c1) in cuts:
         ch = (c1 / c0 - 1) * 100
         if abs(ch) < min_leg or t1 <= t0:
             continue
@@ -207,8 +262,37 @@ def _legs(nq, start_ts, end_ts, min_leg=MIN_LEG):
             x = (seg[k][1] / seg[k - 3][1] - 1) * 100
             if best is None or x * sg > best * sg:
                 best, trig = x, (seg[k - 3][0], seg[k][0])
-        out.append({"start": t0, "end": t1, "nq_pct": round(ch, 2), "trig": list(trig), "trig_pct": round(best or ch, 2)})
+        out.append({"start": t0, "end": t1, "nq_pct": round(ch, 2), "trig": list(trig), "trig_pct": round(best or ch, 2),
+                    "phase": _phase(t0)})
     return out
+
+
+ET = ZoneInfo("America/New_York")
+# 미국 동부 시각 경계 → 장 구분 (시작 시각, 이름)
+PHASES = [((4, 0), "프리마켓"), ((9, 30), "정규장"), ((16, 0), "시간외"), ((20, 0), "야간")]
+
+
+def _bounds(t0, t1):
+    """t0~t1 사이의 장 구분 경계 시각(유닉스초)"""
+    out, d = [], datetime.fromtimestamp(t0, ET).date()
+    while True:
+        for (h, m), _ in PHASES:
+            ts = int(datetime(d.year, d.month, d.day, h, m, tzinfo=ET).timestamp())
+            if ts > t1:
+                return out
+            if d.weekday() < 5 and ts > t0:
+                out.append(ts)
+        d += timedelta(days=1)
+
+
+def _phase(t):
+    x = datetime.fromtimestamp(t + 60, ET)
+    hm_ = (x.hour, x.minute)
+    name = "야간"
+    for st_, n in PHASES:
+        if hm_ >= st_:
+            name = n
+    return name
 
 
 def _fingerprint(ev, X, M):
@@ -582,8 +666,16 @@ def _day(segs, nq, M, whole, start_ts, end_ts):
     rows = []
     for e in sorted(segs, key=lambda e: e["start"]):
         key, name, why, head = _cause(e)
-        rows.append({"start": e["start"], "end": e["end"], "nq_pct": e["nq_pct"], "es_pct": e.get("es_pct"),
-                     "cause_key": key, "cause": name, "why": why, "head": head, "detail": abs(e["nq_pct"]) >= MIN_LEG})
+        # 이 구간에 지수를 가장 많이 끈 대형주 (주가 변화 × 나스닥100 비중, 구간 방향과 같은 쪽)
+        pp = []
+        for s_, w in NDX_W.items():
+            v = _chg(M.get(s_, []), e["start"], e["end"])
+            if v is not None and v * e["nq_pct"] > 0:
+                pp.append((v * w / 100, s_, v))
+        pp.sort(key=lambda x: -abs(x[0]))
+        rows.append({"start": e["start"], "end": e["end"], "nq_pct": e["nq_pct"], "es_pct": e.get("es_pct"), "phase": e.get("phase"),
+                     "cause_key": key, "cause": name, "why": why, "head": head, "detail": abs(e["nq_pct"]) >= MIN_LEG,
+                     "movers": [{"name": MEGA[s_], "pct": round(v, 1), "pp": round(x, 2)} for x, s_, v in pp[:3] if abs(x) >= 0.02]})
     by = {}
     for r in rows:
         b = by.setdefault(r["cause_key"], {"key": r["cause_key"], "name": r["cause"], "pct": 0.0, "n": 0})
@@ -614,6 +706,7 @@ def _day(segs, nq, M, whole, start_ts, end_ts):
             gross = sum(r["nq_pct"] for r in same)
             ev = next((e for e in segs if e["start"] == t_["start"]), {})
             trig = {"start": t_["start"], "end": t_["end"], "nq_pct": t_["nq_pct"], "cause_key": t_["cause_key"], "cause": t_["cause"],
+                    "phase": t_["phase"], "movers": t_["movers"],
                     "why": t_["why"], "share": round(gp / gross * 100), "gross": round(gross, 2), "group_n": len(grp) or 1, "group_pct": round(gp, 2),
                     "news": (ev.get("news") or [])[:2], "explain": (ev.get("explain") or [])[:2],
                     "trig": ev.get("trig"), "trig_pct": ev.get("trig_pct")}
@@ -627,7 +720,7 @@ def _day(segs, nq, M, whole, start_ts, end_ts):
             "attrib": attrib, "segments": rows, "contrib": contrib[:5]}
 
 
-def build_moves(briefing, start_ts, end_ts):
+def build_moves(briefing, start_ts, end_ts, topics=None):
     syms = {"NQ": "NQ%3DF", **CROSS, **{s: s for s in MEGA}}
     with ThreadPoolExecutor(8) as ex:
         fut = {k: ex.submit(_chart, v) for k, v in syms.items()}
@@ -640,7 +733,7 @@ def build_moves(briefing, start_ts, end_ts):
     if "NQ" not in bars:
         return None
     nq = bars["NQ"]
-    topics = briefing.get("topics", [])
+    topics = topics if topics is not None else briefing.get("topics", [])
     idf = _idf(topics)
     arts = _articles(topics)
     arts_t = [a[0] for a in arts]
@@ -705,11 +798,14 @@ def build_moves(briefing, start_ts, end_ts):
     tl_n = sorted(tl_n, key=lambda x: -x["n"])[:6]
     timeline = {"start": start_ts, "end": end_ts, "bucket": BUCKET,
                 "nq": [[t, round(c, 2)] for t, c in nq if start_ts <= t <= end_ts and (t - start_ts) % 900 < 300],
-                "legs": [[e["start"], e["end"], e["nq_pct"]] for e in segs], "narr": tl_n}
+                "legs": [[e["start"], e["end"], e["nq_pct"]] for e in segs], "narr": tl_n,
+                "phases": [[a, b, _phase(a)] for a, b in zip([start_ts] + _bounds(start_ts, end_ts), _bounds(start_ts, end_ts) + [end_ts]) if b > a]}
     span = [c for t, c in bars.get("ES", []) if start_ts <= t <= end_ts]
     print(f"[moves] 구간 {len(segs)}개(자세히 {len(events)}) · 원인 " + ", ".join(f'{x["nq_pct"]:+.2f} {x["cause"]}' for x in (day or {}).get("segments", [])))
     return {
-        "indices": [x for x in (_index_summary("%5EGSPC", "S&P 500"), _index_summary("%5EIXIC", "나스닥")) if x],
+        "indices": [x for x in (_index_summary("%5EGSPC", "S&P 500"), _index_summary("%5ENDX", "나스닥100"),
+                                _index_summary("%5EIXIC", "나스닥 종합")) if x],
+        "window": {"start": start_ts, "end": end_ts},
         "futures_window": {"nq_pct": whole["nq_pct"], "es_pct": round((span[-1] / span[0] - 1) * 100, 2) if len(span) > 1 else None},
         "summary": summary,
         "day": day,

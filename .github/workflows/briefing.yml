@@ -73,8 +73,16 @@ jobs:
           key: mem-${{ github.run_id }}
           restore-keys: mem-
 
+      # 시장 탭 구간 원인용 기사 기억(최근 48시간) — 당일 창(전일 종가부터)이 수집 창(14시간)보다 길어서
+      - uses: actions/cache@v4
+        with:
+          path: .cache/moves_news.json
+          key: mvnews-${{ github.run_id }}
+          restore-keys: mvnews-
+
       - name: Build briefing
         env:
+          MOVES_NEWS: .cache/moves_news.json
           STORY_MEMORY: .cache/story_mem.json
           FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
           FINNHUB_MIN_INTERVAL: "0.25"   # 15분에 한 번 몰아 호출 (59회 < 분당 60회 한도)
