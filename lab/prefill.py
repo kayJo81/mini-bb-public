@@ -198,18 +198,27 @@ def news(D):
             dr = ", ".join(d["name"] for d in S.get("drivers", [])[:3])
             items.append({"h": f"12시간 나스닥 선물 {pct(S['nq_pct'])} — 원인 유형: {dr or '뚜렷하지 않음'}",
                           "m": " · ".join(f"{l['name']} {pct(l['pct'], 1)}" for l in S.get("leaders", [])[:5])})
-            for n in S.get("narratives", [])[:4]:
-                hs = n.get("heads") or []
-                items.append({"h": f"[{n['name']}] 기사 {n['n']}건 (전체의 {n['share']}%)" + (f" · 가격 확인: {n['price']}" if n.get("price") else ""),
-                              "m": hs[0]["headline"] if hs else "", "u": hs[0]["url"] if hs else ""})
-        for e in (mv.get("events") or [])[:4]:
+        Dy = mv.get("day") or {}
+        hm = lambda t: datetime.fromtimestamp(t, KST).strftime("%H:%M")
+        T = Dy.get("trigger")
+        if T:
+            ex = (T.get("explain") or T.get("news") or [{}])[0]
+            items.append({"h": f"🎯 방향을 정한 계기: {hm(T['start'])}~{hm(T['end'])} {T['cause']} 나스닥 선물 {pct(T['nq_pct'])} "
+                               f"({'하락' if T['nq_pct'] < 0 else '상승'} 구간 합의 {T['share']}%)",
+                          "m": ex.get("headline", ""), "u": ex.get("url", "")})
+        if Dy.get("segments"):
+            for r in Dy["segments"]:
+                h_ = r.get("head") or {}
+                items.append({"h": f"{hm(r['start'])}~{hm(r['end'])} KST 나스닥 선물 {pct(r['nq_pct'])} · {r['cause']}",
+                              "m": h_.get("headline", ""), "u": h_.get("url", "")})
+        for e in ([] if Dy.get("segments") else (mv.get("events") or [])[:4]):
             t0 = datetime.fromtimestamp(e["start"], KST).strftime("%H:%M")
             t1 = datetime.fromtimestamp(e["end"], KST).strftime("%H:%M")
             dr = (e.get("drivers") or [{}])[0].get("name", "")
             ex = (e.get("explain") or e.get("news") or [{}])[0]
             items.append({"h": f"{t0}~{t1} KST 나스닥 선물 {pct(e['nq_pct'])} · {dr}", "m": ex.get("headline", ""), "u": ex.get("url", "")})
         out.append({"type": "news", "title": "📰 밤사이 시장을 움직인 뉴스", "sub": (L.get("window") or {}).get("label", ""), "items": items or [{"h": "변동이 작아 원인 분석 구간이 없어요", "m": ""}],
-                    "note": "터미널 '시장' 탭과 같은 분석: 나스닥 선물 15분 봉의 큰 구간 → 같은 시각 다른 자산 움직임(지문) + 기사 흐름으로 원인 유형 추정"})
+                    "note": "터미널 '시장' 탭과 같은 분석: 나스닥 선물을 시간대별 구간으로 나눠 → 같은 시각 다른 자산 움직임으로 구간별 원인 추정 → 원인별로 더해 방향을 정한 계기 찾기"})
     cand = []
     for t in L.get("topics", []):
         if t["id"] not in NEWS_TOPICS:

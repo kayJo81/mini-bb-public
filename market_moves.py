@@ -27,6 +27,10 @@ HDR = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.
 REV = 0.35          # 지그재그 방향 전환 되돌림(%)
 MIN_LEG = 0.45      # 보여 줄 최소 구간 크기(%)
 MAX_EVENTS = 5
+SEG_MIN = 0.15      # 시간대별 원인 줄에 넣을 최소 구간 크기(%) — 이보다 작은 건 '잔 움직임'
+# 나스닥100 안 비중(근사, %) — 대형주가 지수를 얼마나 끌었나(기여도 = 주가 변화 × 비중). 지수에 없는 종목(TSMC·오라클·코어위브)은 빠짐
+NDX_W = {"NVDA": 9.5, "MSFT": 8.0, "AAPL": 8.0, "GOOGL": 6.0, "AMZN": 5.5, "AVGO": 5.5, "META": 3.5, "TSLA": 3.5,
+         "AMD": 1.6, "MU": 1.2}
 ZN_DUR = 6.3        # 10년 국채 선물 듀레이션 근사 → 가격 1% ≈ 금리 16bp
 CROSS = {"ES": "ES%3DF", "RTY": "RTY%3DF", "SOX": "SMH", "HY": "HYG", "ZN": "ZN%3DF", "DXY": "DX-Y.NYB",
          "OIL": "CL%3DF", "GOLD": "GC%3DF", "VIX": "%5EVIX"}
@@ -162,8 +166,8 @@ def _chg(bars, t0, t1):
     return (b / a - 1) * 100 if a and b else None
 
 
-def _legs(nq, start_ts, end_ts):
-    """지그재그: 고점·저점에서 REV% 이상 되돌리면 방향 전환 → 구간 목록 (마지막 진행 중 구간 포함)"""
+def _legs(nq, start_ts, end_ts, min_leg=MIN_LEG):
+    """지그재그: 고점·저점에서 REV% 이상 되돌리면 방향 전환 → 구간 목록, 시간순 (창 시작~첫 꼭짓점·마지막 진행 중 구간 포함)"""
     pts = [(t, c) for t, c in nq if start_ts <= t <= end_ts]
     if len(pts) < 4:
         return []
@@ -189,10 +193,12 @@ def _legs(nq, start_ts, end_ts):
         raw.append((piv, ext))
         if pts[-1][0] > ext[0]:
             raw.append((ext, pts[-1]))      # 마지막 고점·저점 뒤 진행 중인 움직임
+        if raw[0][0][0] > pts[0][0]:
+            raw.insert(0, (pts[0], raw[0][0]))   # 창 시작 ~ 첫 꼭짓점
     out = []
     for (t0, c0), (t1, c1) in raw:
         ch = (c1 / c0 - 1) * 100
-        if abs(ch) < MIN_LEG or t1 <= t0:
+        if abs(ch) < min_leg or t1 <= t0:
             continue
         sg = 1 if ch > 0 else -1
         seg = [(t, c) for t, c in pts if t0 <= t <= t1]
@@ -202,8 +208,7 @@ def _legs(nq, start_ts, end_ts):
             if best is None or x * sg > best * sg:
                 best, trig = x, (seg[k - 3][0], seg[k][0])
         out.append({"start": t0, "end": t1, "nq_pct": round(ch, 2), "trig": list(trig), "trig_pct": round(best or ch, 2)})
-    out.sort(key=lambda e: -abs(e["nq_pct"]))
-    return out[:MAX_EVENTS]
+    return out
 
 
 def _fingerprint(ev, X, M):
@@ -536,6 +541,92 @@ def _match_news(ev, topics, drivers, single, leaders, idf, narr=()):
     return out, [{k: r[k] for k in ("headline", "url", "source", "time")} for r in exp]
 
 
+# 원인 유형을 움직인 방향에 맞춰 부르는 이름 (하락 구간, 상승 구간)
+CAUSE_NAME = {"semis": ("반도체·AI 매도", "반도체·AI 반등"), "tech": ("대형 기술주 약세", "대형 기술주 강세"),
+              "rates": ("금리 상승 부담", "금리 하락"), "oil": ("유가 급등·지정학", "유가 하락"),
+              "credit": ("AI 인프라 신용 위험", "신용 우려 완화"), "riskoff": ("위험회피", "위험선호 회복")}
+
+
+def _cause(ev):
+    """구간 한 줄 원인: 맨 앞 원인 유형(방향 반영) + 대표 뉴스(원인 후보 → 없으면 언론 설명)"""
+    d = (ev.get("drivers") or [None])[0]
+    up = ev["nq_pct"] > 0
+    if d:
+        if d["key"] in CAUSE_NAME:
+            d = {**d, "name": CAUSE_NAME[d["key"]][up]}
+        elif d["key"] == "single":
+            d = {**d, "name": d["name"].replace("개별 종목(", "").rstrip(")") + (" 급등" if up else " 급락")}
+    n = (ev.get("news") or [None])[0]
+    x = (ev.get("explain") or [None])[0]
+    head = None
+    if n:
+        head = {"headline": n["headline"], "url": n["url"], "source": n["source"], "time": n["first_seen"], "kind": "news"}
+    elif x:
+        head = {"headline": x["headline"], "url": x["url"], "source": x["source"], "time": x["time"], "kind": "explain"}
+    return ((d["key"] if d else "none") + ("+" if up else "-")), (d["name"] if d else ("반등(원인 불분명)" if up else "하락(원인 불분명)")), \
+        (d["why"] if d else ""), head
+
+
+def _day(segs, nq, M, whole, start_ts, end_ts):
+    """하루(창 전체) 방향은 무엇이 정했나
+       · 시간대별: 모든 구간(SEG_MIN 이상)을 시간순으로, 구간마다 원인 유형 + 대표 뉴스
+       · 원인별 기여: 구간 등락을 원인 유형별로 더함 (합 + 잔 움직임 = 창 전체 등락)
+       · 방향 확정: 나스닥 선물이 창 시작 수준을 마지막으로 건너 다시 돌아오지 않은 때
+       · 방향 계기: 창 전체 방향과 같은 쪽 구간 중 기여가 가장 큰 것
+       · 대형주 기여: 주가 변화 × 나스닥100 비중(근사)"""
+    pts = [(t, c) for t, c in nq if start_ts <= t <= end_ts]
+    if len(pts) < 4:
+        return None
+    net = whole["nq_pct"]
+    sgn = 1 if net > 0 else -1 if net < 0 else 0
+    rows = []
+    for e in sorted(segs, key=lambda e: e["start"]):
+        key, name, why, head = _cause(e)
+        rows.append({"start": e["start"], "end": e["end"], "nq_pct": e["nq_pct"], "es_pct": e.get("es_pct"),
+                     "cause_key": key, "cause": name, "why": why, "head": head, "detail": abs(e["nq_pct"]) >= MIN_LEG})
+    by = {}
+    for r in rows:
+        b = by.setdefault(r["cause_key"], {"key": r["cause_key"], "name": r["cause"], "pct": 0.0, "n": 0})
+        b["pct"] += r["nq_pct"]
+        b["n"] += 1
+    # 구간 등락의 단순 합은 복리 때문에 창 전체와 조금 다름 → 남는 것은 '잔 움직임'
+    rest = net - sum(b["pct"] for b in by.values())
+    if abs(rest) >= 0.05:
+        by["rest"] = {"key": "rest", "name": "잔 움직임", "pct": rest, "n": 0}
+    attrib = sorted(({**b, "pct": round(b["pct"], 2)} for b in by.values() if abs(b["pct"]) >= 0.03), key=lambda b: -abs(b["pct"]))
+    # 방향 확정: 시작 수준을 마지막으로 건넌 뒤의 첫 봉
+    c0, settle = pts[0][1], None
+    if sgn and abs(net) >= 0.2:
+        last = None
+        for t, c in pts:
+            if (c - c0) * sgn <= 0:
+                last = t
+        nxt = [t for t, c in pts if last is None or t > last]
+        settle = nxt[0] if nxt else None
+    trig = None
+    if sgn and abs(net) >= 0.2:
+        same = [r for r in rows if r["nq_pct"] * sgn > 0]
+        if same:
+            t_ = max(same, key=lambda r: abs(r["nq_pct"]))
+            # 같은 원인이 이어진 구간 묶음이면 함께 (예: 반도체 매도 두 번)
+            grp = [r for r in same if r["cause_key"] == t_["cause_key"] and not t_["cause_key"].startswith("none")]
+            gp = sum(r["nq_pct"] for r in grp) if grp else t_["nq_pct"]
+            gross = sum(r["nq_pct"] for r in same)
+            ev = next((e for e in segs if e["start"] == t_["start"]), {})
+            trig = {"start": t_["start"], "end": t_["end"], "nq_pct": t_["nq_pct"], "cause_key": t_["cause_key"], "cause": t_["cause"],
+                    "why": t_["why"], "share": round(gp / gross * 100), "gross": round(gross, 2), "group_n": len(grp) or 1, "group_pct": round(gp, 2),
+                    "news": (ev.get("news") or [])[:2], "explain": (ev.get("explain") or [])[:2],
+                    "trig": ev.get("trig"), "trig_pct": ev.get("trig_pct")}
+    contrib = []
+    for s_, w in NDX_W.items():
+        v = _chg(M.get(s_, []), whole["start"], whole["end"])
+        if v is not None:
+            contrib.append({"sym": s_, "name": MEGA[s_], "pct": round(v, 2), "pp": round(v * w / 100, 3)})
+    contrib.sort(key=lambda x: -abs(x["pp"]))
+    return {"start": pts[0][0], "end": pts[-1][0], "nq_pct": net, "settle": settle, "trigger": trig,
+            "attrib": attrib, "segments": rows, "contrib": contrib[:5]}
+
+
 def build_moves(briefing, start_ts, end_ts):
     syms = {"NQ": "NQ%3DF", **CROSS, **{s: s for s in MEGA}}
     with ThreadPoolExecutor(8) as ex:
@@ -554,10 +645,10 @@ def build_moves(briefing, start_ts, end_ts):
     arts = _articles(topics)
     arts_t = [a[0] for a in arts]
     NH = _narr_hits(arts, start_ts, end_ts)
-    events = _legs(nq, start_ts, end_ts)
+    segs = _legs(nq, start_ts, end_ts, SEG_MIN)
     X = {k: bars.get(k, []) for k in CROSS}
     M = {s: bars.get(s, []) for s in MEGA}
-    for ev in events:
+    for ev in segs:
         f, mega, drivers, leaders, single = _fingerprint(ev, X, M)
         narr = _narr_rank(ev, NH, f, mega, start_ts, end_ts, ev["nq_pct"], arts_t)
         drivers = _merge_drivers(drivers, narr)
@@ -567,6 +658,7 @@ def build_moves(briefing, start_ts, end_ts):
         ev["drivers"] = drivers
         ev["narratives"] = narr
         ev["news"], ev["explain"] = _match_news(ev, topics, drivers, single, leaders, idf, narr)
+    events = sorted((e for e in segs if abs(e["nq_pct"]) >= MIN_LEG), key=lambda e: -abs(e["nq_pct"]))[:MAX_EVENTS]
     events.sort(key=lambda e: -e["end"])
     # 창 전체 요약 (오늘 무엇이 시장을 끌었나)
     whole = {"start": max(start_ts, nq[0][0]), "end": min(end_ts, nq[-1][0])}
@@ -579,6 +671,7 @@ def build_moves(briefing, start_ts, end_ts):
         dn = _narr_day(NH, wf, wm, whole["nq_pct"], start_ts, end_ts, n_all)
         summary = {"nq_pct": whole["nq_pct"], "es_pct": wf.get("ES"), "cross": wf, "drivers": wd,
                    "leaders": [{"sym": s, "name": MEGA[s], "pct": v} for s, v in wl], "narratives": dn}
+    day = _day(segs, nq, M, whole, start_ts, end_ts)
     # 시간축: 나스닥 선물(15분) + 구간 + 이야기별 30분 기사 수 (기사가 4건 이상인 이야기, 많은 순 6개)
     ser = _series(NH, start_ts, end_ts)
     nb = len(next(iter(ser.values()))) if ser else 0
@@ -612,13 +705,14 @@ def build_moves(briefing, start_ts, end_ts):
     tl_n = sorted(tl_n, key=lambda x: -x["n"])[:6]
     timeline = {"start": start_ts, "end": end_ts, "bucket": BUCKET,
                 "nq": [[t, round(c, 2)] for t, c in nq if start_ts <= t <= end_ts and (t - start_ts) % 900 < 300],
-                "legs": [[e["start"], e["end"], e["nq_pct"]] for e in events], "narr": tl_n}
+                "legs": [[e["start"], e["end"], e["nq_pct"]] for e in segs], "narr": tl_n}
     span = [c for t, c in bars.get("ES", []) if start_ts <= t <= end_ts]
-    print(f"[moves] 구간 {len(events)}개 · 원인 유형 " + ", ".join(d["name"] for e in events for d in e["drivers"][:1]))
+    print(f"[moves] 구간 {len(segs)}개(자세히 {len(events)}) · 원인 " + ", ".join(f'{x["nq_pct"]:+.2f} {x["cause"]}' for x in (day or {}).get("segments", [])))
     return {
         "indices": [x for x in (_index_summary("%5EGSPC", "S&P 500"), _index_summary("%5EIXIC", "나스닥")) if x],
         "futures_window": {"nq_pct": whole["nq_pct"], "es_pct": round((span[-1] / span[0] - 1) * 100, 2) if len(span) > 1 else None},
         "summary": summary,
+        "day": day,
         "timeline": timeline,
         "events": events,
     }
