@@ -26,7 +26,7 @@ table.qa{font-size:7.8pt;table-layout:fixed}table.qa td{padding:1.1mm 1.6mm 1.1m
 table.qa td:first-child{width:5mm}
 table.qa td.n{width:5mm;color:var(--acc);font-weight:900}
 table.qa td.w{width:27mm;font-weight:700;color:#111827}table.qa td.w span{display:block;font-weight:500;color:#6b7280;font-size:6.9pt}
-table.qa td.q{width:34%;color:#374151}table.qa td.a{font-weight:600}table.qa td.a span{color:var(--acc);font-weight:800}
+table.qa td.qq{color:#374151}table.qa td.a{font-weight:600}table.qa td.a span{color:var(--acc);font-weight:800}
 .tone{display:grid;grid-template-columns:24mm 1fr 6mm;gap:1.4mm 2mm;align-items:center;font-size:7.6pt;margin-top:1mm}
 .tone .bar{height:3mm;border-radius:2px;background:#eef0f3;overflow:hidden}.tone .bar b{display:block;height:100%;background:var(--acc)}
 """
@@ -50,7 +50,7 @@ def page(c, d):
     parts = "".join(f'<div style="width:{p["min"] / pm * 100:.1f}%;background:{t["acc"] if k == 0 else "#111827"}">{e(p["l"])} {p["min"]}분</div>'
                     for k, p in enumerate(c["parts"]))
     nums = "".join(f'<div class="num"><div class="v">{e(n["v"])}</div><div class="l">{e(n["l"])}</div></div>' for n in c["numbers"][:8])
-    qa = "".join(f'<tr><td class="n">{k}</td><td class="w">{e(q["who"])}<span>{e(q["firm"])}</span></td><td class="q">{e(q["q"])}</td>'
+    qa = "".join(f'<tr><td class="n">{k}</td><td class="w">{e(q["who"])}<span>{e(q["firm"])}</span></td><td class="qq">{e(q["q"])}</td>'
                  f'<td class="a"><span>{e(q["by"])}</span> {e(q["a"])}</td></tr>' for k, q in enumerate(c["qa"][:8], 1))
     tmax = max(x["n"] for x in c["themes"]) or 1
     themes = "".join(f'<div class="tone" style="grid-template-columns:30mm 1fr 8mm"><span>{e(x["t"])}</span><div class="bar"><b style="width:{x["n"] / tmax * 100:.0f}%"></b></div><b>{x["n"]}</b></div>'
