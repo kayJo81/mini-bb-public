@@ -587,6 +587,18 @@ const io=('IntersectionObserver' in window)?new IntersectionObserver(es=>{
   schedule();
 },{rootMargin:'600px 0px'}):null;
 function schedule(){if(trTimer||trOff||!st.ko||!pending.size)return;trTimer=setTimeout(flush,Math.max(120,trWait-Date.now()));}
+// 구글 무료 번역(다른 사이트에서 읽기 허용) — 서버 쪽 번역 한도를 다 썼거나 막혔을 때만, 한 번에 묶어 1회 요청
+const GFIX=[['시장 매출','시가총액'],['시가 총액','시가총액'],['모든 시간 최고','사상 최고치'],['사상 최고','사상 최고치'],['사상 최고치치','사상 최고치'],
+  ['머스크 씨','머스크'],['마스크','머스크'],['연방 준비 은행','연준'],['연방준비제도이사회','연준'],['연방 준비 제도','연준'],['중간고사','중간선거']];
+async function gtDirect(texts){
+  try{
+    const r=await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ko&dt=t',{method:'POST',
+      headers:{'content-type':'application/x-www-form-urlencoded'},body:'q='+encodeURIComponent(texts.map(t=>t.replace(/\n/g,' ')).join('\n'))});
+    if(!r.ok)return [];
+    const parts=((await r.json())[0]||[]).map(x=>(x&&x[0])||'').join('').split('\n');
+    return parts.length===texts.length?parts.map(p=>GFIX.reduce((t,[a,b])=>t.split(a).join(b),p).trim()||null):[];
+  }catch(e){return [];}
+}
 async function flush(){
   trTimer=null;const batch=[...pending].slice(0,20);batch.forEach(h=>pending.delete(h));
   try{
@@ -594,7 +606,9 @@ async function flush(){
     const v=r.ok?await r.json():{};
     if(!r.ok&&r.status===404){trOff=true;document.getElementById('koBtn').title='번역을 사용할 수 없습니다';return;}
     if(!Array.isArray(v.ko))throw new Error('translate');
-    batch.forEach((h,i)=>{if(v.ko[i]){tr.set(h,v.ko[i]);trFail.delete(h);}else trFail.set(h,Date.now());
+    const miss=batch.filter((h,i)=>!v.ko[i]);
+    const gk=miss.length?await gtDirect(miss):[];                          // 서버 번역이 비면 보는 사람 브라우저에서 구글 번역 직접
+    batch.forEach((h,i)=>{const k=v.ko[i]||gk[miss.indexOf(h)];if(k){tr.set(h,k);trFail.delete(h);}else trFail.set(h,Date.now());
       document.querySelectorAll(`.card[data-h="${CSS.escape(h)}"]`).forEach(applyKo);});
   }catch(e){batch.forEach(h=>pending.add(h));trWait=Date.now()+60e3;}   // 일시 오류: 1분 뒤 다시
   schedule();
