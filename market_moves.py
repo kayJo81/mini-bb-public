@@ -219,8 +219,9 @@ def _chg(bars, t0, t1):
     return (b / a - 1) * 100 if a and b else None
 
 
-def _legs(nq, start_ts, end_ts, min_leg=MIN_LEG):
+def _legs(nq, start_ts, end_ts, min_leg=MIN_LEG, bounds=None, phase=None, rev=None):
     """지그재그: 고점·저점에서 REV% 이상 되돌리면 방향 전환 → 구간 목록, 시간순 (창 시작~첫 꼭짓점·마지막 진행 중 구간 포함)"""
+    bounds, phase, rev = bounds or _bounds, phase or _phase, rev or REV
     pts = [(t, c) for t, c in nq if start_ts <= t <= end_ts]
     if len(pts) < 4:
         return []
@@ -232,14 +233,14 @@ def _legs(nq, start_ts, end_ts, min_leg=MIN_LEG):
                 hi = (t, c)
             if c < lo[1]:
                 lo = (t, c)
-            if c >= lo[1] * (1 + REV / 100):
+            if c >= lo[1] * (1 + rev / 100):
                 d, piv, ext = 1, lo, (t, c)
-            elif c <= hi[1] * (1 - REV / 100):
+            elif c <= hi[1] * (1 - rev / 100):
                 d, piv, ext = -1, hi, (t, c)
             continue
         if d * (c - ext[1]) > 0:
             ext = (t, c)
-        elif (d > 0 and c <= ext[1] * (1 - REV / 100)) or (d < 0 and c >= ext[1] * (1 + REV / 100)):
+        elif (d > 0 and c <= ext[1] * (1 - rev / 100)) or (d < 0 and c >= ext[1] * (1 + rev / 100)):
             raw.append((piv, ext))
             piv, ext, d = ext, (t, c), -d
     if d:
@@ -251,7 +252,7 @@ def _legs(nq, start_ts, end_ts, min_leg=MIN_LEG):
     # 장 구분 경계(정규장 개장·마감, 시간외 끝, 프리마켓 시작)에서 한 번 더 자름 — 장 마감 후 실적 반응이 야간 움직임과 섞이지 않게
     cuts = []
     for (t0, c0), (t1, c1) in raw:
-        b = [t for t in _bounds(t0, t1) if t0 < t < t1]
+        b = [t for t in bounds(t0, t1) if t0 < t < t1]
         knots = [(t0, c0)] + [(t, c) for t, c in pts if t in b] + [(t1, c1)]
         cuts += list(zip(knots, knots[1:]))
     out = []
@@ -267,7 +268,7 @@ def _legs(nq, start_ts, end_ts, min_leg=MIN_LEG):
             if best is None or x * sg > best * sg:
                 best, trig = x, (seg[k - 3][0], seg[k][0])
         out.append({"start": t0, "end": t1, "nq_pct": round(ch, 2), "trig": list(trig), "trig_pct": round(best or ch, 2),
-                    "phase": _phase(t0)})
+                    "phase": phase(t0)})
     return out
 
 

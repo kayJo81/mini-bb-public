@@ -103,6 +103,20 @@ jobs:
         continue-on-error: true
         run: python kr_news.py --out public/briefings/kr_news.json
 
+      # 미니 블벅터 KR '시장' 탭: 코스피 장중 변동을 시간대별로 나눠 원인(갭·수급·반도체·환율…)과 뉴스를 짝지음
+      #   → briefings/kr_moves.json (KR 화면이 가져다 씀) · 당일 창이 수집 창(24h)보다 길 수 있어 기사 기억(72시간) 유지
+      - uses: actions/cache@v4
+        with:
+          path: .cache/kr_moves_news.json
+          key: krmv-${{ github.run_id }}
+          restore-keys: krmv-
+      - name: KR moves (코스피 장중 변동 원인)
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          KR_MOVES_NEWS: .cache/kr_moves_news.json
+        run: python kr_moves.py --news public/briefings/kr_news.json --out public/briefings/kr_moves.json
+
       # FinancialJuice 공개 피드는 최근 100건만 주므로 실행마다 모아 둔다 (⚡ 속보 화면·메일 PDF용, 최대 30시간)
       - uses: actions/cache@v4
         with:
