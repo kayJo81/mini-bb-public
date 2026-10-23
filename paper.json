@@ -22,55 +22,8 @@
   "2026-10-22"
  ],
  "seen": [],
- "pending": [
-  {
-   "sym": "META",
-   "dir": "롱",
-   "b": "pos_dn",
-   "verdict": "근거 약함",
-   "signal_date": "2026-10-22",
-   "edge": 0.53,
-   "z": 3.29,
-   "head": "GE Vernova Slumps 11% as Meta’s Spending Outlook Stokes AI Financing Worries; Vertiv Holdings Drops 7%, Eaton Slides 6%"
-  }
- ],
+ "pending": [],
  "open": [
-  {
-   "sym": "MBLY",
-   "dir": "롱",
-   "b": "pos_dn",
-   "verdict": "근거 약함",
-   "signal_date": "2026-10-16",
-   "edge": 0.75,
-   "z": 1.79,
-   "head": "Mobileye Shares Rise 4.3% as Citi Initiates Coverage With Buy Rating and $11 Price Target",
-   "entry_date": "2026-10-19",
-   "entry": 7.345,
-   "bench_entry": 719.615,
-   "size": 5000.0,
-   "now": 6.95,
-   "ret": -5.58,
-   "bench_ret": -2.3,
-   "asof": "2026-10-22"
-  },
-  {
-   "sym": "TSLA",
-   "dir": "롱",
-   "b": "pos_up",
-   "verdict": "근거 약함",
-   "signal_date": "2026-10-16",
-   "edge": 0.1,
-   "z": 3.18,
-   "head": "Tesla Roadster probably won't drive an earnings beat, but the big unveil did achieve 2 things",
-   "entry_date": "2026-10-19",
-   "entry": 357.485,
-   "bench_entry": 719.615,
-   "size": 5000.0,
-   "now": 374.58,
-   "ret": 4.58,
-   "bench_ret": -2.3,
-   "asof": "2026-10-22"
-  },
   {
    "sym": "CRWV",
    "dir": "롱",
@@ -84,10 +37,10 @@
    "entry": 59.21,
    "bench_entry": 715.25,
    "size": 5000.0,
-   "now": 55.6,
-   "ret": -6.3,
-   "bench_ret": -1.71,
-   "asof": "2026-10-22"
+   "now": 54.235,
+   "ret": -8.6,
+   "bench_ret": -1.72,
+   "asof": "2026-10-23"
   },
   {
    "sym": "GM",
@@ -102,10 +55,10 @@
    "entry": 76.71,
    "bench_entry": 722.22,
    "size": 5000.0,
-   "now": 77.21,
-   "ret": 0.45,
-   "bench_ret": -2.66,
-   "asof": "2026-10-22"
+   "now": 75.92,
+   "ret": -1.23,
+   "bench_ret": -2.67,
+   "asof": "2026-10-23"
   },
   {
    "sym": "ISRG",
@@ -120,10 +73,10 @@
    "entry": 430.665,
    "bench_entry": 713.68,
    "size": 5000.0,
-   "now": 443.85,
-   "ret": 2.86,
-   "bench_ret": -1.49,
-   "asof": "2026-10-22"
+   "now": 452.29,
+   "ret": 4.82,
+   "bench_ret": -1.5,
+   "asof": "2026-10-23"
   },
   {
    "sym": "SMCI",
@@ -138,10 +91,10 @@
    "entry": 34.44,
    "bench_entry": 713.68,
    "size": 5000.0,
-   "now": 33.72,
-   "ret": -2.29,
-   "bench_ret": -1.49,
-   "asof": "2026-10-22"
+   "now": 32.94,
+   "ret": -4.56,
+   "bench_ret": -1.5,
+   "asof": "2026-10-23"
   },
   {
    "sym": "NVDA",
@@ -156,10 +109,28 @@
    "entry": 217.23,
    "bench_entry": 713.68,
    "size": 5000.0,
-   "now": 212.21,
-   "ret": -2.51,
-   "bench_ret": -1.49,
-   "asof": "2026-10-22"
+   "now": 210.96,
+   "ret": -3.09,
+   "bench_ret": -1.5,
+   "asof": "2026-10-23"
+  },
+  {
+   "sym": "META",
+   "dir": "롱",
+   "b": "pos_dn",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-22",
+   "edge": 0.53,
+   "z": 3.29,
+   "head": "GE Vernova Slumps 11% as Meta’s Spending Outlook Stokes AI Financing Worries; Vertiv Holdings Drops 7%, Eaton Slides 6%",
+   "entry_date": "2026-10-23",
+   "entry": 638.12,
+   "bench_entry": 702.102,
+   "size": 5000.0,
+   "now": 642.62,
+   "ret": 0.51,
+   "bench_ret": 0.13,
+   "asof": "2026-10-23"
   }
  ],
  "closed": [
@@ -267,9 +238,51 @@
    "exit_date": "2026-10-21",
    "exit": 1676.6899,
    "pnl": 178.53
+  },
+  {
+   "sym": "MBLY",
+   "dir": "롱",
+   "b": "pos_dn",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-16",
+   "edge": 0.75,
+   "z": 1.79,
+   "head": "Mobileye Shares Rise 4.3% as Citi Initiates Coverage With Buy Rating and $11 Price Target",
+   "entry_date": "2026-10-19",
+   "entry": 7.345,
+   "bench_entry": 719.615,
+   "size": 5000.0,
+   "now": 6.95,
+   "ret": -11.16,
+   "bench_ret": -2.31,
+   "asof": "2026-10-22",
+   "exit_date": "2026-10-23",
+   "exit": 6.54,
+   "pnl": -557.99
+  },
+  {
+   "sym": "TSLA",
+   "dir": "롱",
+   "b": "pos_up",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-16",
+   "edge": 0.1,
+   "z": 3.18,
+   "head": "Tesla Roadster probably won't drive an earnings beat, but the big unveil did achieve 2 things",
+   "entry_date": "2026-10-19",
+   "entry": 357.485,
+   "bench_entry": 719.615,
+   "size": 5000.0,
+   "now": 374.58,
+   "ret": 3.92,
+   "bench_ret": -2.31,
+   "asof": "2026-10-22",
+   "exit_date": "2026-10-23",
+   "exit": 372.22,
+   "pnl": 196.09
   }
  ],
- "cash": 62197.66312892556,
+ "cash": 66835.76386107222,
  "curve": [
   [
    "2026-10-09",
@@ -320,6 +333,11 @@
    "2026-10-22",
    96758.62,
    98634.72
+  ],
+  [
+   "2026-10-23",
+   96228.39,
+   98638.1
   ]
  ],
  "picks_log": [
