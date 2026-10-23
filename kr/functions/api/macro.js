@@ -32,17 +32,17 @@ function thin(closes) {
 // 서버(클라우드플레어)에서 야후가 일부 종목·주소를 막는 일이 있어, 주소 두 곳을 차례로 시도하고 실패 이유를 se 로 남김
 const YH = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
 async function yahooChart(sym) {
-  let err = "";
+  const errs = [];
   for (const h of YH) {
     try {
       const r = await fetch(`https://${h}/v8/finance/chart/${encodeURIComponent(sym)}?interval=15m&range=1d`,
         { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36", Accept: "application/json" } });
-      if (!r.ok) { err = `${sym} ${h.slice(0, 6)} HTTP ${r.status}`; continue; }
+      if (!r.ok) { errs.push(`${h.slice(0, 6)} HTTP ${r.status}`); continue; }
       const res = (await r.json()).chart.result[0];
       return { meta: res.meta, s: thin(res.indicators.quote[0].close || []), err: "" };
-    } catch (e) { err = `${sym} ${h.slice(0, 6)} ${String(e).slice(0, 60)}`; }
+    } catch (e) { errs.push(`${h.slice(0, 6)} ${String(e).slice(0, 60)}`); }
   }
-  throw new Error(err);
+  throw new Error(`${sym}: ${errs.join(" / ")}`);
 }
 
 async function yahoo(sym) {
@@ -59,15 +59,15 @@ export async function onRequestGet({ request, waitUntil }) {
   if (hit) return hit;
   const items = await Promise.all(ITEMS.map(async (it) => {
     try {
-      let se = "";
+      const ses = [];
       const series = async (ys) => {
         for (const y of [].concat(ys)) {
-          try { const x = await yahooChart(y); if (x.s) return x.s; se = `${y} 점 부족`; } catch (e) { se = String(e.message || e); }
+          try { const x = await yahooChart(y); if (x.s) return x.s; ses.push(`${y} 점 부족`); } catch (e) { ses.push(String(e.message || e)); }
         }
         return null;
       };
       const [v, s] = await Promise.all([it.y ? yahoo(it.y) : naver(it.n), it.ys ? series(it.ys) : null]);
-      return { k: it.k, name: it.name, sym: it.sym, d: it.d, unit: it.unit || "", ...v, ...(s ? { s } : it.ys ? { se } : {}) };
+      return { k: it.k, name: it.name, sym: it.sym, d: it.d, unit: it.unit || "", ...v, ...(s ? { s } : it.ys ? { se: ses.join(" | ").slice(0, 240) } : {}) };
     } catch {
       return { k: it.k, name: it.name, sym: it.sym, d: it.d, unit: it.unit || "", price: null };
     }
