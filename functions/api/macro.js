@@ -1,16 +1,16 @@
 // 주요 지표 (환율·달러지수·비트코인·금·금리) — 미국·한국 미니 블벅터 공통, 30초 캐시
-//   GET /api/macro → { at, items: [{ k, name, sym, price, chg, pct, time, unit }] }
+//   GET /api/macro → { at, items: [{ k, name, sym, price, chg, pct, time, unit, s }] }   (s = 오늘 추세선용 가격 배열, 최대 36점)
 // · 네이버 증권 시장지표(원/달러·달러지수·금·미 10·30년·한국 10년) + 야후(달러/엔·비트코인)
 const NAVER = { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1",
   Referer: "https://m.stock.naver.com/", Accept: "application/json" };
 const ITEMS = [
   { k: "usdjpy", name: "달러/엔", sym: "USD/JPY", y: "JPY=X", d: 2 },
-  { k: "usdkrw", name: "달러/원", sym: "USD/KRW", n: "exchange&reutersCode=FX_USDKRW", d: 2 },
-  { k: "dxy", name: "달러 지수", sym: "DXY", n: "exchange&reutersCode=.DXY", d: 2 },
+  { k: "usdkrw", name: "달러/원", sym: "USD/KRW", n: "exchange&reutersCode=FX_USDKRW", ys: "KRW=X", d: 2 },
+  { k: "dxy", name: "달러 지수", sym: "DXY", n: "exchange&reutersCode=.DXY", ys: "DX-Y.NYB", d: 2 },
   { k: "btc", name: "비트코인", sym: "BTC/USD", y: "BTC-USD", d: 0 },
-  { k: "gold", name: "금", sym: "GC", n: "metals&reutersCode=GCcv1", d: 2 },
-  { k: "us10", name: "미 10년물", sym: "US10Y", n: "bond&reutersCode=US10YT=RR", d: 3, unit: "%" },
-  { k: "us30", name: "미 30년물", sym: "US30Y", n: "bond&reutersCode=US30YT=RR", d: 3, unit: "%" },
+  { k: "gold", name: "금", sym: "GC", n: "metals&reutersCode=GCcv1", ys: "GC=F", d: 2 },
+  { k: "us10", name: "미 10년물", sym: "US10Y", n: "bond&reutersCode=US10YT=RR", ys: "^TNX", d: 3, unit: "%" },
+  { k: "us30", name: "미 30년물", sym: "US30Y", n: "bond&reutersCode=US30YT=RR", ys: "^TYX", d: 3, unit: "%" },
   { k: "kr10", name: "한국 10년물", sym: "KR10Y", n: "bond&reutersCode=KR10YT=RR", d: 3, unit: "%" },
 ];
 const num = (s) => { const v = parseFloat(String(s ?? "").replace(/,/g, "")); return Number.isFinite(v) ? v : null; };
@@ -21,13 +21,26 @@ async function naver(q) {
   return { price: num(d.closePrice), chg: num(d.fluctuations), pct: num(d.fluctuationsRatio), time: d.localTradedAt || null };
 }
 
-async function yahoo(sym) {
-  const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=5m&range=1d`,
+// 추세선: 오늘 가격 흐름을 최대 36점으로 줄임 (모양만 보여 주는 용도 — 표시 가격은 위 시세를 씀)
+function thin(closes) {
+  const v = closes.filter((x) => Number.isFinite(x));
+  if (v.length < 4) return null;
+  const step = Math.max(1, Math.ceil(v.length / 36)), out = [];
+  for (let i = v.length - 1; i >= 0; i -= step) out.unshift(v[i]);   // 마지막(현재) 값은 항상 포함
+  return out.map((x) => +x.toPrecision(6));
+}
+async function yahooChart(sym) {
+  const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=15m&range=1d`,
     { headers: { "User-Agent": "Mozilla/5.0" } });
-  const m = (await r.json()).chart.result[0].meta;
+  const res = (await r.json()).chart.result[0];
+  return { meta: res.meta, s: thin(res.indicators.quote[0].close || []) };
+}
+
+async function yahoo(sym) {
+  const { meta: m, s } = await yahooChart(sym);
   const price = m.regularMarketPrice, prev = m.chartPreviousClose ?? m.previousClose;
   return { price, chg: prev ? price - prev : null, pct: prev ? (price / prev - 1) * 100 : null,
-    time: m.regularMarketTime ? new Date(m.regularMarketTime * 1000).toISOString() : null };
+    time: m.regularMarketTime ? new Date(m.regularMarketTime * 1000).toISOString() : null, s };
 }
 
 export async function onRequestGet({ request, waitUntil }) {
@@ -37,8 +50,11 @@ export async function onRequestGet({ request, waitUntil }) {
   if (hit) return hit;
   const items = await Promise.all(ITEMS.map(async (it) => {
     try {
-      const v = it.y ? await yahoo(it.y) : await naver(it.n);
-      return { k: it.k, name: it.name, sym: it.sym, d: it.d, unit: it.unit || "", ...v };
+      const [v, s] = await Promise.all([
+        it.y ? yahoo(it.y) : naver(it.n),
+        it.ys ? yahooChart(it.ys).then((x) => x.s).catch(() => null) : null,
+      ]);
+      return { k: it.k, name: it.name, sym: it.sym, d: it.d, unit: it.unit || "", ...v, ...(s ? { s } : {}) };
     } catch {
       return { k: it.k, name: it.name, sym: it.sym, d: it.d, unit: it.unit || "", price: null };
     }

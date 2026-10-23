@@ -59,12 +59,19 @@ def main():
         themes_html = f.read()
     with open(os.path.join(args.out, "themes.html"), "w", encoding="utf-8") as f:
         f.write(themes_html)
+    # 앱처럼 쓰기(홈 화면 추가)·오프라인용: manifest·서비스 워커·아이콘 (pwa/ → 사이트 루트)
+    import shutil
+    for fn in os.listdir(os.path.join(ROOT, "pwa")):
+        shutil.copy(os.path.join(ROOT, "pwa", fn), os.path.join(args.out, fn))
     # 랩(mini-bblab) 화면이 장중 옵션 수급 등을 가져갈 수 있게 briefings/ 는 다른 사이트에서도 읽기 허용
     with open(os.path.join(args.out, "_headers"), "w", encoding="utf-8") as f:
         f.write("/briefings/*\n  Access-Control-Allow-Origin: *\n"
                 # 기본 보안 헤더: 다른 사이트가 이 화면을 몰래 틀 안에 넣지 못하게, 파일 형식 추측 금지, 주소 유출 최소화
                 "/*\n  X-Frame-Options: SAMEORIGIN\n  X-Content-Type-Options: nosniff\n"
-                "  Referrer-Policy: strict-origin-when-cross-origin\n")
+                "  Referrer-Policy: strict-origin-when-cross-origin\n"
+                # 서비스 워커·manifest 는 캐시하지 않아야 고친 내용이 바로 반영됨
+                "/sw.js\n  Cache-Control: no-cache\n"
+                "/manifest.webmanifest\n  Cache-Control: no-cache\n  Content-Type: application/manifest+json\n")
     print(f"[build] {start:%m-%d %H:%M} ~ {end:%m-%d %H:%M} KST 수집 → {args.out}/")
 
 

@@ -1,0 +1,17 @@
+{
+  "name": "미니 블벅터",
+  "short_name": "블벅터",
+  "description": "미국 증시 뉴스 팩트체크 터미널 — 검증됨·단독보도·미확인 구분, 시장 급변 원인 추적, 실시간 속보",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
