@@ -37,9 +37,27 @@ table{border-collapse:collapse;font-size:13px;width:100%}
 th,td{padding:6px 8px;border-bottom:.5px solid var(--grid);text-align:left;vertical-align:top}
 th{color:var(--sub);font-weight:600;font-size:12px}td.r,th.r{text-align:right;font-family:var(--mono);white-space:nowrap}
 .tbl table.w5{min-width:540px}.tbl table.w7{min-width:760px}.tbl table.w7 td:first-child{min-width:6.5em}   /* 글이 긴 표는 모바일에서 옆으로 밀어 보기 */
+/* 표: '항목·숫자·비교' 3칸 표는 비교를 '·' 단위로 끊어 줄마다, 휴대폰에선 표 대신 카드(항목—숫자 한 줄 + 비교 목록) */
+table.cmp td.cm .c+.c:before{content:" · ";color:#9ca3af}
+table.cmp td:first-child{font-weight:600;color:#111827}
+@media (max-width:640px){
+  .tbl{overflow-x:visible}.tbl table.w5,.tbl table.w7{min-width:0}
+  table.cmp,table.cmp tbody,table.cards,table.cards tbody{display:block}
+  table.cmp tr:first-child:has(th),table.cards tr:first-child:has(th){display:none}
+  table.cmp tr{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:10px 2px;border-bottom:.5px solid var(--grid)}
+  table.cmp td{border:0;padding:0}
+  table.cmp td.r{font-size:14.5px;align-self:start}
+  table.cmp td.cm{grid-column:1/-1;font-size:12.5px;color:#4b5563;line-height:1.5}
+  table.cmp td.cm .c{display:block;padding-left:10px;position:relative}
+  table.cmp td.cm .c:before,table.cmp td.cm .c+.c:before{content:"";position:absolute;left:1px;top:.62em;width:4px;height:4px;border-radius:50%;background:#cbd5e1}
+  table.cards tr{display:block;padding:9px 2px;border-bottom:.5px solid var(--grid)}
+  table.cards td{display:flex;justify-content:space-between;gap:12px;border:0;padding:1px 0;text-align:right;white-space:normal}
+  table.cards td:first-child{display:block;text-align:left;font-weight:700;font-family:inherit;margin-bottom:2px}
+  table.cards td:not(:first-child):before{content:attr(data-l);color:var(--sub);font:600 12px Inter,'Apple SD Gothic Neo',sans-serif;text-align:left;flex:0 0 auto;max-width:45%}
+}
 .fig{margin:12px 0;border:.5px solid var(--bd);border-radius:12px;padding:10px 12px;background:#fff}
 .fig .t{font-size:13px;font-weight:700}.fig .s{font-size:11.5px;color:var(--sub)}
-.fig svg{display:block;width:100%;height:auto}
+.fig svg{display:block;width:100%;height:auto}.fig svg .ax{font-size:10px}
 .ax{font-size:11px;fill:var(--sub);font-family:var(--mono)}.lb{font-size:11.5px;fill:#111827;font-family:var(--mono);font-weight:700}
 .note{font-size:12px;color:var(--sub)}
 .badge{display:inline-block;font-size:11px;font-weight:700;padding:0 6px;border-radius:6px;vertical-align:1px}
@@ -74,8 +92,34 @@ get('index.json').then(r=>r.json()).then(L=>{
   get(`${id}.html`).then(r=>r.text()).then(h=>{
     document.getElementById('app').innerHTML=`<article class="card art"><span class="date">${esc(a.date)}</span> ${liveTag(a)} ${(a.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
       <h1>${esc(a.title)}</h1><p class="lede">${esc(a.sub)}</p>
-      <div class="req"><div class="k">📝 요청 내용</div>${esc(a.request)}</div>${(a.tilts||[]).length?`<div class="req" style="border-left-color:#16a34a"><div class="k" style="color:#16a34a">🧭 포트폴리오 반영 (<a href="sim">가상 운용</a>)</div>${a.tilts.map(t=>`<div>${t.dir>0?'비중↑':'비중↓·숏'} <b>${t.syms.map(esc).join(', ')}</b> · ~${esc(t.until||'')} — ${esc(t.why||'')}</div>`).join('')}</div>`:''}${h}</article>`;});
+      <div class="req"><div class="k">📝 요청 내용</div>${esc(a.request)}</div>${(a.tilts||[]).length?`<div class="req" style="border-left-color:#16a34a"><div class="k" style="color:#16a34a">🧭 포트폴리오 반영 (<a href="sim">가상 운용</a>)</div>${a.tilts.map(t=>`<div>${t.dir>0?'비중↑':'비중↓·숏'} <b>${t.syms.map(esc).join(', ')}</b> · ~${esc(t.until||'')} — ${esc(t.why||'')}</div>`).join('')}</div>`:''}${h}</article>`;
+    tidyTables(document.querySelector('.art'));});
 }).catch(e=>{document.getElementById('app').innerHTML=`<div class="card note">불러오지 못했어요 (${esc(e.message)})</div>`;});
+// 표 손질: 머리 줄 이름을 칸마다 붙이고(휴대폰 카드용), '항목·숫자·비교' 3칸 표는 비교 칸을 ' · ' 단위(괄호 밖)로 끊음
+function splitDots(html){
+  const out=[];let d=0,cur='';
+  for(let i=0;i<html.length;i++){const ch=html[i];
+    if(ch==='('||ch==='（')d++;else if((ch===')'||ch==='）')&&d)d--;
+    if(!d&&html.startsWith(' · ',i)){out.push(cur);cur='';i+=2;continue;}
+    cur+=ch;}
+  out.push(cur);return out.map(x=>x.trim()).filter(Boolean);
+}
+function tidyTables(root){
+  if(!root)return;
+  root.querySelectorAll('table').forEach(t=>{
+    const rows=[...t.rows];if(!rows.length)return;
+    const head=rows[0].querySelector('th')?[...rows[0].cells].map(c=>c.textContent.trim()):null;
+    const n=Math.max(...rows.map(r=>r.cells.length));
+    if(head)rows.slice(1).forEach(r=>[...r.cells].forEach((c,i)=>c.dataset.l=head[i]||''));
+    if(n===3&&head&&!rows[0].cells[2].classList.contains('r')){
+      t.classList.add('cmp');
+      rows.slice(1).forEach(r=>{const c=r.cells[2];if(!c)return;c.classList.add('cm');
+        const parts=splitDots(c.innerHTML);
+        // 숫자로 시작하는 조각이 있으면(예: '연말 6.43억 · 3.72억' — 두 값을 짝지은 것) 끊지 않음
+        if(parts.length>1&&!parts.some(x=>/^[\d+\-−$.%]/.test(x.replace(/<[^>]+>/g,''))))c.innerHTML=parts.map(x=>`<span class="c">${x}</span>`).join('');});
+    }else if(head&&n>=3)t.classList.add('cards');
+  });
+}
 // 방문자 수: 미국 증시 터미널과 같은 집계(api/visit)에 합산 — 브라우저당 하루 1번 (실시간 기사 2분 새로고침은 안 셈)
 (async()=>{
   const today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
