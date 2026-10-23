@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>미니 블벅터 KR · 한국 증시</title>
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="미니 블벅터 KR">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f4f5f7;--card:#fff;--bd:#e5e7eb;--sub:#6b7280;--ink:#111827;--acc:#2563eb;--up:#dc2626;--dn:#2563eb;--r:14px;
@@ -13,7 +20,7 @@ html,body{overflow-x:hidden}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,'Apple SD Gothic Neo','Noto Sans KR',sans-serif}
 a{color:inherit}
 #bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:.5px solid var(--bd)}
-.brand{font-weight:800;font-size:20px;text-decoration:none;letter-spacing:-.02em}.brand em{font-style:normal;color:var(--up)}
+.brand{font-weight:800;font-size:20px;text-decoration:none;letter-spacing:-.02em}.brand-sub{font-size:14px;font-weight:700;color:#6b7280}.brand em{font-style:normal;color:var(--up)}
 .pill{font-size:13px;font-weight:700;border-radius:999px;padding:3px 11px;background:#f3f4f6;color:#4b5563}
 .pill.open{background:#fee2e2;color:#b91c1c}
 .spacer{flex:1}
@@ -158,21 +165,117 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
 .mx-p{font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:-.02em;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mx-c{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mx-c.u{color:#dc2626}.mx-c.d{color:#2563eb}.mx-c.f{color:#6b7280}
+/* ── 휴대폰: 위쪽을 짧게 — 지표는 옆으로 넘기고, 수급은 두 장 스냅, 분야는 한 줄 탭, 카테고리는 서랍 ── */
+.mx-s{display:block;width:100%;height:20px;margin-top:3px;overflow:visible}
+.mx-s polyline{fill:none;stroke-width:1.4;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.mx-s.u polyline{stroke:var(--up)}.mx-s.d polyline{stroke:var(--dn)}.mx-s.f polyline{stroke:#9ca3af}
+.mx-s line{stroke:#d1d5db;stroke-width:1;stroke-dasharray:1 3;vector-effect:non-scaling-stroke}
+.nav-chv,.nav-sel{display:none}
+@media (max-width:759px){
+  body{overflow-x:clip}   /* body 가 스크롤 상자가 되면 sticky 상단 바가 붙어 있지 못해서 */
+  /* 상단 바: 왼쪽에 브랜드·상태 + 갱신 시각 두 줄, 오른쪽에 버튼 — 한 덩어리 얇게 */
+  #bar{display:grid;grid-template-columns:auto auto 1fr auto auto;grid-template-areas:"brand pill . rb us" "upd upd upd rb us";
+    column-gap:6px;row-gap:0;align-items:center;padding:6px 12px;transition:transform .22s ease}
+  #bar.hide{transform:translateY(-100%)}
+  #bar .spacer,.brand-sub,#bar .lg{display:none}
+  .brand{grid-area:brand;font-size:17px;line-height:1.25}
+  #mst{grid-area:pill;font-size:11.5px;padding:1px 9px;justify-self:start}
+  #upd{grid-area:upd;font-size:11px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  #rbtn{grid-area:rb}#usBtn{grid-area:us}
+  .btn{font-size:13px;padding:6px 10px}
+  .wrap{padding:8px 12px 32px}
+  /* 지표: 한 줄로 옆으로 넘김 */
+  .mx{padding:6px 8px 8px;margin-bottom:8px;border-radius:12px}
+  .mx-h{font-size:13px;margin-bottom:4px}.mx-h span{font-size:10.5px}
+  .mx-g{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding:0 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:0 -8px;padding:0 8px}
+  .mx-g::-webkit-scrollbar{display:none}
+  .mx-t{flex:0 0 92px;scroll-snap-align:start}
+  /* 수급: 두 장을 옆으로 넘김(둘째 장이 살짝 보임), 장 안은 개인·외국인·기관계를 한 줄 3칸으로 */
+  .flow{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 12px;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:0 -12px 8px;padding:0 12px}
+  .flow::-webkit-scrollbar{display:none}
+  .fc{flex:0 0 88%;scroll-snap-align:start;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:12px;padding:8px 11px 6px}
+  .fc>*{grid-column:1/-1}
+  .fc>.fr{grid-column:auto;grid-template-columns:minmax(0,1fr);gap:0;padding:3px 0 0}
+  .fc>.fr>span{font-size:12px;color:var(--sub)}
+  .fc>.fr b{text-align:left;font-size:16px}
+  .fbar{height:4px;margin-top:2px}
+  .frs{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;margin-top:3px}
+  .fr.sub{padding-left:0;gap:4px;font-size:11.5px;white-space:nowrap}
+  .fsvg{height:30px}
+  .fc>.fleg{grid-column:1/3;margin-top:2px}
+  .fc>.fdet{grid-column:3;margin-top:2px;text-align:right}
+  .fc>.fdet[open]{grid-column:1/-1;text-align:left}
+  /* 분야 탭: 한 줄, 옆으로 넘김 (탭이 늘어도 스크롤로 이어짐) */
+  .secs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;position:relative;margin:0 -12px 8px;padding:2px 12px 4px}
+  .secs::-webkit-scrollbar{display:none}
+  .sec{flex:0 0 auto;min-width:84px;max-width:150px;padding:6px 12px;border-radius:12px;box-shadow:none}
+  .sec.on{box-shadow:0 0 0 1px #111827 inset}
+  .sec .t{font-size:14.5px;white-space:nowrap}
+  .sec .s{font-size:12px;margin-top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sec .s b{font-size:13px}
+  /* 카테고리 서랍 */
+  .ncats{padding:0;overflow:hidden;margin-bottom:8px;border-radius:12px}
+  .ncats .nav-h{margin:0;padding:11px 14px;cursor:pointer;align-items:center}
+  .nav-t{font-size:15px}.nav-hint{display:none}
+  .nav-sel{display:inline;font-size:12.5px;color:var(--sub);margin-left:6px;font-weight:500}
+  .nav-chv{display:inline-block;margin-left:auto;transition:transform .15s;color:var(--sub)}
+  .ncats.open .nav-chv{transform:rotate(180deg)}
+  .ncats:not(.open)>:not(.nav-h){display:none}
+  .ncats.open>:not(.nav-h){margin-left:14px;margin-right:14px}
+  .ncats.open{padding-bottom:12px}
+  .ncats.open .nav-h{margin-bottom:2px}
+}
+/* 📈 시장: 코스피 장중 변동 원인 (미국판 '시장을 움직인 뉴스'의 한국판 — 빨강 상승·파랑 하락) */
+.km{background:#fff;border:.5px solid var(--bd);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);padding:12px 14px;margin:0 0 12px;min-width:0}
+.km-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.km-t{font-weight:800;font-size:16px}.km-note{font-size:12px;color:var(--sub);line-height:1.5}
+.km-big{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;font-family:var(--mono);font-weight:800;margin-top:6px}
+.km-big .n{font-size:26px;letter-spacing:-.02em}.km-big .c{font-size:20px}.km-big .k{font-size:15px;font-weight:700}
+.km-big small{font-family:Inter,sans-serif;font-size:12px;font-weight:600;color:var(--sub)}
+.km-fl{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:13.5px}
+.km-fl b{font-family:var(--mono);font-weight:700}.km-fl span.l{color:var(--sub);font-weight:600;margin-right:3px}
+.km-q{font-size:14px;font-weight:800;margin:12px 0 4px}.km-q.sm{font-size:12.5px;color:#374151;margin-top:8px}
+.km-l{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.km-i{border-left:3px solid var(--dn);padding:2px 0 2px 8px}.km-i.upc{border-left-color:var(--up)}
+.km-ih{display:flex;flex-wrap:wrap;align-items:center;gap:3px 8px}.km-ih b{font-size:14.5px}
+.km-pp{font-family:var(--mono);font-size:13px;font-weight:800}.km-when{font-size:11.5px;color:var(--sub)}
+.km-n{font-size:13px;line-height:1.45;margin-top:2px;overflow-wrap:anywhere}.km-n a{text-decoration:none;color:#111827}.km-n a:hover{color:var(--acc)}
+.km-n .tm{font-family:var(--mono);font-size:10.5px;color:var(--sub);margin-right:4px}.km-src{font-size:11.5px;color:var(--sub)}
+.km-w{font-size:12px;color:var(--sub);margin-top:1px;overflow-wrap:anywhere}
+.km-no{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#111827;color:#fff;font-style:normal;font-size:10px;font-weight:800;margin-right:3px;vertical-align:1px}
+.km-no.dn{background:var(--dn)}.km-no.up{background:var(--up)}.km-no[data-seg]{cursor:pointer}.km-no.sel{outline:2px solid #111827;outline-offset:1px}
+.km-ph{font-size:10.5px;padding:1px 6px;border-radius:5px;background:#f3f4f6;color:#374151;font-weight:700}
+.km-chg{font-family:var(--mono);font-size:12.5px;font-weight:800;border-radius:6px;padding:1px 7px}
+.km-chg.up{background:#fee2e2}.km-chg.dn{background:#dbeafe}
+.km-x{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:12.5px;margin-top:4px}.km-x b{font-weight:600;color:var(--sub);margin-right:3px}
+.km-tl{margin:8px 0 2px}.km-tl svg{display:block;width:100%;max-width:640px;height:auto}
+.km-tl .ax{font-size:9px;fill:#6b7280;font-family:var(--mono)}.km-tl .sn{font-size:9.5px;font-weight:800}
+.km-sg{cursor:pointer}.km-sg .hit{fill:transparent}.km-sg.sel rect:not(.hit){stroke:#111827;stroke-width:1.2}
+.km-d{margin-top:8px}.km-d summary{font-size:13px;font-weight:700;color:#374151;cursor:pointer}
+.km-r{border-left:2px solid var(--bd);padding:3px 0 3px 7px;margin-top:6px}.km-r.sel{background:#f1f5f9;border-left-color:#111827;border-radius:0 6px 6px 0}
+.km-drv{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.km-dr{font-size:12px;padding:2px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:600}.km-dr.k0{background:#111827;color:#fff}
+.km-dr small{font-weight:400;opacity:.85;margin-left:4px}
+.km-ev{border-top:.5px dashed var(--bd);padding:8px 0 2px;margin-top:8px}
+.km-lbl{font-size:11.5px;font-weight:700;color:var(--sub);margin-top:6px}
+.km-empty{color:var(--sub);font-size:13.5px;padding:14px 4px}
+@media(min-width:641px){.secs{grid-template-columns:repeat(7,1fr)}}
 </style>
 </head>
 <body>
 <div id="bar">
-  <a class="brand" href="./">미니 블벅터 <em>KR</em> <span style="font-size:14px;font-weight:700;color:#6b7280">한국 증시용</span></a>
+  <a class="brand" href="./">미니 블벅터 <em>KR</em> <span class="brand-sub">한국 증시용</span></a>
   <span class="pill" id="mst">—</span>
   <span class="hsub" id="upd"></span>
   <div class="spacer"></div>
-  <button class="btn" id="rbtn">↻ 새로고침</button>
-  <a class="btn" href="https://mini-bbterminal.pages.dev">🇺🇸 미국 증시</a>
+  <button class="btn" id="rbtn" title="새로고침">↻<span class="lg"> 새로고침</span></button>
+  <a class="btn" id="usBtn" href="https://mini-bbterminal.pages.dev">🇺🇸 미국<span class="lg"> 증시</span></a>
 </div>
 <div class="wrap">
   <div class="mx" id="mx" hidden><div class="mx-h">📊 주요 지표 <span id="mxAt"></span></div><div class="mx-g" id="mxG"></div></div>
   <div class="flow" id="flow" hidden></div>
   <div class="secs" id="secs">
+    <button class="sec" data-sec="moves"><div class="t">📈 시장</div><div class="s" id="secMoves">코스피 장중 변동 원인</div></button>
     <button class="sec" data-sec="theme"><div class="t">🔥 장중 테마</div><div class="s" id="secTheme">불러오는 중…</div></button>
     <button class="sec" data-sec="산업"><div class="t">🏭 산업</div><div class="s" data-cnt="산업">뉴스</div></button>
     <button class="sec" data-sec="매크로"><div class="t">🌐 매크로</div><div class="s" data-cnt="매크로">뉴스</div></button>
@@ -180,6 +283,7 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
     <button class="sec map" data-sec="map"><div class="t">🗺️ 맵</div><div class="s" id="secMap">코스피·코스닥 한눈에</div></button>
     <button class="sec" data-sec="report"><div class="t">📑 리포트</div><div class="s" id="secRep">증권사 매크로·산업·기업</div></button>
   </div>
+  <div id="movesView" hidden></div>
   <div id="mapView" hidden>
     <div class="mbar"><button class="mtab" data-m="KOSPI">코스피</button><button class="mtab" data-m="KOSDAQ">코스닥</button>
       <span class="midx" id="midx"></span></div>
@@ -237,7 +341,7 @@ async function loadFlow(){
       const det=Object.entries(x.detail||{}).map(([k,v])=>`<div><span>${k}</span><span class="${c(v)}">${f(v)}</span></div>`).join('')+
         `<div><span>기타법인</span><span class="${c(x.corp)}">${f(x.corp)}</span></div>`;
       return `<div class="fc"><div class="fh">${name}<span>${x.at.slice(5,10).replace('-','/')} ${x.at.slice(11,16)} · 억 원</span></div>
-        ${row('개인',x.ind,FC.ind)}${row('외국인',x.frn,FC.frn)}${row('기관계',x.inst,FC.inst)}${row('ㄴ 순수기관',x.pure,'',1)}${row('ㄴ 금융투자',x.fin,'',1)}
+        ${row('개인',x.ind,FC.ind)}${row('외국인',x.frn,FC.frn)}${row('기관계',x.inst,FC.inst)}<div class="frs">${row('ㄴ 순수기관',x.pure,'',1)}${row('ㄴ 금융투자',x.fin,'',1)}</div>
         ${flowSvg(x.series)}<div class="fleg"><span><i style="background:${FC.ind}"></i>개인</span><span><i style="background:${FC.frn}"></i>외국인</span><span><i style="background:${FC.inst}"></i>기관</span></div>
         <details class="fdet"><summary>▸ 기관 세부</summary>${det}</details></div>`;
     };
@@ -261,7 +365,7 @@ function schedule(){
   const ms=open?30e3:300e3;nextAt=Date.now()+ms;timer=setTimeout(load,ms);
 }
 setInterval(()=>{const s=Math.max(0,Math.round((nextAt-Date.now())/1e3));const at=st.data?new Date(st.data.at):null;
-  document.getElementById('upd').textContent=at?`${at.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} 기준 · ${s}초 뒤 갱신`:'';},1000);
+  document.getElementById('upd').innerHTML=at?`${at.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}<span class="lg"> 기준</span> · ${s}초 뒤<span class="lg"> 갱신</span>`:'';},1000);
 
 function render(){
   const d=st.data;if(!d)return;
@@ -388,18 +492,132 @@ document.getElementById('list').addEventListener('click',onListClick);
 document.getElementById('qlist').addEventListener('click',onListClick);
 const ALIAS={'원전':'원자력','2차전지':'2차전지','배터리':'2차전지','로봇':'로봇','ai':'AI','방산':'방위산업','조선':'조선','바이오':'바이오'};
 document.getElementById('q').oninput=e=>{const v=e.target.value.trim();st.q=ALIAS[v.toLowerCase()]||v;render();};
+// ── 📈 시장: 코스피 장중 변동 원인 (briefings/kr_moves.json — 미국판 사이트가 15분마다 만들어 둠) ──
+//   갭(전일 종가→시가) + 정규장 구간별 원인(수급·반도체·환율·미국장…)과 뉴스, 하루 순효과로 묶은 '왜 빠졌나/올랐나'
+const KM_URL='https://mini-bbterminal.pages.dev/briefings/kr_moves.json';
+const km={data:null,at:0,sel:null,open:false};
+const kmHM=ts=>new Date(ts*1000).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false});
+const kmMD=ts=>new Date(ts*1000).toLocaleDateString('en-GB',{timeZone:'Asia/Seoul',day:'2-digit',month:'2-digit'}).split('/').reverse().join('/');
+const km억=v=>v==null?'–':(v>0?'+':'')+Number(v).toLocaleString()+'억';
+const KMX=[['KQ','코스닥'],['FX','원/달러'],['NQF','미국 선물'],['SOX','미국 반도체'],['IXIC','나스닥'],['EWY','한국 ETF(EWY)'],['N225','닛케이'],['HSI','항셍'],['SSEC','상하이']];
+async function loadMoves(){
+  try{
+    const r=await fetch(KM_URL+'?t='+Math.floor(Date.now()/60000),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
+    km.data=await r.json();km.at=Date.now();
+    const D=km.data.day,iss=(D.issues||[]).length;
+    document.getElementById('secMoves').innerHTML=`코스피 <b class="${cls(D.pct)}">${pct(D.pct)}</b> · 이슈 ${iss}개`;
+  }catch(e){if(!km.data)document.getElementById('secMoves').textContent='불러오지 못함';}
+  if(sec==='moves')renderMoves();
+}
+function renderMoves(){
+  const box=document.getElementById('movesView'),d=km.data;
+  if(!d){box.innerHTML='<div class="km"><div class="km-empty">불러오는 중… (데이터가 없으면 다음 갱신 때 나타나요)</div></div>';return;}
+  const D=d.day,seg=D.segments||[],segNo=new Map(seg.map((r,i)=>[r.start,i+1])),ref=D.pct,dn=ref<0,live=d.mode==='live';
+  const kq=(d.indices||[]).find(i=>i.name==='코스닥')||{};
+  const tm=ts=>kmMD(ts)!==kmMD(D.end)?kmMD(ts)+' '+kmHM(ts):kmHM(ts);
+  const segCls=n=>{const r=seg[n-1];return r&&r.pct<0?'dn':'up';};
+  const ago=Math.max(0,Math.round((Date.now()-Date.parse(d.generated_at))/60000));
+  const chips=nos=>nos.map(n=>`<i class="km-no ${segCls(n)}" data-seg="${n}" role="button" title="${n}번 구간 설명으로">${n}</i>`).join('');
+  const movers=ms=>(ms&&ms.length)?`<div class="km-w">지수를 끈 종목: ${ms.map(m=>`${esc(m.name)} <span class="${cls(m.pct)}">${pct(m.pct)}</span> (${m.pp>0?'+':''}${m.pp.toFixed(2)}%p)`).join(' · ')}</div>`:'';
+  const news=(h)=>`<div class="km-n"><span class="tm">${tm(h.time||h.first_seen)}</span><a href="${safeUrl(h.url)}" target="_blank" rel="noopener">${esc(h.headline)}</a> <span class="km-src">· ${esc(h.source||'')}${h.kind==='explain'?' · 언론 설명':''}</span></div>`;
+  const flowLine=f=>f?`<div class="km-fl">${[['외국인',f.frn],['기관',f.inst],['개인',f.ind]].map(([n,v])=>`<span><span class="l">${n}</span><b class="${cls(v)}">${km억(v)}</b></span>`).join('')}</div>`:'';
+  // 1) 상단: 코스피 · 코스닥 · 수급
+  let h=`<div class="km"><div class="km-h"><span class="km-t">📈 코스피 ${live?'장중':'장 마감'} — 왜 ${dn?'빠졌나':'올랐나'}</span>
+    <span class="km-note">${esc(d.date)} · 분석 ${ago}분 전</span></div>
+    <div class="km-big"><span class="n">${D.price.toLocaleString(undefined,{maximumFractionDigits:2})}</span><span class="c ${cls(ref)}">${pct(ref)}</span>
+      <span class="k">코스닥 <span class="${cls(kq.change_pct)}">${pct(kq.change_pct)}</span></span><small>전일 종가 대비${D.settle?` · ${D.settle===D.open?'시가부터 줄곧 이 방향':'방향 확정 '+kmHM(D.settle)}`:''}</small></div>
+    ${flowLine(D.flow)}`;
+  // 2) 왜 빠졌나 / 올랐나: 같은 원인 구간을 하루 순효과로 묶음
+  const iss=D.issues||[],main=iss.filter(x=>x.pct*ref>0),opp=iss.filter(x=>x.pct*ref<0);
+  const one=x=>`<li class="km-i ${x.pct>0?'upc':''}" data-nos="${x.nos.join(',')}"><div class="km-ih"><b>${esc(x.name)}</b><span class="km-pp ${cls(x.pp)}">${x.pp>0?'+':''}${x.pp.toFixed(2)}%p</span><span class="km-when">${esc(x.phases.join('·'))} ${chips(x.nos)}</span></div>
+    ${x.head?news(x.head):'<div class="km-w">이 시간대 관련 기사를 찾지 못했어요</div>'}${x.why?`<div class="km-w">근거(같은 시간 다른 자산): ${esc(x.why)}</div>`:''}${movers(x.movers)}</li>`;
+  h+=(Math.abs(ref)<0.2&&!iss.length)?'<div class="km-note" style="margin-top:8px">뚜렷한 방향 없이 보합</div>'
+    :`<div class="km-q">${dn?'왜 빠졌나':'왜 올랐나'}</div><ol class="km-l">${main.map(one).join('')||'<li class="km-w">뚜렷한 원인 구간이 없어요</li>'}</ol>
+      ${opp.length?`<div class="km-q sm">${dn?'받쳐 준 것':'끌어내린 것'}</div><ol class="km-l">${opp.map(one).join('')}</ol>`:''}
+      <div class="km-note" style="margin-top:6px">%p = 위 코스피 등락 중 그 이슈 몫(구간 등락을 이슈별로 묶어 환산) · 원인은 같은 시간대 다른 자산·수급·기사로 추정한 것이며 인과 확인이 아님</div>`;
+  // 3) 하루 대형주 기여
+  if((D.contrib||[]).length)h+=`<div class="km-x"><b>지수를 끈 대형주</b>${D.contrib.map(c=>`<span>${esc(c.name)} <span class="${cls(c.pct)}">${pct(c.pct)}</span> <small style="color:var(--sub)">${c.pp>0?'+':''}${c.pp.toFixed(2)}%p</small></span>`).join('')}</div>`;
+  // 4) 시간축: 전일 종가→시가(갭) 띠 + 정규장 + 구간 번호(누르면 설명으로)
+  const T=d.timeline;
+  if(T&&(T.kp||[]).length>1){
+    const W=360,L=8,R=6,top=24,ph=74,H=top+ph+22,gapW=34,sessEnd=T.open+6.5*3600,lastX=[-99,-99];
+    const x=t=>t<=T.open?L+gapW*(t-T.start)/(T.open-T.start):L+gapW+(W-L-R-gapW)*(Math.min(t,sessEnd)-T.open)/(sessEnd-T.open);
+    const v=T.kp.map(p=>p[1]),mn=Math.min(...v),mx=Math.max(...v),y=c=>top+ph-(ph-4)*(c-mn)/((mx-mn)||1);
+    let g=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="코스피 하루 흐름과 구간별 원인">`;
+    if(T.end<sessEnd)g+=`<rect x="${x(T.end).toFixed(1)}" y="${top}" width="${(x(sessEnd)-x(T.end)).toFixed(1)}" height="${ph}" fill="#f9fafb"/>`;
+    (T.legs||[]).forEach(l=>{const n=segNo.get(l[0]),x0=x(l[0]),x1=x(l[1]),hw=Math.max(12,x1-x0);
+      g+=`<g class="km-sg" ${n?`data-seg="${n}"`:''}><rect x="${x0.toFixed(1)}" y="${top}" width="${Math.max(1,x1-x0).toFixed(1)}" height="${ph}" fill="${l[2]<0?'#dbeafe':'#fee2e2'}" fill-opacity="${Math.abs(l[2])>=0.5?1:0.55}"/>`;
+      if(n){const cx=(x0+x1)/2,row=lastX[0]<cx-11?0:lastX[1]<cx-11?1:-1;
+        if(row>=0){lastX[row]=cx;g+=`<text x="${cx.toFixed(1)}" y="${top-4-row*10}" text-anchor="middle" class="sn" fill="${l[2]<0?'#1d4ed8':'#b91c1c'}">${n}</text>`;}
+        g+=`<rect class="hit" x="${(cx-hw/2).toFixed(1)}" y="${top-14}" width="${hw.toFixed(1)}" height="${ph+14}"/>`;}
+      g+='</g>';});
+    g+=`<line x1="${L}" x2="${W-R}" y1="${y(v[0]).toFixed(1)}" y2="${y(v[0]).toFixed(1)}" stroke="#9ca3af" stroke-dasharray="2 3"/>`;
+    g+=`<line x1="${x(T.open).toFixed(1)}" x2="${x(T.open).toFixed(1)}" y1="${top}" y2="${top+ph}" stroke="#d1d5db"/>`;
+    g+=`<path d="${T.kp.map((p,i)=>(i?'L':'M')+x(p[0]).toFixed(1)+','+y(p[1]).toFixed(1)).join('')}" fill="none" stroke="#111827" stroke-width="1.5" stroke-linejoin="round"/>`;
+    if(D.settle&&D.settle>T.open)g+=`<line x1="${x(D.settle).toFixed(1)}" x2="${x(D.settle).toFixed(1)}" y1="${top}" y2="${top+ph}" stroke="#111827" stroke-dasharray="3 2"/><text x="${(x(D.settle)+3).toFixed(1)}" y="${top+8}" class="ax" style="font-weight:700;fill:#111827">방향 확정 ${kmHM(D.settle)}</text>`;
+    g+=`<text x="${L}" y="${top+ph+11}" class="ax">전일 종가→시가</text>`;
+    for(const hh of [11,13]){const t=T.open+(hh-9)*3600;g+=`<text x="${x(t).toFixed(1)}" y="${top+ph+11}" text-anchor="middle" class="ax">${hh}:00</text>`;}
+    g+=`<text x="${(W-R).toFixed(1)}" y="${top+ph+11}" text-anchor="end" class="ax">15:30</text></svg>`;
+    h+=`<div class="km-tl" id="kmTl">${g}</div><div class="km-note">👆 숫자·구간을 누르면 그 시간대 설명으로 이동 · 점선 = 전일 종가 · 왼쪽 좁은 띠 = 전일 마감~시가(갭) · 연한 칸은 작은 구간</div>`;
+  }
+  // 5) 시간대별 자세히
+  if(seg.length)h+=`<details class="km-d"${km.open?' open':''}><summary>🕒 시간대별로 자세히 (${seg.length}구간)</summary>${seg.map((r,i)=>`<div class="km-r" id="kmseg-${i+1}">
+    <div class="km-ih"><i class="km-no ${r.pct<0?'dn':'up'}" data-seg="${i+1}" role="button" title="차트에서 보기">${i+1}</i><b>${r.gap?'전일 마감~시가 갭':kmHM(r.start)+'–'+kmHM(r.end)}</b><span class="km-ph">${esc(r.phase)}</span><span class="km-chg ${cls(r.pct)}">${pct(r.pct)}</span><b>${esc(r.cause)}</b></div>
+    ${r.head?news(r.head):'<div class="km-w">이 시간대 기사를 아직 모으지 못함</div>'}${r.why?`<div class="km-w">${esc(r.why)}</div>`:''}${r.flow?flowLine(r.flow):''}${movers(r.movers)}</div>`).join('')}</details>`;
+  h+='</div>';
+  // 6) 큰 구간 자세히: 원인 유형 전부 · 같은 시간 다른 자산 · 후보 뉴스 · 언론 설명
+  const ev=(d.events||[]);
+  if(ev.length)h+=`<div class="km"><div class="km-t">🔎 큰 구간 자세히 <span class="km-note">구간 등락이 컸던 곳</span></div>${ev.map(e=>{
+    const n=segNo.get(e.start),c=e.cross||{};
+    return `<div class="km-ev"><div class="km-ih">${n?`<i class="km-no ${e.pct<0?'dn':'up'}">${n}</i>`:''}<b>${e.gap?'전일 마감~시가 갭':kmHM(e.start)+'–'+kmHM(e.end)}</b><span class="km-ph">${esc(e.phase)}</span><span class="km-chg ${cls(e.pct)}">코스피 ${pct(e.pct)}</span></div>
+      <div class="km-drv">${(e.drivers||[]).length?e.drivers.map((x,i)=>`<span class="km-dr ${i?'':'k0'}">${esc(x.name)}<small>${esc(x.why)}</small></span>`).join(''):'<span class="km-dr" style="background:#f3f4f6;color:#6b7280">원인 유형 불분명 — 다른 자산·수급 움직임이 뚜렷하지 않음</span>'}</div>
+      <div class="km-x">${KMX.filter(([k])=>c[k]!=null).map(([k,nm])=>`<span><b>${nm}</b><span class="${cls(c[k])}">${pct(c[k])}</span></span>`).join('')}${e.flow?`<span><b>수급</b>외국인 <span class="${cls(e.flow.frn)}">${km억(e.flow.frn)}</span> · 기관 <span class="${cls(e.flow.inst)}">${km억(e.flow.inst)}</span> · 개인 <span class="${cls(e.flow.ind)}">${km억(e.flow.ind)}</span></span>`:''}</div>
+      ${movers(e.movers)}
+      ${(e.news||[]).length?`<div class="km-lbl">🕒 그 무렵 처음 나온 관련 뉴스 (원인 후보)</div>${e.news.map(news).join('')}`:''}
+      ${(e.explain||[]).length?`<div class="km-lbl">📰 언론이 설명한 이유 (구간 뒤 시장 기사)</div>${e.explain.map(news).join('')}`:''}</div>`;}).join('')}</div>`;
+  h+=`<div class="km-note" style="padding:0 4px 10px">코스피·코스닥 시세는 야후 5분봉(약 15~20분 지연), 수급은 다음 금융(장중 실시간), 기사는 국내 언론·구글 뉴스 · 미국판 사이트가 15분마다 분석 · 투자 권유 아님</div>`;
+  box.innerHTML=h;kmApply();
+}
+function kmApply(){
+  const box=document.getElementById('movesView');
+  box.querySelectorAll('[data-seg]').forEach(el=>el.classList.toggle('sel',+el.dataset.seg===km.sel));
+  box.querySelectorAll('.km-r').forEach(el=>el.classList.toggle('sel',el.id==='kmseg-'+km.sel));
+}
+document.getElementById('movesView').addEventListener('click',e=>{
+  const t=e.target.closest('[data-seg]');if(!t)return;
+  const n=+t.dataset.seg,box=document.getElementById('movesView'),fromChart=!!t.closest('.km-tl'),fromRow=!!t.closest('.km-r');
+  km.sel=(fromChart&&km.sel===n)?null:n;kmApply();if(km.sel==null)return;
+  if(fromRow){const tl=document.getElementById('kmTl');if(tl)tl.scrollIntoView({behavior:'smooth',block:'center'});return;}
+  const d=box.querySelector('.km-d');if(d){d.open=true;km.open=true;}
+  requestAnimationFrame(()=>{const r=document.getElementById('kmseg-'+n);if(r)r.scrollIntoView({behavior:'smooth',block:'center'});});
+});
+document.getElementById('movesView').addEventListener('toggle',e=>{if(e.target.matches&&e.target.matches('.km-d'))km.open=e.target.open;},true);
+setInterval(loadMoves,3*60e3);
 // ── 섹션: 장중 테마 / 한국 증시 뉴스 ──
 const VL={VERIFIED:'검증됨',SINGLE:'단독보도',UNVERIFIED:'미확인'};
 const ns={sel:new Set(),data:null,at:0};   // sel: 고른 카테고리(토픽 id·'G:그룹') 여러 개, 비면 전체
 let sec='theme';try{sec=localStorage.getItem('kr_sec')||'theme';}catch(e){}
-if(!['theme','산업','매크로','정치·정책','map'].includes(sec))sec='theme';
+if(!['moves','theme','산업','매크로','정치·정책','map'].includes(sec))sec='theme';
+// 휴대폰: 분야 탭이 한 줄 가로 스크롤이라, 고른 탭이 가운데 오게 맞춤 (탭이 늘어도 그대로 동작)
+let secTouched=false;
+function centerSec(smooth){
+  const bx=document.getElementById('secs'),b=bx.querySelector('.sec.on');if(!b||bx.scrollWidth<=bx.clientWidth)return;
+  requestAnimationFrame(()=>bx.scrollTo({left:Math.max(0,b.offsetLeft-(bx.clientWidth-b.offsetWidth)/2),behavior:smooth?'smooth':'auto'}));
+}
+(()=>{const bx=document.getElementById('secs');
+  ['touchstart','wheel','pointerdown'].forEach(t=>bx.addEventListener(t,()=>{secTouched=true;},{passive:true}));
+  // 건수·시각 글씨가 바뀌어 탭 폭이 달라져도, 아직 직접 넘기지 않았으면 고른 탭을 가운데에 유지
+  new MutationObserver(()=>{if(!secTouched)centerSec(false);}).observe(bx,{childList:true,subtree:true,characterData:true});})();
 function setSec(v){
   sec=v;try{localStorage.setItem('kr_sec',v);}catch(e){}
   document.querySelectorAll('.sec').forEach(b=>b.classList.toggle('on',b.dataset.sec===v));
-  document.getElementById('themeView').hidden=v!=='theme';document.getElementById('newsView').hidden=v==='theme'||v==='map';
+  document.getElementById('themeView').hidden=v!=='theme';document.getElementById('newsView').hidden=v==='theme'||v==='map'||v==='moves';
+  document.getElementById('movesView').hidden=v!=='moves';
   document.getElementById('mapView').hidden=v!=='map';
   document.getElementById('repView').hidden=v!=='report';if(v==='report')document.getElementById('newsView').hidden=true;
-  ns.sel.clear();
+  ns.sel.clear();document.getElementById('ncats').classList.remove('open');
+  centerSec(secTouched);
+  if(v==='moves'){renderMoves();loadMoves();return;}
   if(v==='report'){loadRep();return;}
   if(v==='map'){loadMap();return;}
   if(v!=='theme'){if(Date.now()-ns.at>60e3)loadNews();else renderNews();}
@@ -420,9 +638,10 @@ function renderNews(){
   const GC={'K 테크':'#2563eb','K 조방원':'#059669','K 바이오':'#db2777','K 모빌리티':'#0891b2','K 금융':'#ca8a04','K 정책':'#7c3aed'};
   const isOn=t=>ns.sel.has(t.id)||ns.sel.has('G:'+(t.group||''));
   const pill=(t,gc)=>`<button type="button" class="ni ${isOn(t)?'on':''} ${t.count?'':'empty'}" style="--gc:${gc}" data-c="${t.id}"><span>${esc(t.name)}</span><span class="c">${t.count}</span></button>`;
+  const nc=document.getElementById('ncats');
   const groups=[];for(const t of T){const k=t.group||'';let g=groups.find(x=>x.k===k);if(!g)groups.push(g={k,ts:[]});g.ts.push(t);}
-  document.getElementById('ncats').innerHTML=
-    `<div class="nav-h"><span class="nav-t">${esc(sec)} 카테고리</span><span class="nav-hint">👆 여러 개 골라 보기</span></div>`+
+  nc.innerHTML=
+    `<div class="nav-h" role="button" aria-expanded="${nc.classList.contains('open')}"><span class="nav-t">${esc(sec)} 카테고리<span class="nav-sel">· ${ns.sel.size?ns.sel.size+'개 선택':'전체'}</span></span><span class="nav-hint">👆 여러 개 골라 보기</span><span class="nav-chv">▾</span></div>`+
     `<div class="pills"><button type="button" class="ni all ${ns.sel.size?'':'on'}" data-c="ALL"><span>전체</span><span class="c">${tot}</span></button></div>`+
     groups.map(g=>{const gc=GC[g.k]||'#2563eb',on=ns.sel.has('G:'+g.k);
       return (g.k?`<div><button type="button" class="ng ${on?'on':''}" style="--gc:${gc}" data-c="G:${esc(g.k)}">${esc(g.k)}<span class="c">${g.ts.reduce((a,t)=>a+t.count,0)}</span><span class="gh">${on?'✓ 선택됨':'그룹 전체 보기'}</span></button></div>`:'<div class="ngap"></div>')+
@@ -439,7 +658,9 @@ function renderNews(){
     :'<div class="empty">해당 카테고리 뉴스가 없어요.</div>');
 }
 // 카테고리 여러 개 고르기: 누르면 켜고/끄기, '전체'는 모두 해제 (그룹을 켜면 그 안의 개별 카테고리는 그룹에 포함)
-document.getElementById('ncats').addEventListener('click',e=>{const c=e.target.closest('[data-c]');if(!c)return;const k=c.dataset.c,T=(ns.data||{}).topics||[];
+document.getElementById('ncats').addEventListener('click',e=>{
+  if(e.target.closest('.nav-h')){const o=e.currentTarget.classList.toggle('open');e.target.closest('.nav-h').setAttribute('aria-expanded',o);return;}   // 휴대폰: 서랍 열기/닫기 (열림 상태는 컨테이너 클래스에)
+  const c=e.target.closest('[data-c]');if(!c)return;const k=c.dataset.c,T=(ns.data||{}).topics||[];
   if(k==='ALL')ns.sel.clear();
   else{const tp=T.find(t=>t.id===k),g=tp&&'G:'+(tp.group||'');
     if(tp&&ns.sel.has(g)){ns.sel.delete(g);T.filter(t=>t.group===tp.group&&t.id!==k&&t.section===tp.section).forEach(t=>ns.sel.add(t.id));}
@@ -525,8 +746,8 @@ document.getElementById('tmap').addEventListener('click',e=>{const t=e.target.cl
 document.querySelectorAll('.mtab').forEach(b=>b.onclick=()=>{mp.m=b.dataset.m;mp.sel=null;try{localStorage.setItem('kr_map',mp.m);}catch(e){}
   if(mp.data[mp.m])renderMap();loadMap();});
 let rzT;addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(()=>{if(sec==='map')renderMap();},200);});
-setInterval(()=>{if(sec!=='theme'&&sec!=='map')loadNews();},5*60e3);
-document.getElementById('rbtn').onclick=()=>{load();if(sec==='map')loadMap();else if(sec!=='theme')loadNews();};
+setInterval(()=>{if(sec!=='theme'&&sec!=='map'&&sec!=='moves')loadNews();},5*60e3);
+document.getElementById('rbtn').onclick=()=>{load();if(sec==='map')loadMap();else if(sec==='moves')loadMoves();else if(sec!=='theme')loadNews();};
 // ── 📑 리포트: 네이버 증권 리서치 (증권사 매크로·산업·기업 리포트, 10분 캐시) ──
 const rp={data:null,at:0,sel:new Set()};
 const REP_GROUPS=['K 테크','K 조방원','K 바이오','K 모빌리티','K 금융','소비·기타'];
@@ -574,15 +795,26 @@ async function loadMacro(){
   try{
     const d=await (await fetch('api/macro',{cache:'no-store'})).json();if(!d.items)return;
     const f=(v,n)=>v==null?'–':Number(v).toLocaleString('en-US',{minimumFractionDigits:n,maximumFractionDigits:n});
+    // 오늘 가격 흐름 추세선 (점선 = 오늘 시작 수준) · 한국식: 오르면 빨강, 내리면 파랑 (없으면 빈 자리만)
+    const spark=(a,c)=>{if(!Array.isArray(a)||a.length<4)return '<div style="height:23px"></div>';const w=80,h=20,mn=Math.min(...a),mx=Math.max(...a),r=(mx-mn)||1,y=v=>(h-2-(v-mn)/r*(h-4)).toFixed(1);
+      return `<svg class="mx-s ${c}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="${w}" y1="${y(a[0])}" y2="${y(a[0])}"/><polyline points="${a.map((v,i)=>(i/(a.length-1)*w).toFixed(1)+','+y(v)).join(' ')}"/></svg>`;};
     document.getElementById('mxG').innerHTML=d.items.map(x=>{const c=x.chg==null?'f':x.chg>0?'u':x.chg<0?'d':'f',s=x.chg>0?'+':'';
-      return `<div class="mx-t" title="${x.sym}"><div class="mx-n">${x.name}</div><div class="mx-p">${f(x.price,x.d)}${x.unit&&x.price!=null?'<small style="font-size:10px">%</small>':''}</div>`+
+      return `<div class="mx-t" title="${esc(x.sym)}"><div class="mx-n">${esc(x.name)}</div><div class="mx-p">${f(x.price,x.d)}${x.unit&&x.price!=null?'<small style="font-size:10px">%</small>':''}</div>`+
         // 등락: 금리는 bp(0.01%p) 변화, 나머지는 % (자세한 값은 길게 누르면/마우스를 올리면)
-        `<div class="mx-c ${c}" title="${x.chg==null?'':s+f(x.chg,x.d)} (${x.pct==null?'':s+f(x.pct,2)}%)">${x.unit?(x.chg==null?'':s+f(x.chg*100,1)+'bp'):(x.pct==null?'':s+f(x.pct,2)+'%')}</div></div>`;}).join('');
+        `<div class="mx-c ${c}" title="${x.chg==null?'':s+f(x.chg,x.d)} (${x.pct==null?'':s+f(x.pct,2)}%)">${x.unit?(x.chg==null?'':s+f(x.chg*100,1)+'bp'):(x.pct==null?'':s+f(x.pct,2)+'%')}</div>${spark(x.s,c)}</div>`;}).join('');
     document.getElementById('mxAt').textContent=new Date(d.at).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})+' 기준 · 30초마다';
     document.getElementById('mx').hidden=false;
   }catch(e){}
 }
 loadMacro();setInterval(loadMacro,30e3);
+loadMoves();
+// 휴대폰: 아래로 스크롤하면 상단 바를 숨기고, 위로 올리면 다시 보임
+(()=>{const bar=document.getElementById('bar');let ly=scrollY,tk=false;
+  addEventListener('scroll',()=>{if(tk)return;tk=true;requestAnimationFrame(()=>{tk=false;const y=scrollY;
+    if(innerWidth<760){if(y>ly+8&&y>140)bar.classList.add('hide');else if(y<ly-8||y<60)bar.classList.remove('hide');}else bar.classList.remove('hide');ly=y;});},{passive:true});})();
+// 앱처럼 쓰기(홈 화면 추가) + 마지막으로 받은 화면을 오프라인에서도 보여 주는 서비스 워커 (https 에서만)
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))
+  addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
 </script>
 </body>
 </html>
