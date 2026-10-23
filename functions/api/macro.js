@@ -22,8 +22,9 @@ async function naver(q) {
 }
 
 // 추세선: 오늘 가격 흐름을 최대 36점으로 줄임 (모양만 보여 주는 용도 — 표시 가격은 위 시세를 씀)
-function thin(closes) {
-  const v = closes.filter((x) => Number.isFinite(x));
+function thin(closes, tail) {
+  let v = closes.filter((x) => Number.isFinite(x));
+  if (tail) v = v.slice(-tail);
   if (v.length < 4) return null;
   const step = Math.max(1, Math.ceil(v.length / 36)), out = [];
   for (let i = v.length - 1; i >= 0; i -= step) out.unshift(v[i]);   // 마지막(현재) 값은 항상 포함
@@ -31,15 +32,15 @@ function thin(closes) {
 }
 // 서버(클라우드플레어)에서 야후가 일부 종목·주소를 막는 일이 있어, 주소 두 곳을 차례로 시도하고 실패 이유를 se 로 남김
 const YH = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
-async function yahooChart(sym) {
+async function yahooChart(sym, rng = "1d", tail) {
   const errs = [];
   for (const h of YH) {
     try {
-      const r = await fetch(`https://${h}/v8/finance/chart/${encodeURIComponent(sym)}?interval=15m&range=1d`,
+      const r = await fetch(`https://${h}/v8/finance/chart/${encodeURIComponent(sym)}?interval=15m&range=${rng}`,
         { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36", Accept: "application/json" } });
       if (!r.ok) { errs.push(`${h.slice(0, 6)} HTTP ${r.status}`); continue; }
       const res = (await r.json()).chart.result[0];
-      return { meta: res.meta, s: thin(res.indicators.quote[0].close || []), err: "" };
+      return { meta: res.meta, s: thin(res.indicators.quote[0].close || [], tail), err: "" };
     } catch (e) { errs.push(`${h.slice(0, 6)} ${String(e).slice(0, 60)}`); }
   }
   throw new Error(`${sym}: ${errs.join(" / ")}`);
@@ -62,7 +63,12 @@ export async function onRequestGet({ request, waitUntil }) {
       const ses = [];
       const series = async (ys) => {
         for (const y of [].concat(ys)) {
-          try { const x = await yahooChart(y); if (x.s) return x.s; ses.push(`${y} 점 부족`); } catch (e) { ses.push(String(e.message || e)); }
+          try {
+            let x = await yahooChart(y);
+            if (!x.s || x.s.length < 12) x = await yahooChart(y, "2d", 48);   // 오늘 봉이 적으면(선물 새 거래일 직후 등) 최근 12시간으로
+            if (x.s) return x.s;
+            ses.push(`${y} 점 부족`);
+          } catch (e) { ses.push(String(e.message || e)); }
         }
         return null;
       };
