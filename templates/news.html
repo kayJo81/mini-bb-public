@@ -333,6 +333,7 @@ body{font-size:15px}
 .mx-s line{stroke:#d1d5db;stroke-width:1;stroke-dasharray:1 3;vector-effect:non-scaling-stroke}
 #fltBtn{display:none}
 .nav-chv,.nav-sel{display:none}
+.nav-tap{display:none}
 /* 시장 차트 ↔ 이슈·시간대별 설명 연결 */
 .sg{cursor:pointer}.sg .hit{fill:transparent}.sg.sel rect:not(.hit){stroke:#111827;stroke-width:1.2}
 .dy-no[data-seg]{cursor:pointer}.dy-no.sel{outline:2px solid #111827;outline-offset:1px}
@@ -372,8 +373,9 @@ body{font-size:15px}
   .nav{padding:0;overflow:hidden}
   .nav .nav-h{margin:0;padding:12px 14px;cursor:pointer;align-items:center}
   .nav-hint{display:none}
+  .nav-tap{display:inline-block;margin-left:auto;font-size:12.5px;font-weight:700;color:var(--acc);background:#eff6ff;border-radius:999px;padding:3px 10px;white-space:nowrap}
   .nav-sel{display:inline;font-size:12.5px;color:var(--sub);margin-left:6px;font-weight:500}
-  .nav-chv{display:inline-block;margin-left:auto;transition:transform .15s;color:var(--sub)}
+  .nav-chv{display:inline-block;margin-left:8px;transition:transform .15s;color:var(--sub)}
   .nav.open .nav-chv{transform:rotate(180deg)}
   .nav:not(.open)>:not(.nav-h){display:none}
   .nav.open>:not(.nav-h){margin-left:14px;margin-right:14px}
@@ -426,7 +428,7 @@ body{font-size:15px}
     <span class="chip" data-s="time">최신순</span>
     <span class="chip" data-s="rank">검증순</span>
     <span class="chip on" id="hideOp">의견기사 숨김</span>
-    <button type="button" class="chip" id="fltBtn" aria-expanded="false" title="필터 열기/닫기">⚙️ 필터<span id="fltN"></span> ▾</button>
+    <button type="button" class="chip" id="fltBtn" aria-expanded="false" title="필터 열기/닫기">⚙️ <span id="fltT">필터 선택</span> ▾</button>
     <input id="q" placeholder="헤드라인 검색…">
   </div>
   <div class="main">
@@ -685,7 +687,7 @@ function render(){
     nav+=`<button type="button" class="ni ${on?'on':''} ${n?'':'empty'}" style="--gc:${gc}" data-t="${t.id}" aria-pressed="${on}"><span>${esc(t.name)}</span><span class="c">${n}</span></button>`;
   }
   document.getElementById('nav').innerHTML=
-    `<div class="nav-h"><span class="nav-t">${esc(st.section)} 카테고리<span class="nav-sel">· ${all?'전체':st.sel.size+'개 선택'}</span></span><span class="nav-hint">👆 여러 개 골라 보기</span><span class="nav-chv">▾</span></div>`+
+    `<div class="nav-h"><span class="nav-t">${esc(st.section)} 카테고리<span class="nav-sel">· ${all?'전체':st.sel.size+'개 선택'}</span></span><span class="nav-hint">👆 여러 개 골라 보기</span><span class="nav-tap">${document.getElementById('nav').classList.contains('open')?'접기':'👆 눌러서 선택'}</span><span class="nav-chv">▾</span></div>`+
     `<div class="pills"><button type="button" class="ni all ${all?'on':''}" data-t="ALL" aria-pressed="${all}"><span>전체</span><span class="c">${total}</span></button></div>`+
     nav+'</div>';
 
@@ -793,7 +795,7 @@ function card(s,cat){
 document.getElementById('rbtn').onclick=load;
 document.getElementById('koBtn').onclick=()=>{st.ko=!st.ko;save();document.getElementById('koBtn').classList.toggle('on',st.ko);watchCards();renderMoves();if(st.section==='속보')renderFlash();};
 function fltCount(){const n=(st.verdict!=='ALL')+(st.region!=='ALL')+(st.sort!=='time')+(!st.hideOp);
-  document.getElementById('fltN').textContent=n?' '+n:'';document.getElementById('fltBtn').classList.toggle('on',n>0);}
+  document.getElementById('fltT').textContent=n?`필터 ${n}개 적용`:'필터 선택';document.getElementById('fltBtn').classList.toggle('on',n>0);}
 document.querySelector('.filters').onclick=e=>{
   const c=e.target.closest('.chip');if(!c)return;
   if(c.id==='fltBtn'){const f=document.querySelector('.filters'),o=f.classList.toggle('open');c.setAttribute('aria-expanded',o);return;}
@@ -814,7 +816,7 @@ document.getElementById('secTabs').onclick=e=>{const b=e.target.closest('button.
   st.section=b.dataset.sec;st.sel.clear();save();render();};
 // 카테고리는 여러 개 고를 수 있음: 누르면 켜고/끄기, '전체'는 모두 해제 (그룹을 켜면 그 안의 개별 카테고리는 그룹에 포함)
 document.getElementById('nav').onclick=e=>{
-  if(e.target.closest('.nav-h')){document.getElementById('nav').classList.toggle('open');return;}   // 휴대폰: 서랍 열기/닫기
+  if(e.target.closest('.nav-h')){const o=document.getElementById('nav').classList.toggle('open'),tp=document.querySelector('#nav .nav-tap');if(tp)tp.textContent=o?'접기':'👆 눌러서 선택';return;}   // 휴대폰: 서랍 열기/닫기
   const n=e.target.closest('.ni,.ng');if(!n)return;const k=n.dataset.t;
   if(k==='ALL')st.sel.clear();
   else{const tp=data.topics.find(t=>t.id===k);

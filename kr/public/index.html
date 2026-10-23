@@ -171,6 +171,7 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
 .mx-s.u polyline{stroke:var(--up)}.mx-s.d polyline{stroke:var(--dn)}.mx-s.f polyline{stroke:#9ca3af}
 .mx-s line{stroke:#d1d5db;stroke-width:1;stroke-dasharray:1 3;vector-effect:non-scaling-stroke}
 .nav-chv,.nav-sel{display:none}
+.nav-tap{display:none}
 @media (max-width:759px){
   body{overflow-x:clip}   /* body 가 스크롤 상자가 되면 sticky 상단 바가 붙어 있지 못해서 */
   /* 상단 바: 왼쪽에 브랜드·상태 + 갱신 시각 두 줄, 오른쪽에 버튼 — 한 덩어리 얇게 */
@@ -217,8 +218,9 @@ footer{font-size:11px;color:var(--sub);text-align:center;padding:16px 0}
   .ncats{padding:0;overflow:hidden;margin-bottom:8px;border-radius:12px}
   .ncats .nav-h{margin:0;padding:11px 14px;cursor:pointer;align-items:center}
   .nav-t{font-size:15px}.nav-hint{display:none}
+  .nav-tap{display:inline-block;margin-left:auto;font-size:12.5px;font-weight:700;color:var(--acc);background:#eff6ff;border-radius:999px;padding:3px 10px;white-space:nowrap}
   .nav-sel{display:inline;font-size:12.5px;color:var(--sub);margin-left:6px;font-weight:500}
-  .nav-chv{display:inline-block;margin-left:auto;transition:transform .15s;color:var(--sub)}
+  .nav-chv{display:inline-block;margin-left:8px;transition:transform .15s;color:var(--sub)}
   .ncats.open .nav-chv{transform:rotate(180deg)}
   .ncats:not(.open)>:not(.nav-h){display:none}
   .ncats.open>:not(.nav-h){margin-left:14px;margin-right:14px}
@@ -641,7 +643,7 @@ function renderNews(){
   const nc=document.getElementById('ncats');
   const groups=[];for(const t of T){const k=t.group||'';let g=groups.find(x=>x.k===k);if(!g)groups.push(g={k,ts:[]});g.ts.push(t);}
   nc.innerHTML=
-    `<div class="nav-h" role="button" aria-expanded="${nc.classList.contains('open')}"><span class="nav-t">${esc(sec)} 카테고리<span class="nav-sel">· ${ns.sel.size?ns.sel.size+'개 선택':'전체'}</span></span><span class="nav-hint">👆 여러 개 골라 보기</span><span class="nav-chv">▾</span></div>`+
+    `<div class="nav-h" role="button" aria-expanded="${nc.classList.contains('open')}"><span class="nav-t">${esc(sec)} 카테고리<span class="nav-sel">· ${ns.sel.size?ns.sel.size+'개 선택':'전체'}</span></span><span class="nav-hint">👆 여러 개 골라 보기</span><span class="nav-tap">${nc.classList.contains('open')?'접기':'👆 눌러서 선택'}</span><span class="nav-chv">▾</span></div>`+
     `<div class="pills"><button type="button" class="ni all ${ns.sel.size?'':'on'}" data-c="ALL"><span>전체</span><span class="c">${tot}</span></button></div>`+
     groups.map(g=>{const gc=GC[g.k]||'#2563eb',on=ns.sel.has('G:'+g.k);
       return (g.k?`<div><button type="button" class="ng ${on?'on':''}" style="--gc:${gc}" data-c="G:${esc(g.k)}">${esc(g.k)}<span class="c">${g.ts.reduce((a,t)=>a+t.count,0)}</span><span class="gh">${on?'✓ 선택됨':'그룹 전체 보기'}</span></button></div>`:'<div class="ngap"></div>')+
@@ -659,7 +661,7 @@ function renderNews(){
 }
 // 카테고리 여러 개 고르기: 누르면 켜고/끄기, '전체'는 모두 해제 (그룹을 켜면 그 안의 개별 카테고리는 그룹에 포함)
 document.getElementById('ncats').addEventListener('click',e=>{
-  if(e.target.closest('.nav-h')){const o=e.currentTarget.classList.toggle('open');e.target.closest('.nav-h').setAttribute('aria-expanded',o);return;}   // 휴대폰: 서랍 열기/닫기 (열림 상태는 컨테이너 클래스에)
+  if(e.target.closest('.nav-h')){const o=e.currentTarget.classList.toggle('open');e.target.closest('.nav-h').setAttribute('aria-expanded',o);const tp=e.currentTarget.querySelector('.nav-tap');if(tp)tp.textContent=o?'접기':'👆 눌러서 선택';return;}   // 휴대폰: 서랍 열기/닫기 (열림 상태는 컨테이너 클래스에)
   const c=e.target.closest('[data-c]');if(!c)return;const k=c.dataset.c,T=(ns.data||{}).topics||[];
   if(k==='ALL')ns.sel.clear();
   else{const tp=T.find(t=>t.id===k),g=tp&&'G:'+(tp.group||'');
