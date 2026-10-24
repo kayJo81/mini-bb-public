@@ -203,8 +203,8 @@ function render(d){
     <span><b>🧪 가상 매매 시뮬레이션</b><br><span class="hsub">${PF?`🧭 포트폴리오 ${PF.started?`$${Math.round(PF.equity).toLocaleString()} (${pct(PF.ret)}) · QQQ ${pct(PF.bench.QQQ)}`:'첫 구성 대기'} · 주식 ${Math.round(PF.regime.exposure*100)}% · `:''}${P?`뉴스 신호 시험 ${esc(P.status)} ${pct(P.ret)}`:'신호를 실제로 따라 했다면?'}</span></span><span class="link">보기 →</span></a>`;
   h+=`<a class="card" href="weekly" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
     <span><b>📅 주간 전략</b><br><span class="hsub" id="wkSub">이번 주 매크로·정치·산업·실적 일정(요일별) + 주간 전략 · 매주 일요일 20:00 갱신</span></span><span class="link">보기 →</span></a>`;
-  h+=`<a class="card" href="tesla" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
-    <span><b>🚗 테슬라 판매</b><br><span class="hsub">분기 인도량(라인업별, 2020~) · 에너지 저장 배치</span></span><span class="link">보기 →</span></a>`;
+  h+=`<a class="card" href="toppicks" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
+    <span><b>🏆 Top Picks Lab</b><br><span class="hsub">테슬라·스페이스X·코인베이스·인텔·엔비디아·애플·알파벳·MSFT·아마존·메타·브로드컴·마벨·GEV·블룸에너지 — 최근 12분기 실적·사업별 매출·판매량 지표 (테슬라 판매 상세 포함)</span></span><span class="link">보기 →</span></a>`;
   h+=`<a class="card" href="macro" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
     <span><b>📈 매크로 지표</b><br><span class="hsub" id="macSub">CPI·PCE·PPI 항목별 월간 누적 · PPI AI 비용(클라우드·반도체·전력·전력망) 비교</span></span><span class="link">보기 →</span></a>`;
   h+=`<a class="card" href="deep" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">

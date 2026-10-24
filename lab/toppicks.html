@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>미니 블벅 랩 · Top Picks Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--bd:#e5e7eb;--sub:#6b7280;--ink:#111827;--grid:#eef0f3;--acc:#2563eb;--r:14px;
+  --sh:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);--mono:'JetBrains Mono',monospace;--up:#16a34a;--dn:#dc2626;
+  /* 계열 색 (고정 순서) */
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#8b5cf6;--s7:#14b8a6;--s8:#9ca3af}
+*{box-sizing:border-box}html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,'Apple SD Gothic Neo','Noto Sans KR',sans-serif}
+a{color:inherit}.wrap{max-width:1080px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+h1{font-size:20px;margin:0}h1 b{color:var(--acc)}.hsub{font-size:12px;color:var(--sub)}
+.link{font-size:12px;font-weight:600;text-decoration:none;background:#fff;color:#111827;border:.5px solid var(--bd);padding:7px 12px;border-radius:9px;white-space:nowrap}
+.card{background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:14px 16px;margin-bottom:12px;min-width:0}
+h2{font-size:16px;margin:0 0 2px}.note{font-size:12px;color:var(--sub);margin:0 0 8px}
+/* 기업 고르기: 가로로 넘기는 칩 (선택하면 가운데로) */
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 12px;padding:2px 16px 6px;position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 80%,rgba(244,245,247,0))}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:6px 12px;border-radius:12px;border:1.5px solid var(--bd);background:#fff;cursor:pointer;font-family:inherit;text-align:left;box-shadow:var(--sh)}
+.chip b{font-family:var(--mono);font-size:14px}.chip span{font-size:11px;color:var(--sub);white-space:nowrap}
+.chip.on{background:#111827;border-color:#111827}.chip.on b,.chip.on span{color:#fff}
+.chip.na{opacity:.5}
+/* 접고 펴는 카드 */
+.fold{padding:0}
+.fold>summary{list-style:none;display:flex;align-items:center;gap:8px;cursor:pointer;padding:14px 16px}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary h2{margin:0;flex:1;min-width:0}
+.fold>summary::after{content:'펼치기 ▾';font-size:12px;font-weight:700;color:var(--acc);background:#eff6ff;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.fold[open]>summary::after{content:'접기 ▴'}
+.fold>.in{padding:0 16px 14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:8px 0 4px}
+.kpi{border:.5px solid var(--bd);border-radius:10px;padding:8px 10px;min-width:0}.kpi .k{font-size:11.5px;color:var(--sub);font-weight:600}
+.kpi .v{font-family:var(--mono);font-size:18px;font-weight:700;white-space:nowrap}.kpi .d{font-size:11.5px;color:var(--sub);line-height:1.35}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin:4px 0 6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.legend label{cursor:pointer;user-select:none}.legend label.off{opacity:.4;text-decoration:line-through}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.ax{font-size:8.5px;fill:var(--sub);font-family:var(--mono)}.lb{font-size:8.5px;fill:#111827;font-family:var(--mono);font-weight:700}
+.col{cursor:pointer}.col .hit{fill:transparent}.col.sel .bg{fill:#f1f5f9}
+.cap{font-size:12.5px;min-height:20px;margin:2px 0 4px;padding:4px 8px;border-radius:8px;background:#f8fafc;color:#374151;line-height:1.5}
+.cap b{font-family:var(--mono)}
+h3{font-size:13.5px;margin:14px 0 4px}
+.tw{overflow-x:auto;margin-top:4px;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;font-size:12px;width:100%}
+th,td{padding:5px 7px;border-bottom:.5px solid var(--grid);text-align:right;white-space:nowrap;font-family:var(--mono)}
+th{font-family:inherit;color:var(--sub);font-weight:600;background:#fff}
+td:first-child,th:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:1;font-family:inherit;min-width:118px;max-width:170px;white-space:normal;box-shadow:1px 0 0 var(--grid)}
+td:first-child small{display:block;color:var(--sub);font-size:10.5px;font-weight:400;line-height:1.3}
+tr.sub td{color:var(--sub);font-size:11px}tr.sub td:first-child{padding-left:14px}
+tr.strong td{font-weight:700}
+.empty{color:var(--sub);padding:18px 4px;font-size:13px}
+.memo{font-size:12.5px;line-height:1.6}.memo ul{margin:4px 0 8px;padding-left:18px}.memo li{margin:2px 0}
+.memo a{color:var(--acc);overflow-wrap:anywhere}
+iframe.emb{width:100%;border:0;display:block;min-height:600px;background:transparent}
+.fx{font-size:11.5px;color:var(--sub);margin-top:2px}
+@media(max-width:640px){.wrap{padding:12px}.chips{margin:0 -12px 10px;padding:2px 12px 6px}.fold>summary{padding:12px 14px}.fold>.in{padding:0 14px 12px}.card{padding:12px 14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div><h1>미니 블벅 <b>랩</b> · Top Picks Lab</h1><div class="hsub">관심 기업 14곳 — 최근 12개 분기 실적 · 사업별 매출 · 판매량·사업 지표 (SEC 공시 기준)</div></div><a class="link" href="./">← 랩 메인</a></header>
+<div class="chips" id="chips"></div>
+<div id="corner"><div class="card"><div class="empty">불러오는 중…</div></div></div>
+<p class="hsub">투자 권유 아님 · 원자료: 각 사 SEC 공시(8-K 실적 발표문·10-Q·10-K) · 금액은 달러 기준 · 회계연도는 회사마다 달라 분기 이름(예: FY27 2Q)과 달력 분기가 다를 수 있어요</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl=u=>/^https?:\/\//i.test(String(u??'').trim())?esc(u):'#';
+// 표시 순서·이름 (회사 JSON 이 없으면 '자료 준비 중')
+const CO=[['TSLA','테슬라'],['SPCX','스페이스X'],['COIN','코인베이스'],['INTC','인텔'],['NVDA','엔비디아'],['AAPL','애플'],['GOOGL','알파벳'],['MSFT','마이크로소프트'],['AMZN','아마존'],['META','메타'],['AVGO','브로드컴'],['MRVL','마벨'],['GEV','GE 버노바'],['BE','블룸에너지']];
+const MINUS='−';
+// ── 숫자 표시: 금액(백만 달러)은 억 달러, 대수는 만/억 ──
+function fUsdM(v){if(v==null)return '–';const a=Math.abs(v),s=v<0?MINUS:'';
+  if(a>=100000)return s+Math.round(a/100).toLocaleString('en-US')+'억';
+  if(a>=10000)return s+(a/100).toFixed(1)+'억';
+  return s+(a/100).toFixed(2)+'억';}
+function fCount(v){if(v==null)return '–';const a=Math.abs(v),s=v<0?MINUS:'';
+  if(a>=1e9)return s+(a/1e8).toFixed(1)+'억';
+  if(a>=1e8)return s+(a/1e8).toFixed(2)+'억';
+  if(a>=1e5)return s+(a/1e4).toFixed(1)+'만';
+  if(a>=1e4)return s+(a/1e4).toFixed(2)+'만';
+  return s+Math.round(a).toLocaleString('en-US');}
+function fv(v,unit){
+  if(v==null||(typeof v==='number'&&!isFinite(v)))return '–';
+  switch(unit){
+    case 'usd_m':return fUsdM(v);
+    case 'usd':return (v<0?MINUS:'')+'$'+Math.abs(v).toFixed(2);
+    case 'pct':return (v<0?MINUS:'')+Math.abs(v).toFixed(1)+'%';
+    case 'count':return fCount(v);
+    case 'count_k':return fCount(v*1e3);
+    case 'count_m':return fCount(v*1e6);
+    case 'gwh':return (v<0?MINUS:'')+Math.abs(v).toFixed(2).replace(/\.?0+$/,'')+' GWh';
+    case 'gw':return (v<0?MINUS:'')+Math.abs(v).toFixed(2).replace(/\.?0+$/,'')+' GW';
+    case 'mw':return Math.round(v).toLocaleString('en-US')+' MW';
+    case 'x':return v.toFixed(2)+'x';
+    case 'text':return esc(v);
+    default:return String(v);}}
+const pc=(v,d=1)=>v==null||!isFinite(v)?'–':(v>0?'+':v<0?MINUS:'')+Math.abs(v).toFixed(d)+'%';
+const cl=v=>v>0?'up':v<0?'dn':'';
+const ratio=(a,b)=>a==null||b==null||!b?null:a/b*100;
+const yoyOf=(v,i)=>i>=4&&v[i]!=null&&v[i-4]!=null&&v[i-4]>0?(v[i]/v[i-4]-1)*100:null;
+const COLORS=['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)','var(--s6)','var(--s7)','var(--s8)'];
+let D=null,SEL='TSLA';
+const cache={};
+// ── 접힘 상태 기억 ──
+function foldInit(root){root.querySelectorAll('details.fold').forEach(el=>{
+  try{const v=localStorage.getItem('fold_tp_'+el.dataset.fold);if(v!=null)el.open=v==='1';}catch(e){}
+  el.addEventListener('toggle',()=>{try{localStorage.setItem('fold_tp_'+el.dataset.fold,el.open?'1':'0');}catch(e){}});});}
+const fold=(id,title,body,open=true)=>`<details class="card fold" data-fold="${id}"${open?' open':''}><summary><h2>${title}</h2></summary><div class="in">${body}</div></details>`;
+// ── 기업 고르기 ──
+function chips(center){
+  const sl=$('chips').scrollLeft;
+  $('chips').innerHTML=CO.map(([t,n])=>`<button type="button" class="chip ${t===SEL?'on':''} ${cache[t]===null?'na':''}" data-t="${t}"><b>${t}</b><span>${esc(n)}</span></button>`).join('');
+  const c=$('chips'),on=c.querySelector('.chip.on');c.scrollLeft=center&&on?on.offsetLeft-(c.clientWidth-on.offsetWidth)/2:sl;
+}
+$('chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;pick(b.dataset.t);});
+async function pick(t){
+  SEL=t;try{localStorage.setItem('tp_sel',t);}catch(e){}history.replaceState(null,'','#'+t);chips(true);
+  $('corner').innerHTML='<div class="card"><div class="empty">불러오는 중…</div></div>';
+  if(!(t in cache)){try{const r=await fetch(`tp/${t}.json?${Math.floor(Date.now()/600000)}`);cache[t]=r.ok?await r.json():null;}catch(e){cache[t]=null;}}
+  if(SEL!==t)return;
+  chips();
+  if(!cache[t]){$('corner').innerHTML=`<div class="card"><h2>${esc(CO.find(x=>x[0]===t)[1])} (${t})</h2><div class="empty">자료를 준비 중이에요. 곧 채워집니다.</div></div>`+(t==='TSLA'?teslaEmbed():'');if(t==='TSLA')embedInit();return;}
+  D=cache[t];render();
+}
+// ── 코너 그리기 ──
+function render(){
+  const q=D.quarters,n=q.length,M=Object.fromEntries(D.metrics.map(m=>[m.key,m]));
+  const ql=i=>{const m=String(q[i].label).match(/(\d{2,4})\D+([1-4])/);return m?`${m[1].slice(-2)}.${m[2]}Q`:esc(q[i].label);};
+  const rev=(M.revenue||{}).v||Array(n).fill(null),gp=(M.gross_profit||{}).v||[],op=(M.op_income||{}).v||[],ni=(M.net_income||{}).v||[],eps=(M.eps_diluted||{}).v||[];
+  const L=n-1;let last=L;while(last>0&&rev[last]==null)last--;     // 값이 있는 마지막 분기
+  const yoy=rev.map((_,i)=>yoyOf(rev,i));
+  const opm=op.map((v,i)=>ratio(v,rev[i])),gm=gp.map((v,i)=>ratio(v,rev[i])),nm=ni.map((v,i)=>ratio(v,rev[i]));
+  // 1) 요약
+  const tile=(k,v,d)=>`<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d||''}</div></div>`;
+  let h=`<div class="card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline"><h2 style="font-size:18px">${esc(D.name)} <span style="font-family:var(--mono);color:var(--sub);font-size:14px">${esc(D.ticker)}</span></h2><span class="hsub">${esc(D.name_en)} · ${esc(D.exchange||'')}</span></div>
+    <div class="hsub" style="margin-top:2px">최신 분기: <b>${esc(D.latest_reported)}</b> · 자료 갱신 ${esc(D.updated)}</div>
+    ${D.fiscal_note?`<div class="fx">${esc(D.fiscal_note)}</div>`:''}
+    <div class="kpis">${tile('매출 ('+ql(last)+')',fUsdM(rev[last]),`전년비 <b class="${cl(yoy[last])}">${pc(yoy[last])}</b>`)}
+      ${tile('영업이익률',fv(opm[last],'pct'),`영업이익 ${fUsdM(op[last])}`)}
+      ${tile('순이익',fUsdM(ni[last]),`순이익률 ${fv(nm[last],'pct')}`)}
+      ${tile('희석 EPS',fv(eps[last],'usd'),eps[last-4]!=null?`전년 동기 ${fv(eps[last-4],'usd')}`:'')}</div></div>`;
+  // 2) 분기 실적: 매출 막대 + 이익률 선 + 표
+  h+=fold('fin','📈 분기 실적',`<p class="note">최근 ${n}개 분기 · 막대를 누르면 그 분기 숫자가 아래에 나와요 · 금액은 억 달러</p>
+    <h3 style="margin-top:4px">매출 (십억 달러)</h3><div class="chart" id="cRev"></div><div class="cap" id="capRev">막대를 눌러 보세요</div>
+    <h3>이익률</h3><div class="legend" id="lgM"></div><div class="chart" id="cMar"></div>
+    <h3>표 <span class="hsub">← 옆으로 밀면 과거 분기</span></h3><div class="tw" id="tFin"></div>`);
+  // 3) 사업별 매출
+  const segs=D.segments.filter(s=>!s.exclude_from_sum);
+  h+=fold('seg','🧩 사업별 매출',segs.length?`<p class="note">회사가 공시하는 부문·제품군 · 누적 막대(보이는 항목의 합) · 이름을 눌러 켜고 끄기</p>
+    <div class="legend" id="lgS"></div><div class="chart" id="cSeg"></div><div class="cap" id="capSeg">막대를 눌러 보세요</div>
+    <h3>표 <span class="hsub">(이름 아래: 최근 분기 전년비 · 비중) · ← 옆으로 밀면 과거 분기</span></h3><div class="tw" id="tSeg"></div>`:'<div class="empty">공시된 사업별 매출이 없어요.</div>');
+  // 4) 판매량·지표
+  h+=fold('kpi','📦 판매량·사업 지표',D.kpis.length?`<p class="note">← 옆으로 밀면 과거 분기 · 회사가 공시하지 않은 분기는 –</p><div class="tw" id="tKpi"></div>`:'<div class="empty">공시된 지표가 없어요.</div>');
+  // 5) 테슬라: 기존 판매 자료
+  if(D.ticker==='TSLA')h+=teslaEmbed();
+  // 6) 메모·출처
+  const ev=(D.events||[]).map(e=>`<li><b>${esc(e.quarter)}</b> ${esc(e.text)}</li>`).join(''),cv=(D.caveats||[]).map(c=>`<li>${esc(c)}</li>`).join(''),
+    sr=(D.sources||[]).map(s=>`<li><a href="${safeUrl(s.url)}" target="_blank" rel="noopener">${esc(s.label)}</a></li>`).join('');
+  h+=fold('memo','🗒️ 메모 · 출처',`<div class="memo">${ev?`<b>주요 사건</b><ul>${ev}</ul>`:''}${cv?`<b>유의할 점</b><ul>${cv}</ul>`:''}<b>출처</b><ul>${sr}</ul></div>`,false);
+  $('corner').innerHTML=h;foldInit($('corner'));
+  // 차트·표
+  revChart(q,rev,yoy,ql);marChart(q,[['매출총이익률',gm,'var(--s1)'],['영업이익률',opm,'var(--s2)'],['순이익률',nm,'var(--s3)']],ql);
+  finTable(q,M,rev,yoy,gm,opm,nm,ql);
+  if(segs.length){segChart(q,segs,ql);segTable(q,segs,rev,ql,last);}
+  if(D.kpis.length)kpiTable(q,ql);
+  document.querySelectorAll('#corner .tw').forEach(t=>{t.scrollLeft=t.scrollWidth;});
+  if(D.ticker==='TSLA')embedInit();
+}
+// ── 매출 막대 (+ 전년비) ──
+function revChart(q,rev,yoy,ql){
+  const W=360,H=196,p={t:16,r:6,b:30,l:6},n=q.length,bw=(W-p.l-p.r)/n,w=Math.max(8,bw*0.64),max=Math.max(1,...rev.filter(v=>v!=null)),sy=v=>(H-p.t-p.b)*v/max;
+  const dec=max/1000>=20?0:max/1000>=2?1:2;
+  let g=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="분기 매출">`;
+  q.forEach((_,i)=>{const x=p.l+bw*i+(bw-w)/2,b=H-p.b,v=rev[i];
+    g+=`<g class="col" data-i="${i}"><rect class="bg" x="${p.l+bw*i}" y="${p.t-12}" width="${bw}" height="${H-p.t-p.b+34}" fill="transparent"/>`;
+    if(v!=null){const h=sy(Math.max(v,0));g+=`<rect x="${x.toFixed(1)}" y="${(b-h).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="2.5" fill="var(--s1)" fill-opacity="${i===n-1?1:.82}"/><text class="lb" x="${(x+w/2).toFixed(1)}" y="${(b-h-3).toFixed(1)}" text-anchor="middle">${(v/1000).toFixed(dec)}</text>`;}
+    g+=`<text class="ax" x="${(x+w/2).toFixed(1)}" y="${b+11}" text-anchor="middle">${ql(i)}</text>`;
+    if(yoy[i]!=null)g+=`<text class="ax" x="${(x+w/2).toFixed(1)}" y="${b+22}" text-anchor="middle" style="fill:${yoy[i]>=0?'#16a34a':'#dc2626'}">${yoy[i]>=0?'+':MINUS}${Math.abs(yoy[i]).toFixed(0)}%</text>`;
+    g+='<rect class="hit" x="'+(p.l+bw*i)+'" y="0" width="'+bw+'" height="'+H+'"/></g>';});
+  $('cRev').innerHTML=g+'</svg>';
+  $('cRev').onclick=e=>{const c=e.target.closest('.col');if(!c)return;const i=+c.dataset.i;
+    $('cRev').querySelectorAll('.col').forEach(x=>x.classList.toggle('sel',x===c));
+    $('capRev').innerHTML=`<b>${esc(q[i].label)}</b> <span class="hsub">(${esc(q[i].end)} 종료)</span> · 매출 <b>${fUsdM(rev[i])}</b> · 전년비 <b class="${cl(yoy[i])}">${pc(yoy[i])}</b>`;};
+}
+// ── 이익률 선 (켜고 끄기) ──
+let marOff=new Set();
+function marChart(q,S,ql){
+  $('lgM').innerHTML=S.map(([n,,c],k)=>`<label class="${marOff.has(k)?'off':''}" data-k="${k}"><i style="background:${c}"></i>${n}</label>`).join('');
+  $('lgM').onclick=e=>{const l=e.target.closest('label');if(!l)return;const k=+l.dataset.k;marOff.has(k)?marOff.delete(k):marOff.add(k);marChart(q,S,ql);};
+  const W=360,H=170,p={t:12,r:34,b:20,l:30},n=q.length,vis=S.filter((_,k)=>!marOff.has(k));
+  const all=vis.flatMap(s=>s[1]).filter(v=>v!=null&&isFinite(v));
+  if(!all.length){$('cMar').innerHTML='<div class="empty">이익률 데이터가 없어요.</div>';return;}
+  let lo=Math.min(0,...all),hi=Math.max(...all);const span=Math.max(10,hi-lo),step=span>80?25:span>40?10:5;lo=Math.floor(lo/step)*step;hi=Math.ceil(hi/step)*step;
+  const x=i=>p.l+(W-p.l-p.r)*i/(n-1),y=v=>H-p.b-(H-p.t-p.b)*(v-lo)/(hi-lo||1);
+  let g=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="이익률 추이">`;
+  for(let v=lo;v<=hi+1e-9;v+=step)g+=`<line x1="${p.l}" x2="${W-p.r}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="${v===0?'#9ca3af':'#eef0f3'}"/><text class="ax" x="${p.l-4}" y="${(y(v)+3).toFixed(1)}" text-anchor="end">${v}%</text>`;
+  q.forEach((_,i)=>{if(i%2===(n-1)%2)g+=`<text class="ax" x="${x(i).toFixed(1)}" y="${H-5}" text-anchor="middle">${ql(i)}</text>`;});
+  S.forEach(([nm,v,c],k)=>{if(marOff.has(k))return;
+    let d='',pen=false;v.forEach((val,i)=>{if(val==null||!isFinite(val)){pen=false;return;}d+=(pen?'L':'M')+x(i).toFixed(1)+','+y(val).toFixed(1);pen=true;});
+    g+=`<path d="${d}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    let li=n-1;while(li>=0&&(v[li]==null||!isFinite(v[li])))li--;
+    if(li>=0)g+=`<circle cx="${x(li).toFixed(1)}" cy="${y(v[li]).toFixed(1)}" r="2.6" fill="${c}"/><text class="lb" x="${(x(li)+5).toFixed(1)}" y="${(y(v[li])+3).toFixed(1)}" style="fill:${c}">${v[li].toFixed(0)}%</text>`;});
+  $('cMar').innerHTML=g+'</svg>';
+}
+// ── 실적 표 ──
+function finTable(q,M,rev,yoy,gm,opm,nm,ql){
+  const core=new Set(['revenue','gross_profit','op_income','net_income','eps_diluted']);
+  const row=(name,vals,cls='',sub='')=>`<tr class="${cls}"><td>${name}${sub?`<small>${sub}</small>`:''}</td>${vals.map(v=>`<td>${v}</td>`).join('')}</tr>`;
+  const m=(k)=>(M[k]||{v:[]}).v,u=(k)=>(M[k]||{}).unit;
+  let h=`<table><tr><th>분기</th>${q.map((_,i)=>`<th>${ql(i)}</th>`).join('')}</tr>
+    <tr class="sub"><td>종료일</td>${q.map(x=>`<td>${esc(x.end.slice(2,7).replace('-','.'))}</td>`).join('')}</tr>`;
+  h+=row('매출',rev.map(v=>fUsdM(v)),'strong');
+  h+=row('전년비',yoy.map(v=>v==null?'–':`<span class="${cl(v)}">${pc(v)}</span>`),'sub');
+  h+=row('매출총이익',m('gross_profit').map(v=>fUsdM(v)));h+=row('총이익률',gm.map(v=>fv(v,'pct')),'sub');
+  h+=row('영업이익',m('op_income').map(v=>fUsdM(v)));h+=row('영업이익률',opm.map(v=>fv(v,'pct')),'sub');
+  h+=row('순이익',m('net_income').map(v=>fUsdM(v)));h+=row('순이익률',nm.map(v=>fv(v,'pct')),'sub');
+  h+=row('희석 EPS',m('eps_diluted').map(v=>fv(v,'usd')),'strong');
+  D.metrics.filter(x=>!core.has(x.key)).forEach(x=>{h+=row(esc(x.name),x.v.map(v=>fv(v,x.unit)),'',x.note?esc(x.note):'');});
+  $('tFin').innerHTML=h+'</table>';
+}
+// ── 사업별 누적 막대 ──
+let segOff=new Set();
+function segChart(q,segs,ql){
+  $('lgS').innerHTML=segs.map((s,k)=>`<label class="${segOff.has(k)?'off':''}" data-k="${k}"><i style="background:${COLORS[k%COLORS.length]}"></i>${esc(s.name)}</label>`).join('');
+  $('lgS').onclick=e=>{const l=e.target.closest('label');if(!l)return;const k=+l.dataset.k;segOff.has(k)?segOff.delete(k):segOff.add(k);segChart(q,segs,ql);};
+  const W=360,H=196,p={t:14,r:6,b:22,l:6},n=q.length,bw=(W-p.l-p.r)/n,w=Math.max(8,bw*0.64);
+  const tot=q.map((_,i)=>segs.reduce((a,s,k)=>a+(segOff.has(k)||s.v[i]==null||s.v[i]<0?0:s.v[i]),0)),max=Math.max(1,...tot),sy=v=>(H-p.t-p.b)*v/max,dec=max/1000>=20?0:max/1000>=2?1:2;
+  let g=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="사업별 매출">`;
+  q.forEach((_,i)=>{const x=p.l+bw*i+(bw-w)/2;let y=H-p.b;
+    g+=`<g class="col" data-i="${i}"><rect class="bg" x="${p.l+bw*i}" y="${p.t-10}" width="${bw}" height="${H-p.t-p.b+22}" fill="transparent"/>`;
+    segs.forEach((s,k)=>{const v=s.v[i];if(segOff.has(k)||v==null||v<=0)return;const h=sy(v);y-=h;g+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(.5,h-.6).toFixed(1)}" fill="${COLORS[k%COLORS.length]}"/>`;});
+    if(tot[i]>0)g+=`<text class="lb" x="${(x+w/2).toFixed(1)}" y="${(y-3).toFixed(1)}" text-anchor="middle">${(tot[i]/1000).toFixed(dec)}</text>`;
+    g+=`<text class="ax" x="${(x+w/2).toFixed(1)}" y="${H-p.b+11}" text-anchor="middle">${ql(i)}</text><rect class="hit" x="${p.l+bw*i}" y="0" width="${bw}" height="${H}"/></g>`;});
+  $('cSeg').innerHTML=g+'</svg>';
+  $('cSeg').onclick=e=>{const c=e.target.closest('.col');if(!c)return;const i=+c.dataset.i;
+    $('cSeg').querySelectorAll('.col').forEach(x=>x.classList.toggle('sel',x===c));
+    const t=segs.reduce((a,s)=>a+(s.v[i]>0?s.v[i]:0),0);
+    $('capSeg').innerHTML=`<b>${esc(q[i].label)}</b> · `+segs.map((s,k)=>s.v[i]==null?'':`<span style="color:${COLORS[k%COLORS.length]}">●</span> ${esc(s.name)} <b>${fUsdM(s.v[i])}</b> (${t?(s.v[i]/t*100).toFixed(0):'–'}%)`).filter(Boolean).join(' · ');};
+}
+function segTable(q,segs,rev,ql,last){
+  const t=segs.reduce((a,s)=>a+(s.v[last]>0?s.v[last]:0),0);
+  let h=`<table><tr><th>사업</th>${q.map((_,i)=>`<th>${ql(i)}</th>`).join('')}</tr>`;
+  segs.forEach((s,k)=>{const yy=yoyOf(s.v,last),sh=t&&s.v[last]>0?s.v[last]/t*100:null;
+    h+=`<tr><td><span style="color:${COLORS[k%COLORS.length]}">●</span> ${esc(s.name)}<small>${yy==null?'':`전년비 <span class="${cl(yy)}">${pc(yy)}</span>`}${sh==null?'':` · 비중 ${sh.toFixed(0)}%`}${s.note?` · ${esc(s.note)}`:''}</small></td>${s.v.map(v=>`<td>${fUsdM(v)}</td>`).join('')}</tr>`;});
+  h+=`<tr class="strong"><td>합계</td>${q.map((_,i)=>`<td>${fUsdM(segs.some(s=>s.v[i]==null)?null:segs.reduce((a,s)=>a+s.v[i],0))}</td>`).join('')}</tr>`;
+  // 부문 영업이익 등 합계에 넣지 않는 줄
+  D.segments.filter(s=>s.exclude_from_sum).forEach(s=>{h+=`<tr class="sub"><td>${esc(s.name)}${s.note?`<small>${esc(s.note)}</small>`:''}</td>${s.v.map(v=>`<td>${fUsdM(v)}</td>`).join('')}</tr>`;});
+  $('tSeg').innerHTML=h+'</table>';
+}
+function kpiTable(q,ql){
+  let h=`<table><tr><th>지표</th>${q.map((_,i)=>`<th>${ql(i)}</th>`).join('')}</tr>`;
+  D.kpis.forEach(k=>{h+=`<tr><td>${esc(k.name)}${k.note?`<small>${esc(k.note)}</small>`:''}</td>${k.v.map(v=>`<td>${fv(v,k.unit)}</td>`).join('')}</tr>`;});
+  $('tKpi').innerHTML=h+'</table>';
+}
+// ── 테슬라: 기존 판매 자료(분기 인도량 라인업별·유럽 국가별 등록·에너지 저장)를 그대로 ──
+function teslaEmbed(){return fold('tsla','🚗 테슬라 판매 상세 <span class="hsub" style="font-weight:500">분기 인도량(라인업별) · 유럽 국가별 월간 등록 · 에너지 저장</span>',`<iframe class="emb" id="tslaFrame" src="tesla.html?embed=1" title="테슬라 판매 상세" loading="lazy"></iframe>`);}
+function embedInit(){const el=document.querySelector('[data-fold="tsla"]');if(el)foldInit(el.parentElement);}
+addEventListener('message',e=>{if(e.origin===location.origin&&e.data&&Number.isFinite(e.data.mbbEmbedHeight)){const f=$('tslaFrame');if(f)f.style.height=Math.min(20000,Math.max(300,e.data.mbbEmbedHeight))+'px';}});
+// 시작
+(function(){
+  let s=(location.hash||'').slice(1).toUpperCase();if(!CO.some(x=>x[0]===s)){try{s=localStorage.getItem('tp_sel')||'';}catch(e){s='';}}
+  if(!CO.some(x=>x[0]===s))s='TSLA';
+  chips(true);pick(s);
+  // 나머지 기업은 칩 표시(자료 없음 흐리게)를 위해 뒤에서 미리 확인
+  CO.forEach(([t])=>{if(t!==s)fetch(`tp/${t}.json?${Math.floor(Date.now()/600000)}`).then(r=>r.ok?r.json():null).then(j=>{cache[t]=j;chips();}).catch(()=>{cache[t]=null;chips();});});
+})();
+</script>
+</body>
+</html>
