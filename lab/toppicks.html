@@ -120,6 +120,8 @@ function chips(center){
   $('chips').innerHTML=CO.map(([t,n])=>`<button type="button" class="chip ${t===SEL?'on':''} ${cache[t]===null?'na':''}" data-t="${t}"><b>${t}</b><span>${esc(n)}</span></button>`).join('');
   const c=$('chips'),on=c.querySelector('.chip.on');c.scrollLeft=center&&on?on.offsetLeft-(c.clientWidth-on.offsetWidth)/2:sl;
 }
+$('corner').addEventListener('click',e=>{const a=e.target.closest('a[data-open]');if(!a)return;e.preventDefault();
+  const d=document.querySelector(`[data-fold="${a.dataset.open}"]`);if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'});}});
 $('chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;pick(b.dataset.t);});
 async function pick(t){
   SEL=t;try{localStorage.setItem('tp_sel',t);}catch(e){}history.replaceState(null,'','#'+t);chips(true);
@@ -151,7 +153,7 @@ function render(){
   h+=fold('fin','📈 분기 실적',`<p class="note">최근 ${n}개 분기 · 막대를 누르면 그 분기 숫자가 아래에 나와요 · 금액은 억 달러</p>
     <h3 style="margin-top:4px">매출 (십억 달러)</h3><div class="chart" id="cRev"></div><div class="cap" id="capRev">막대를 눌러 보세요</div>
     <h3>이익률</h3><div class="legend" id="lgM"></div><div class="chart" id="cMar"></div>
-    <h3>표 <span class="hsub">← 옆으로 밀면 과거 분기</span></h3><div class="tw" id="tFin"></div>`);
+    <h3>표 <span class="hsub">← 옆으로 밀면 과거 분기</span></h3><div class="tw" id="tFin"></div>${(D.caveats||[]).length?`<div class="fx" style="margin-top:6px">⚠️ 일회성 항목·기준 변경 등 유의할 점 ${D.caveats.length}건 — <a href="#memo" data-open="memo" style="color:var(--acc);font-weight:600">🗒️ 메모에서 보기</a></div>`:''}`);
   // 3) 사업별 매출
   const segs=D.segments.filter(s=>!s.exclude_from_sum);
   h+=fold('seg','🧩 사업별 매출',segs.length?`<p class="note">회사가 공시하는 부문·제품군 · 누적 막대(보이는 항목의 합) · 이름을 눌러 켜고 끄기</p>
