@@ -25,24 +25,6 @@
  "pending": [],
  "open": [
   {
-   "sym": "CRWV",
-   "dir": "롱",
-   "b": "pos_dn",
-   "verdict": "근거 약함",
-   "signal_date": "2026-10-19",
-   "edge": 0.53,
-   "z": 3.73,
-   "head": "Nebius Stock Fell 12% in a Day as CoreWeave’s Debt Scare Spread. Here’s Why Its Balance Sheet Isn’t CoreWeave’s Yet",
-   "entry_date": "2026-10-20",
-   "entry": 59.21,
-   "bench_entry": 715.25,
-   "size": 5000.0,
-   "now": 54.235,
-   "ret": -8.6,
-   "bench_ret": -1.72,
-   "asof": "2026-10-23"
-  },
-  {
    "sym": "GM",
    "dir": "롱",
    "b": "pos_dn",
@@ -55,10 +37,10 @@
    "entry": 76.71,
    "bench_entry": 722.22,
    "size": 5000.0,
-   "now": 75.92,
-   "ret": -1.23,
-   "bench_ret": -2.67,
-   "asof": "2026-10-23"
+   "now": 76.4,
+   "ret": -0.6,
+   "bench_ret": -1.47,
+   "asof": "2026-10-26"
   },
   {
    "sym": "ISRG",
@@ -73,10 +55,10 @@
    "entry": 430.665,
    "bench_entry": 713.68,
    "size": 5000.0,
-   "now": 452.29,
-   "ret": 4.82,
-   "bench_ret": -1.5,
-   "asof": "2026-10-23"
+   "now": 451.575,
+   "ret": 4.66,
+   "bench_ret": -0.29,
+   "asof": "2026-10-26"
   },
   {
    "sym": "SMCI",
@@ -91,10 +73,10 @@
    "entry": 34.44,
    "bench_entry": 713.68,
    "size": 5000.0,
-   "now": 32.94,
-   "ret": -4.56,
-   "bench_ret": -1.5,
-   "asof": "2026-10-23"
+   "now": 32.97,
+   "ret": -4.47,
+   "bench_ret": -0.29,
+   "asof": "2026-10-26"
   },
   {
    "sym": "NVDA",
@@ -109,10 +91,10 @@
    "entry": 217.23,
    "bench_entry": 713.68,
    "size": 5000.0,
-   "now": 210.96,
-   "ret": -3.09,
-   "bench_ret": -1.5,
-   "asof": "2026-10-23"
+   "now": 215.65,
+   "ret": -0.93,
+   "bench_ret": -0.29,
+   "asof": "2026-10-26"
   },
   {
    "sym": "META",
@@ -127,10 +109,10 @@
    "entry": 638.12,
    "bench_entry": 702.102,
    "size": 5000.0,
-   "now": 642.62,
-   "ret": 0.51,
-   "bench_ret": 0.13,
-   "asof": "2026-10-23"
+   "now": 642.1699,
+   "ret": 0.43,
+   "bench_ret": 1.36,
+   "asof": "2026-10-26"
   }
  ],
  "closed": [
@@ -280,9 +262,30 @@
    "exit_date": "2026-10-23",
    "exit": 372.22,
    "pnl": 196.09
+  },
+  {
+   "sym": "CRWV",
+   "dir": "롱",
+   "b": "pos_dn",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-19",
+   "edge": 0.53,
+   "z": 3.73,
+   "head": "Nebius Stock Fell 12% in a Day as CoreWeave’s Debt Scare Spread. Here’s Why Its Balance Sheet Isn’t CoreWeave’s Yet",
+   "entry_date": "2026-10-20",
+   "entry": 59.21,
+   "bench_entry": 715.25,
+   "size": 5000.0,
+   "now": 54.235,
+   "ret": -4.25,
+   "bench_ret": -0.51,
+   "asof": "2026-10-23",
+   "exit_date": "2026-10-26",
+   "exit": 56.81,
+   "pnl": -212.67
   }
  ],
- "cash": 66835.76386107222,
+ "cash": 71623.09539290806,
  "curve": [
   [
    "2026-10-09",
@@ -338,6 +341,11 @@
    "2026-10-23",
    96228.39,
    98638.1
+  ],
+  [
+   "2026-10-26",
+   96577.6,
+   99002.09
   ]
  ],
  "picks_log": [
