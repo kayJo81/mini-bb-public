@@ -1,0 +1,41 @@
+# 심층 뉴스 기사 전문 → A4 PDF → 메일 (본문 요약, PDF 첨부) — 수동 실행용
+#  · 내용: lab/deepnews/<id>.html, 그리는 코드: scripts/article_pdf.py
+# 필요한 저장소 Secrets: GMAIL_USER, GMAIL_APP_PASSWORD, 선택 MAIL_TO
+name: articlepdf
+
+on:
+  workflow_dispatch:
+    inputs:
+      ids:
+        description: "PDF로 보낼 기사 id (쉼표로 구분, 예: anthropic-s1-2026-10,oracle-ai-world-2026-10)"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk >/dev/null
+          pip install -q playwright
+          python -m playwright install --with-deps chromium >/dev/null
+      - name: Build and mail
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          IDS: ${{ inputs.ids }}
+        run: python scripts/article_pdf.py --out reports_articles --mail --ids "$IDS"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: articles
+          path: reports_articles/*.pdf
+          retention-days: 14
