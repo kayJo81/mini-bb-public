@@ -382,6 +382,9 @@ body{font-size:15px}
   .nav.open{padding-bottom:12px}
   .main{gap:8px}
 }
+.jk-h{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px}.jk-h span{font-size:10px;color:var(--sub)}.jk-h a{margin-left:auto;font-size:11px;color:var(--acc)}
+.jk-p{padding:8px 0;border-bottom:.5px solid var(--bd);font-size:12px}.jk-p:last-of-type{border-bottom:0}.jk-t{font-size:10px;color:var(--sub);margin-bottom:2px}.jk-x{white-space:pre-wrap;line-height:1.5}.jk-p a{font-size:11px;color:var(--acc)}.jk-n{margin-top:6px;font-size:10px;color:var(--sub)}
+#jukanBtn.on{background:#111827;color:#fff;border-color:#111827}
 </style>
 </head>
 <body>
@@ -394,6 +397,7 @@ body{font-size:15px}
   <button type="button" id="koBtn" title="헤드라인 한국어 번역 켜기/끄기">가 한국어</button>
   <nav class="navbox" aria-label="화면 이동">
   <button type="button" class="btn" id="fjBtn" title="실시간 속보: FinancialJuice·월스트리트견문·시나재경 (30초마다 갱신)">⚡ 속보</button>
+  <button type="button" class="btn" id="jukanBtn" aria-expanded="false" title="@jukan05 최근 글 (수동 갱신)">𝕏 Jukan</button>
   <button type="button" class="btn" id="usBtn" title="미국 증시 뉴스 (시장·산업·매크로·지정학·장중 테마·리포트)">🇺🇸 미국<span class="lg"> 증시</span></button>
   <a class="btn" href="https://mini-bbterminal-kr.pages.dev" target="_blank" rel="noopener" title="한국 증시용 미니 블벅터 (장중 테마)">🇰🇷 한국<span class="lg"> 증시</span></a>
   <a class="btn" id="labLink" href="https://mini-bblab.pages.dev" target="_blank" rel="noopener" title="뉴스 기반 롱/숏 후보 탐색">🧪 랩</a>
@@ -403,6 +407,11 @@ body{font-size:15px}
 </div>
 
 <div class="wrap">
+  <div class="mv" id="jukanPanel" hidden>
+    <div class="jk-h"><b>𝕏 @jukan05 최근 피드</b><span id="jkAt"></span><a id="jkProf" href="https://x.com/jukan05" target="_blank" rel="noopener">프로필 ↗</a></div>
+    <div id="jukanList">불러오는 중…</div>
+    <div class="jk-n">직접 확인해 반영하는 수동 피드예요. 새 글은 요청 시 갱신됩니다(최대 15분 뒤 반영).</div>
+  </div>
   <div class="mx" id="mx" hidden><div class="mx-h">📊 주요 지표 <span id="mxAt"></span></div><div class="mx-g" id="mxG"></div></div>
   <div class="sections">
     <div class="sec-hint">👆 보고 싶은 분야를 눌러서 선택하세요</div>
@@ -1003,6 +1012,24 @@ loadFlash();setInterval(()=>{if(st.section==='속보'||Date.now()-flLast>5*60e3)
 
 function loadReports(){fetch('briefings/reports.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{REP=d;if(data)render();}).catch(()=>{});}
 loadReports();setInterval(loadReports,5*60e3);
+
+// @jukan05 수동 피드: briefings/jukan.json (feeds/jukan.json → 빌드 때 복사)
+(function(){
+  const btn=document.getElementById('jukanBtn'),pan=document.getElementById('jukanPanel');if(!btn||!pan)return;
+  const okUrl=u=>/^https:\/\/(x|twitter)\.com\//.test(u||'');
+  let loaded=false;
+  async function load(){
+    const box=document.getElementById('jukanList');
+    try{
+      const r=await fetch('briefings/jukan.json',{cache:'no-store'});const d=await r.json();
+      document.getElementById('jkAt').textContent=d.updated?('갱신 '+d.updated):'';
+      const h=(d.handle||'jukan05').replace(/[^A-Za-z0-9_]/g,'');document.getElementById('jkProf').href='https://x.com/'+h;
+      box.innerHTML=(d.posts||[]).map(p=>`<div class="jk-p"><div class="jk-t">${esc(p.time||'')}</div><div class="jk-x">${esc(p.text||'')}</div>${okUrl(p.url)?`<a href="${esc(p.url)}" target="_blank" rel="noopener">${/\/status\//.test(p.url)?'원문 보기':'프로필 보기'} ↗</a>`:''}</div>`).join('')||'표시할 글이 없어요';
+      loaded=true;
+    }catch(e){box.textContent='피드를 불러오지 못했어요';}
+  }
+  btn.onclick=()=>{const show=pan.hidden;pan.hidden=!show;btn.classList.toggle('on',show);btn.setAttribute('aria-expanded',show);if(show&&!loaded)load();};
+})();
 </script>
 </body>
 </html>

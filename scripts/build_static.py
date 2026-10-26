@@ -63,6 +63,10 @@ def main():
     import shutil
     for fn in os.listdir(os.path.join(ROOT, "pwa")):
         shutil.copy(os.path.join(ROOT, "pwa", fn), os.path.join(args.out, fn))
+    # @jukan05 수동 피드 (feeds/jukan.json → briefings/jukan.json)
+    jk = os.path.join(ROOT, "feeds", "jukan.json")
+    if os.path.exists(jk):
+        shutil.copy(jk, os.path.join(out_b, "jukan.json"))
     # 랩(mini-bblab) 화면이 장중 옵션 수급 등을 가져갈 수 있게 briefings/ 는 다른 사이트에서도 읽기 허용
     with open(os.path.join(args.out, "_headers"), "w", encoding="utf-8") as f:
         f.write("/briefings/*\n  Access-Control-Allow-Origin: *\n"
