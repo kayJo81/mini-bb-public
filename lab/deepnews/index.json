@@ -1,5 +1,36 @@
 [
  {
+  "id": "oracle-ai-world-2026-10",
+  "date": "2026-10-26",
+  "tags": [
+   "오라클",
+   "AI World",
+   "키노트",
+   "클라우드",
+   "AI 인프라"
+  ],
+  "live": true,
+  "updated": "10-26 13:45 KST",
+  "title": "오라클 AI World 2026 (10/26~29) — 월요일 키노트 한국 10/27 01:30, ‘Oracle: where AI means business’",
+  "sub": "행사 일정, 미리보기 볼 포인트, 키노트 발표 시간순 정리, 직후 ORCL·관련주 반응 (행사 중 갱신)",
+  "request": "오라클 AI World·오픈AI DevDay 등 이번 주 AI 이벤트를 실시간 심층 뉴스로 깔끔하게 정리하고 업데이트"
+ },
+ {
+  "id": "openai-devday-exchange-berlin-2026-10",
+  "date": "2026-10-26",
+  "tags": [
+   "오픈AI",
+   "DevDay",
+   "코덱스",
+   "AI 개발자"
+  ],
+  "live": true,
+  "updated": "10-26 13:45 KST",
+  "title": "오픈AI DevDay Exchange 베를린 (10/26) — 개발자 세션·코덱스 실습 중심, 신규 모델 예고 없음",
+  "sub": "행사 일정(한국 22:00), 순회 일정, 미리보기 볼 포인트, 발표 시간순 정리 (행사 중 갱신)",
+  "request": "오라클 AI World·오픈AI DevDay 등 이번 주 AI 이벤트를 실시간 심층 뉴스로 깔끔하게 정리하고 업데이트"
+ },
+ {
   "id": "bloom-3q26-earnings",
   "date": "2026-10-23",
   "tags": [
