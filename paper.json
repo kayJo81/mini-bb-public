@@ -25,24 +25,6 @@
  "pending": [],
  "open": [
   {
-   "sym": "GM",
-   "dir": "롱",
-   "b": "pos_dn",
-   "verdict": "근거 약함",
-   "signal_date": "2026-10-20",
-   "edge": 0.53,
-   "z": 10.66,
-   "head": "Elice Plunges in Trading Debut; General Motors Falls on Forecast | Stock Movers",
-   "entry_date": "2026-10-21",
-   "entry": 76.71,
-   "bench_entry": 722.22,
-   "size": 5000.0,
-   "now": 76.31,
-   "ret": -0.72,
-   "bench_ret": -1.59,
-   "asof": "2026-10-26"
-  },
-  {
    "sym": "ISRG",
    "dir": "롱",
    "b": "pos_dn",
@@ -55,10 +37,10 @@
    "entry": 430.665,
    "bench_entry": 713.68,
    "size": 5000.0,
-   "now": 451.63,
-   "ret": 4.67,
-   "bench_ret": -0.41,
-   "asof": "2026-10-26"
+   "now": 446.34,
+   "ret": 3.44,
+   "bench_ret": 0.83,
+   "asof": "2026-10-27"
   },
   {
    "sym": "SMCI",
@@ -73,10 +55,10 @@
    "entry": 34.44,
    "bench_entry": 713.68,
    "size": 5000.0,
-   "now": 32.69,
-   "ret": -5.28,
-   "bench_ret": -0.41,
-   "asof": "2026-10-26"
+   "now": 35.165,
+   "ret": 1.91,
+   "bench_ret": 0.83,
+   "asof": "2026-10-27"
   },
   {
    "sym": "NVDA",
@@ -91,10 +73,10 @@
    "entry": 217.23,
    "bench_entry": 713.68,
    "size": 5000.0,
-   "now": 216.0,
-   "ret": -0.77,
-   "bench_ret": -0.41,
-   "asof": "2026-10-26"
+   "now": 217.75,
+   "ret": 0.04,
+   "bench_ret": 0.83,
+   "asof": "2026-10-27"
   },
   {
    "sym": "META",
@@ -109,10 +91,10 @@
    "entry": 638.12,
    "bench_entry": 702.102,
    "size": 5000.0,
-   "now": 630.56,
-   "ret": -1.38,
-   "bench_ret": 1.24,
-   "asof": "2026-10-26"
+   "now": 623.3599,
+   "ret": -2.51,
+   "bench_ret": 2.49,
+   "asof": "2026-10-27"
   }
  ],
  "closed": [
@@ -283,9 +265,30 @@
    "exit_date": "2026-10-26",
    "exit": 56.81,
    "pnl": -212.67
+  },
+  {
+   "sym": "GM",
+   "dir": "롱",
+   "b": "pos_dn",
+   "verdict": "근거 약함",
+   "signal_date": "2026-10-20",
+   "edge": 0.53,
+   "z": 10.66,
+   "head": "Elice Plunges in Trading Debut; General Motors Falls on Forecast | Stock Movers",
+   "entry_date": "2026-10-21",
+   "entry": 76.71,
+   "bench_entry": 722.22,
+   "size": 5000.0,
+   "now": 76.31,
+   "ret": 4.78,
+   "bench_ret": -0.37,
+   "asof": "2026-10-26",
+   "exit_date": "2026-10-27",
+   "exit": 80.53,
+   "pnl": 238.99
   }
  ],
- "cash": 71623.09539290806,
+ "cash": 76862.08509438114,
  "curve": [
   [
    "2026-10-09",
@@ -346,6 +349,11 @@
    "2026-10-26",
    96448.81,
    98971.94
+  ],
+  [
+   "2026-10-27",
+   97005.64,
+   99280.43
   ]
  ],
  "picks_log": [
