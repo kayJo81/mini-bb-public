@@ -385,6 +385,16 @@ body{font-size:15px}
 .jk-h{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px}.jk-h span{font-size:10px;color:var(--sub)}.jk-h a{margin-left:auto;font-size:11px;color:var(--acc)}
 .jk-p{padding:8px 0;border-bottom:.5px solid var(--bd);font-size:12px}.jk-p:last-of-type{border-bottom:0}.jk-t{font-size:10px;color:var(--sub);margin-bottom:2px}.jk-x{white-space:pre-wrap;line-height:1.5}.jk-p a{font-size:11px;color:var(--acc)}.jk-n{margin-top:6px;font-size:10px;color:var(--sub)}
 #jukanBtn.on{background:#111827;color:#fff;border-color:#111827}
+.mt{margin:0 0 12px;border:1px solid #c7d2fe;background:linear-gradient(#f5f7ff,#fff);border-radius:12px;padding:10px 12px}
+.mt-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:12px;color:#6b7280}.mt-h b{color:#fff;background:#4338ca;border-radius:6px;padding:1px 8px;font-size:12px;letter-spacing:.02em}.mt-h a{margin-left:auto;font-size:11px;color:#2563eb;text-decoration:none}
+.mt .bar{margin:8px 0 2px}.mt .bar .t{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:3px}.mt .bar .t .d{color:#1d4ed8}.mt .bar .t .r{color:#b91c1c}.mt .bar .t .m{color:#6b7280;font-weight:600}
+.mt .bar .sb{position:relative;display:flex;height:14px;border-radius:7px;overflow:hidden;background:#e5e7eb}.mt .bar .sb i{display:block;height:100%}.mt .bar .sb i.d{background:#2563eb}.mt .bar .sb i.r{background:#dc2626}.mt .bar .sb i.o{background:#7c3aed}.mt .bar .sb u{position:absolute;top:-2px;bottom:-2px;width:2px;background:#111827;text-decoration:none}
+.mt .bar .n{font-size:11px;color:#6b7280;margin-top:2px}
+.mt .rc{margin-top:8px;border-top:.5px solid #e0e7ff}.mt .rc .row{display:grid;grid-template-columns:58px 1fr auto;gap:2px 8px;align-items:baseline;padding:6px 0;border-bottom:.5px solid #eef2ff;font-size:12.5px}
+.mt .rc .st{font-weight:700}.mt .rc .cd{min-width:0;overflow-wrap:anywhere}.mt .rc .cd .d{color:#1d4ed8;font-weight:600}.mt .rc .cd .r{color:#b91c1c;font-weight:600}.mt .rc .pc{font:600 11px var(--mono);color:#6b7280;white-space:nowrap}
+.mt .tg{display:inline-block;font-size:10.5px;font-weight:700;border-radius:5px;padding:0 5px;margin-left:4px;vertical-align:1px}.mt .tg.cd{background:#dbeafe;color:#1e40af}.mt .tg.cr{background:#fee2e2;color:#991b1b}.mt .tg.ld{background:#eff6ff;color:#1e40af}.mt .tg.lr{background:#fef2f2;color:#991b1b}.mt .tg.pn{background:#f3f4f6;color:#4b5563}
+.mt .more{display:block;width:100%;margin-top:6px;border:.5px solid #c7d2fe;background:#fff;color:#4338ca;border-radius:8px;padding:5px;font-size:12px;font-weight:600;cursor:pointer}
+.mt .nt{margin-top:6px;font-size:11.5px;color:#6b7280;line-height:1.5}
 .brk{margin:0 0 12px;border:1px solid #fecaca;background:linear-gradient(#fff5f5,#fff);border-radius:12px;padding:10px 12px}
 .brk-h{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px;color:#6b7280}.brk-h b{color:#fff;background:#dc2626;border-radius:6px;padding:1px 8px;font-size:12px;letter-spacing:.02em}.brk-h a{margin-left:auto;font-size:11px;color:#2563eb;text-decoration:none}
 .brk a.it{display:flex;gap:8px;align-items:baseline;padding:7px 0;border-top:.5px solid #fee2e2;text-decoration:none;color:#111827;font-size:13px;line-height:1.45}.brk a.it:first-of-type{border-top:0}
@@ -445,6 +455,7 @@ body{font-size:15px}
     <button type="button" class="chip" id="fltBtn" aria-expanded="false" title="필터 열기/닫기">⚙️ <span id="fltT">필터 선택</span> ▾</button>
     <input id="q" placeholder="헤드라인 검색…">
   </div>
+  <div class="mt" id="mt" hidden></div>
   <div class="brk" id="brk" hidden></div>
   <div class="main">
     <div class="nav" id="nav"></div>
@@ -1035,6 +1046,43 @@ loadReports();setInterval(loadReports,5*60e3);
     }catch(e){box.textContent='피드를 불러오지 못했어요';}
   }
   btn.onclick=()=>{const show=pan.hidden;pan.hidden=!show;btn.classList.toggle('on',show);btn.setAttribute('aria-expanded',show);if(show&&!loaded)load();};
+})();
+
+// 중간선거 개표 현황: 저장소의 feeds/midterm.json 을 바로 읽어 재배포 없이 반영(1분마다)
+(function(){
+  const box=document.getElementById('mt');if(!box)return;
+  const RAW='https://raw.githubusercontent.com/kayJo81/mini-bb-public/main/feeds/midterm.json';
+  let open=false,last=null;
+  const n=v=>(v==null||v==='')?0:+v;
+  function bar(title,c,tot,need,base,note){
+    const d=n(c.D)+n(base&&base.D),r=n(c.R)+n(base&&base.R),o=n(c.I)+n(base&&base.I),un=Math.max(0,tot-d-r-o);
+    const w=v=>(v/tot*100).toFixed(2)+'%';
+    return `<div class="bar"><div class="t"><span class="d">민주 ${d}</span><span class="m">${title} · 과반 ${need}</span><span class="r">공화 ${r}</span></div>`+
+      `<div class="sb"><i class="d" style="width:${w(d)}"></i><i class="o" style="width:${w(o)}"></i><i style="width:${w(un)}"></i><i class="r" style="width:${w(r)}"></i><u style="left:${((need-.5)/tot*100).toFixed(2)}%"></u></div>`+
+      `<div class="n">${note||''}</div></div>`;
+  }
+  const tag=r=>{const c=r.call;if(c==='D')return'<span class="tg cd">민주 확정</span>';if(c==='R')return'<span class="tg cr">공화 확정</span>';
+    if(r.lead==='D')return'<span class="tg ld">민주 앞서</span>';if(r.lead==='R')return'<span class="tg lr">공화 앞서</span>';return'<span class="tg pn">개표 중</span>';};
+  function draw(){
+    const F=last;if(!F){box.hidden=true;return;}
+    const S=F.senate||{},H=F.house||{},races=F.races||[];
+    const rows=(open?races:races.slice(0,6)).map(r=>`<div class="row"><span class="st">${esc(r.st)}<br><span style="font-weight:500;color:#6b7280;font-size:11px">${esc(r.k||'')}</span></span>`+
+      `<span class="cd"><span class="d">${esc(r.D||'')}${r.dv!=null?' '+r.dv+'%':''}</span> vs <span class="r">${esc(r.R||'')}${r.rv!=null?' '+r.rv+'%':''}</span>${tag(r)}</span><span class="pc">${r.pct!=null&&r.pct!==''?'개표 '+esc(r.pct):''}</span></div>`).join('');
+    box.innerHTML=`<div class="mt-h"><b>🗳️ 중간선거 개표 현황</b><span>${esc(F.updated||'')} 기준</span><a href="https://mini-bblab.pages.dev/deep?id=${encodeURIComponent(F.article||'midterm-results-2026')}" target="_blank" rel="noopener">심층 분석 →</a></div>`+
+      bar('상원 100석',S.called||{},100,S.need||50,S.base,S.note||'')+
+      bar('하원 435석',H.called||{},435,H.need||218,H.base,H.note||'')+
+      (rows?`<div class="rc">${rows}</div>`:'')+
+      (races.length>6?`<button class="more" id="mtMore">${open?'접기':'접전 지역 전체 보기 ('+races.length+')'}</button>`:'')+
+      `<div class="nt">${esc(F.status||'')}${F.source?' · 출처 '+esc(F.source):''} · 공식 확정이 아닌 언론 집계 기준이에요.</div>`;
+    box.hidden=false;
+    const b=document.getElementById('mtMore');if(b)b.onclick=()=>{open=!open;draw();};
+  }
+  async function load(){
+    try{const r=await fetch(RAW+'?t='+Math.floor(Date.now()/60000),{cache:'no-store'});if(!r.ok)throw 0;last=await r.json();
+      if(last.hidden){last=null;}}catch(e){if(!last){box.hidden=true;return;}}
+    draw();
+  }
+  load();setInterval(load,60000);
 })();
 
 // Breaking!: 최근 24시간 안에 만들거나 갱신한 심층 뉴스(lab/deepnews/index.json) 링크 — 저장소에서 바로 읽어 재배포 없이 반영
