@@ -14,3 +14,6 @@ labdata/
 public_lab/
 .wrangler/
 node_modules/
+
+# 로컬 실행용 번역·수집 캐시 (GitHub Actions 는 cache 액션으로 따로 유지)
+.cache/
