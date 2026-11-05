@@ -42,5 +42,7 @@ export default {
     const h = now.getUTCHours();
     const report = event.cron === REPORT_CRON && ((h === 20 && edt) || (h === 21 && !edt));
     ctx.waitUntil(dispatch(env, report));
+    // TrendForce 보도자료·메모리 가격(trendforce.yml): 30분마다 — 15분 틱 중 :07·:37 에만 (REPORT_CRON 한 줄 실행은 제외)
+    if (event.cron !== REPORT_CRON && now.getUTCMinutes() % 30 === 7) ctx.waitUntil(dispatch(env, false, "trendforce.yml", {}));
   },
 };

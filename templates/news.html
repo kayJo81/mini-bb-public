@@ -179,6 +179,50 @@ body.fj .filters,body.fj .main,body.fj .sections{display:none}
 .rp-a.up{background:#fee2e2;color:#b91c1c}.rp-a.dn{background:#dbeafe;color:#1d4ed8}.rp-a.nw{background:#fef3c7;color:#92400e}.rp-a.eq{background:#f3f4f6;color:#374151}
 .rp-g{font-weight:800;font-size:14px;margin:10px 0 2px}
 .rp-sum{margin:2px 0 4px;padding-left:18px;font-size:13.5px;line-height:1.5}.rp-sum li{margin:4px 0}.rp-sum b{font-weight:700}
+/* 🔧 트렌드포스: 보도자료 목록 + 메모리 가격 시계열 */
+body.tf .filters,body.tf .main{display:none}
+.tf-g{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.tf-g .rp-card{margin:0}
+@media (min-width:1000px){.tf-g{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}}
+.tf-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:2px 0 8px}
+.tf-bar .chip{font-size:13px;padding:4px 11px}
+.tf-bar .sp{flex:1}
+.tf-d{font-family:var(--mono);font-size:11.5px;color:var(--sub);margin-right:6px}
+.rp-i.tf-pr{border-left:3px solid #dc2626;padding-left:9px;background:#fffafa}
+.rp-f.tf-new{background:#dc2626;color:#fff}
+.rp-f.tf-pb{background:#fef3c7;color:#92400e}
+.rp-f.tf-tg{background:#f3f4f6;color:#4b5563;font-weight:600}
+.tf-s{font-size:12.5px;color:#374151;margin-top:3px;line-height:1.45}
+.tf-more{display:block;width:100%;margin-top:8px;border:.5px solid var(--bd);background:#fff;color:#374151;border-radius:8px;padding:7px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.tf-ch{display:block;width:100%;height:auto;margin:2px 0 6px}
+.tf-one{margin:8px 0;padding:14px 10px;border:.5px dashed var(--bd);border-radius:10px;text-align:center;font-size:13px;color:var(--sub);line-height:1.6}.tf-one b{font-family:var(--mono);font-size:16px;color:var(--ink)}
+.tf-ch text{font-size:10px;fill:#6b7280;font-family:var(--mono)}
+.tf-ch .gl{stroke:#e5e7eb;stroke-width:1}
+.tf-ch .bd{fill:rgba(37,99,235,.10);stroke:none}
+.tf-ch .ln{fill:none;stroke:#2563eb;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.tf-ch circle{fill:#2563eb}
+.tf-ch .em{font-size:11px;fill:#6b7280}
+.tf-sel{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;margin-top:4px}
+.tf-sel b{font-size:14px}.tf-sel .v{font-family:var(--mono);font-size:17px;font-weight:800}.tf-sel small{font-size:11px;color:var(--sub)}
+.tf-t{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px;margin-top:6px}
+.tf-t th{font-size:10.5px;font-weight:600;color:var(--sub);text-align:right;padding:3px 4px}
+.tf-t th:first-child,.tf-t td:first-child{text-align:left}
+.tf-t td{padding:6px 4px;border-top:.5px dashed var(--bd);vertical-align:middle;text-align:right}
+.tf-t td:first-child{overflow-wrap:anywhere;line-height:1.3}
+.tf-t td small{display:block;font-size:10.5px;color:var(--sub);font-weight:400}
+.tf-t td.n{font-family:var(--mono);font-size:12.5px;font-weight:700}
+.tf-t tr[data-tf-sel]{cursor:pointer}.tf-t tr.on{background:#f1f5f9}
+.tf-t .gh td{border-top:0;padding:8px 4px 2px;font-weight:800;font-size:12px;color:#374151}
+.tf-c{font-family:var(--mono);font-size:11.5px;font-weight:700;white-space:nowrap}
+.tf-c.u{color:#dc2626}.tf-c.d{color:#2563eb}.tf-c.f{color:#6b7280}
+.tf-sp{display:block;width:52px;height:22px;margin-left:auto}
+.tf-sp polyline{fill:none;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.tf-sp.u polyline{stroke:#dc2626}.tf-sp.d polyline{stroke:#2563eb}.tf-sp.f polyline{stroke:#9ca3af}
+.tf-sp line{stroke:#d1d5db;stroke-width:1;stroke-dasharray:2 3}.tf-sp circle{fill:#9ca3af}
+.tf-note{font-size:12px;color:#92400e;background:#fffbeb;border:.5px solid #fde68a;border-radius:8px;padding:6px 9px;margin:4px 0 6px;line-height:1.5}
+.tf-det{margin-top:8px;font-size:12.5px}.tf-det summary{cursor:pointer;font-weight:700;color:#374151}
+.tf-foot{font-size:11.5px;color:var(--sub);line-height:1.6;margin:10px 2px 0;overflow-wrap:anywhere}
+.tf-foot a{color:var(--acc)}
 #themesView iframe{width:100%;border:0;display:block;min-height:600px;background:transparent}
 .stab2{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--bd);
        background:#fff;cursor:pointer;text-align:left;font-family:inherit;box-shadow:var(--sh);transition:border-color .12s,transform .12s,box-shadow .12s}
@@ -434,6 +478,7 @@ body{font-size:15px}
   </div>
   <div id="themesView" hidden><iframe id="themesFrame" title="장중 테마" loading="lazy"></iframe></div>
   <div id="repView" hidden></div>
+  <div id="tfView" hidden></div>
   <div id="fjView" hidden><div class="fj-h"><div><b>⚡ 실시간 속보</b> <span id="fjSub">불러오는 중…</span></div><input id="fjQ" type="search" placeholder="속보 검색 (한글·영문·중문)"><button type="button" class="btn" id="fjClose">✕ 닫기</button><div class="fl-c" id="flChips"></div></div><div class="fj-l" id="fjList"></div></div>
   <div class="mv" id="moves" hidden></div>
   <div class="mv" id="midterms" hidden></div>
@@ -686,12 +731,15 @@ function render(){
   }).join('')+
     // 장중 테마: 이 화면 안에 테마(themes?embed=1)를 펼쳐 보여 줌
     `<button type="button" class="stab2 go ${st.section==='테마'?'on':''}" style="--sc:#ea580c" data-sec="테마" aria-pressed="${st.section==='테마'}"><span class="t">🔥 장중 테마</span><span class="d">미국 당일 테마·이슈 테마·옵션 수급</span><span class="n" id="themeTop">${THEME_TOP||'15분마다 갱신'}</span></button>`+
-    `<button type="button" class="stab2 ${st.section==='리포트'?'on':''}" style="--sc:#0f766e" data-sec="리포트" aria-pressed="${st.section==='리포트'}"><span class="t">📑 리포트</span><span class="d">IB 매크로·전략 / 산업별 투자의견·목표가</span><span class="n">${REP?`${(REP.macro||[]).length+(REP.calls||[]).length+(REP.ratings||[]).length}건`:'15분마다 갱신'}</span></button>`;
+    `<button type="button" class="stab2 ${st.section==='리포트'?'on':''}" style="--sc:#0f766e" data-sec="리포트" aria-pressed="${st.section==='리포트'}"><span class="t">📑 리포트</span><span class="d">IB 매크로·전략 / 산업별 투자의견·목표가</span><span class="n">${REP?`${(REP.macro||[]).length+(REP.calls||[]).length+(REP.ratings||[]).length}건`:'15분마다 갱신'}</span></button>`+
+    `<button type="button" class="stab2 ${st.section==='트렌드포스'?'on':''}" style="--sc:#b45309" data-sec="트렌드포스" aria-pressed="${st.section==='트렌드포스'}"><span class="t">🔧 트렌드포스</span><span class="d">반도체 보고서·메모리 가격 시계열</span><span class="n" id="tfTabN">${tfTabN()}</span></button>`;
   tabsEl.scrollLeft=tabsSL;
   if(tabsSecShown!==st.section){tabsSecShown=st.section;const a=tabsEl.querySelector('.stab2.on');if(a&&tabsEl.scrollWidth>tabsEl.clientWidth)tabsEl.scrollLeft=a.offsetLeft-(tabsEl.clientWidth-a.offsetWidth)/2;}
+  const tfOn=st.section==='트렌드포스';document.body.classList.toggle('tf',tfOn);document.getElementById('tfView').hidden=!tfOn;
   const fjOn=st.section==='속보';document.body.classList.toggle('fj',fjOn);document.getElementById('fjView').hidden=!fjOn;
   document.getElementById('fjBtn').classList.toggle('on',fjOn);document.getElementById('usBtn').classList.toggle('on',!fjOn);
   if(fjOn){document.body.classList.remove('theme','rep');document.getElementById('themesView').hidden=true;document.getElementById('repView').hidden=true;renderFlash();return;}
+  if(tfOn){document.body.classList.remove('theme','rep');document.getElementById('themesView').hidden=true;document.getElementById('repView').hidden=true;renderTf();return;}
   const thOn=st.section==='테마',tv=document.getElementById('themesView');
   document.body.classList.toggle('theme',thOn);tv.hidden=!thOn;
   if(thOn){const f=document.getElementById('themesFrame');if(!f.src)f.src='themes?embed=1';return;}
@@ -819,7 +867,7 @@ function card(s,cat){
 }
 
 document.getElementById('rbtn').onclick=load;
-document.getElementById('koBtn').onclick=()=>{st.ko=!st.ko;save();document.getElementById('koBtn').classList.toggle('on',st.ko);watchCards();renderMoves();if(st.section==='속보')renderFlash();};
+document.getElementById('koBtn').onclick=()=>{st.ko=!st.ko;save();document.getElementById('koBtn').classList.toggle('on',st.ko);watchCards();renderMoves();if(st.section==='속보')renderFlash();if(st.section==='트렌드포스')renderTf();};
 function fltCount(){const n=(st.verdict!=='ALL')+(st.region!=='ALL')+(st.sort!=='time')+(!st.hideOp);
   document.getElementById('fltT').textContent=n?`필터 ${n}개 적용`:'필터 선택';document.getElementById('fltBtn').classList.toggle('on',n>0);}
 document.querySelector('.filters').onclick=e=>{
@@ -942,6 +990,125 @@ function renderReports(){
 }
 document.getElementById('repView').addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b)return;const k=b.dataset.r;
   if(k==='ALL')rsel.clear();else rsel.has(k)?rsel.delete(k):rsel.add(k);renderReports();});
+// ── 🔧 트렌드포스: 보도자료 + 메모리(DRAM·NAND) 가격 시계열 — 저장소 feeds/trendforce*.json 을 raw 로 직접 읽어 재배포 없이 반영(90초마다) ──
+var TF={news:null,prices:null,at:0,fail:false,range:'ALL',sel:'',tag:'ALL',shown:8,all:false};
+const TF_RAW='https://raw.githubusercontent.com/kayJo81/mini-bb-public/main/feeds/';
+// 화면에 먼저 보여 줄 핵심 시리즈(없으면 앞쪽 8개로 대신)
+const TF_CORE=[['dram_spot:DDR5 16Gb (2Gx8) 4800/5600','DDR5 16Gb 현물'],['dram_spot:DDR4 16Gb (2Gx8) 3200','DDR4 16Gb 현물'],['dram_spot:DDR4 8Gb (1Gx8) 3200','DDR4 8Gb 현물'],
+  ['dram_contract:DDR5 8GB SO-DIMM','DDR5 8GB 모듈 계약'],['dram_contract:DDR4 8Gb 1Gx8','DDR4 8Gb 칩 계약'],['flash_spot:MLC 64Gb 8GBx8','NAND MLC 64Gb 현물'],
+  ['wafer_spot:512Gb TLC','NAND 512Gb TLC 웨이퍼'],['flash_contract:NAND 128Gb 16Gx8 MLC','NAND MLC 128Gb 계약']];
+const TF_GRP={dram_spot:'DRAM 현물',dram_contract:'DRAM 계약',module_spot:'모듈 현물',gddr_spot:'GDDR 현물',flash_spot:'NAND 현물',flash_contract:'NAND 계약(카드·UFD)',
+  wafer_spot:'NAND 웨이퍼 현물',memCard_spot:'메모리카드 현물',pcc_oem_ssd_contract:'PC OEM SSD 계약',ssd_street:'SSD 소매가'};
+const tfN=v=>v==null?'–':v>=1000?v.toLocaleString('en-US',{maximumFractionDigits:0}):v>=100?v.toFixed(1):String(+v.toFixed(3));
+const tfMD=t=>String(t||'').slice(5).replace('-','/');
+// 변화율: 오르면 빨강, 내리면 파랑 (📊 주요 지표와 같은 색)
+const tfC=c=>typeof c!=='number'?'<span class="tf-c f">–</span>':`<span class="tf-c ${c>0?'u':c<0?'d':'f'}">${c>0?'▲ +':c<0?'▼ −':'— '}${Math.abs(c).toFixed(2)}%</span>`;
+const tfDay=t=>Date.parse(t+'T00:00:00Z');
+// 날짜 형식이 맞고 평균이 숫자인 점만 쓴다 (파일이 깨져도 화면은 안 깨지게)
+function tfSeries(){const S=(TF.prices&&TF.prices.series)||{};
+  return Object.keys(S).map(k=>({...S[k],k,pts:(Array.isArray(S[k].pts)?S[k].pts:[]).filter(p=>p&&typeof p.avg==='number'&&/^\d{4}-\d{2}-\d{2}$/.test(p.t))})).filter(s=>s.pts.length);}
+function tfPts(s){const p=s.pts;if(TF.range==='ALL')return p;
+  const last=tfDay(p[p.length-1].t),days=TF.range==='1M'?31:93;return p.filter(x=>tfDay(x.t)>=last-days*864e5);}
+function tfChg(s){const l=s.pts[s.pts.length-1];return typeof l.chg==='number'?l.chg:(s.pts.length>1?(l.avg/s.pts[s.pts.length-2].avg-1)*100:null);}
+function tfIsNew(x){   // 24시간 안에 새로 잡힌 글(seen). seen 이 없는 글(처음 수집분)은 오늘(KST) 날짜일 때만
+  if(x.seen){const t=Date.parse(x.seen);return !isNaN(t)&&Date.now()-t<864e5&&t-Date.now()<36e5;}
+  return x.date===new Date(Date.now()+9*36e5).toISOString().slice(0,10);}
+function tfSpark(pts){
+  if(pts.length<2)return '<svg class="tf-sp f" viewBox="0 0 52 22" aria-hidden="true"><line x1="2" x2="50" y1="11" y2="11"/><circle cx="48" cy="11" r="2.5"/></svg>';
+  const a=pts.map(p=>p.avg),mn=Math.min(...a),mx=Math.max(...a),r=(mx-mn)||1,y=v=>(19-(v-mn)/r*16).toFixed(1);
+  const c=a[a.length-1]>a[0]?'u':a[a.length-1]<a[0]?'d':'f';
+  return `<svg class="tf-sp ${c}" viewBox="0 0 52 22" aria-hidden="true"><polyline points="${pts.map((p,i)=>(2+i/(pts.length-1)*48).toFixed(1)+','+y(p.avg)).join(' ')}"/></svg>`;}
+// 선택한 시리즈의 큰 차트: 평균선 + 고저 띠. 점이 1개면 안내 문구
+function tfChart(s){
+  const pts=tfPts(s),vw=(document.getElementById('tfView').clientWidth||360)-30,W=Math.max(280,Math.min(640,vw)),H=190,L=46,R=12,T=10,B=24,pw=W-L-R,ph=H-T-B;
+  if(pts.length<2)return `<div class="tf-one"><b>${esc(tfN(pts[0].avg))} USD</b> · ${esc(tfMD(pts[0].t))}<br>점이 1개뿐이라 선은 아직 없어요. 새 자료가 들어올 때마다 이어져요.</div>`;
+  const hi=pts.map(p=>typeof p.high==='number'?p.high:p.avg),lo=pts.map(p=>typeof p.low==='number'?p.low:p.avg);
+  let mn=Math.min(...lo,...pts.map(p=>p.avg)),mx=Math.max(...hi,...pts.map(p=>p.avg));const pad=((mx-mn)||Math.abs(mx)||1)*.06;mn-=pad;mx+=pad;
+  const t0=tfDay(pts[0].t),t1=tfDay(pts[pts.length-1].t),dt=(t1-t0)||1,X=p=>L+(tfDay(p.t)-t0)/dt*pw,Y=v=>T+(1-(v-mn)/(mx-mn))*ph;
+  const f=v=>v.toFixed(1);
+  // 고저 띠: 위쪽 선을 따라갔다가 아래쪽 선을 거꾸로 되돌아옴
+  const top=pts.map((p,i)=>f(X(p))+','+f(Y(hi[i]))),bot=pts.map((p,i)=>f(X(p))+','+f(Y(lo[i]))).reverse();
+  const grid=[0,.5,1].map(q=>{const v=mx-(mx-mn)*q,y=T+ph*q;return `<line class="gl" x1="${L}" x2="${W-R}" y1="${f(y)}" y2="${f(y)}"/><text x="${L-5}" y="${f(y+3.5)}" text-anchor="end">${esc(tfN(v))}</text>`;}).join('');
+  const dots=pts.length<=40?pts.map(p=>`<circle cx="${f(X(p))}" cy="${f(Y(p.avg))}" r="2.6"/>`).join(''):`<circle cx="${f(X(pts[pts.length-1]))}" cy="${f(Y(pts[pts.length-1].avg))}" r="3.4"/>`;
+  return `<svg class="tf-ch" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(s.name)} 시계열">${grid}<polygon class="bd" points="${top.concat(bot).join(' ')}"/>`+
+    `<polyline class="ln" points="${pts.map(p=>f(X(p))+','+f(Y(p.avg))).join(' ')}"/>${dots}`+
+    `<text x="${L}" y="${H-6}">${esc(tfMD(pts[0].t))}</text><text x="${W-R}" y="${H-6}" text-anchor="end">${esc(tfMD(pts[pts.length-1].t))}</text></svg>`;}
+function tfRow(s,label){
+  const last=s.pts[s.pts.length-1];
+  return `<tr class="${TF.sel===s.k?'on':''}" data-tf-sel="${esc(s.k)}"><td><b>${esc(label||s.name)}</b><small>${esc(TF_GRP[s.group]||s.title||'')} · ${esc(tfMD(last.t))}${last.s?' '+esc(last.s):''}</small></td>`+
+    `<td>${tfSpark(tfPts(s))}</td><td class="n">${esc(tfN(last.avg))}</td><td>${tfC(tfChg(s))}</td></tr>`;}
+const TF_HEAD='<colgroup><col><col style="width:56px"><col style="width:58px"><col style="width:72px"></colgroup><thead><tr><th>품목</th><th>추이</th><th>평균(USD)</th><th>변화</th></tr></thead>';
+function tfNewsHtml(){
+  const N=TF.news,head='<div class="rp-h">📰 TrendForce 보고서';
+  if(!N||!Array.isArray(N.items))return `<div class="rp-card">${head} <span>보도자료</span></div><div class="el-fail">⚠️ 보고서 목록을 불러오지 못했어요</div></div>`;
+  const items=N.items.filter(x=>x&&x.id),cnt={};
+  for(const x of items)for(const t of x.tags||[])cnt[t]=(cnt[t]||0)+1;
+  const nPrice=items.filter(x=>x.price_related).length,nNew=items.filter(tfIsNew).length;
+  const tags=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,10);
+  if(TF.tag!=='ALL'&&TF.tag!=='PRICE'&&!cnt[TF.tag])TF.tag='ALL';
+  const list=items.filter(x=>TF.tag==='ALL'||(TF.tag==='PRICE'?x.price_related:(x.tags||[]).includes(TF.tag)));
+  const pill=(k,n,c)=>`<button type="button" class="ni ${TF.tag===k?'on':''}" data-tf-tag="${esc(k)}"><span>${esc(n)}</span><span class="c">${c}</span></button>`;
+  const one=x=>{const ko=st.ko&&x.title_ko,sm=st.ko?x.summary_ko:(x.summary_en||'');
+    return `<div class="rp-i ${x.price_related?'tf-pr':''}"><span class="tf-d">${esc(tfMD(x.date))}</span>${tfIsNew(x)?'<span class="rp-f tf-new">NEW</span>':''}${x.price_related?'<span class="rp-f tf-pb">💲 가격</span>':''}`+
+      `${(x.tags||[]).map(t=>`<span class="rp-f tf-tg">${esc(t)}</span>`).join('')}<br><a href="${safeUrl(x.url)}" target="_blank" rel="noopener"><b>${esc(ko||x.title_en)}</b></a>`+
+      `${ko?`<div class="rp-o">${esc(x.title_en)}</div>`:''}${sm?`<div class="tf-s">${esc(sm)}</div>`:''}</div>`;};
+  return `<div class="rp-card">${head} <span>${nNew?`NEW ${nNew}건 · `:''}최근 ${items.length}건 · 가격 관련 ${nPrice}건 (붉은 선)</span></div>`+
+    `<div class="pills tf-bar">${pill('ALL','전체',items.length)}${pill('PRICE','💲 가격 관련',nPrice)}${tags.map(t=>pill(t,t,cnt[t])).join('')}</div>`+
+    (list.length?list.slice(0,TF.shown).map(one).join(''):'<div class="rp-m">해당하는 보고서가 없어요</div>')+
+    (list.length>TF.shown?`<button type="button" class="tf-more" data-tf-more="1">더 보기 (${list.length-TF.shown}건 남음)</button>`:'')+'</div>';}
+function tfPriceHtml(){
+  const P=TF.prices,head='<div class="rp-h">📈 메모리 가격 시계열';
+  if(!P||!P.series)return `<div class="rp-card">${head} <span>DRAMeXchange 공개 가격</span></div><div class="el-fail">⚠️ 가격 자료를 불러오지 못했어요</div></div>`;
+  const all=tfSeries();if(!all.length)return `<div class="rp-card">${head}</div><div class="el-fail">⚠️ 가격 시리즈가 비어 있어요</div></div>`;
+  const by=Object.fromEntries(all.map(s=>[s.k,s]));
+  let core=TF_CORE.filter(([k])=>by[k]).map(([k,l])=>({s:by[k],l}));
+  if(!core.length)core=all.slice(0,8).map(s=>({s,l:s.name}));
+  if(!by[TF.sel])TF.sel=core[0].s.k;
+  const cur=by[TF.sel],lab=(core.find(c=>c.s.k===cur.k)||{}).l||cur.name,last=cur.pts[cur.pts.length-1],rng=tfPts(cur);
+  const maxPts=Math.max(...all.map(s=>s.pts.length)),first=core.map(c=>c.s.pts[0].t).sort()[0];
+  const coreKeys=new Set(core.map(c=>c.s.k)),rest=all.filter(s=>!coreKeys.has(s.k));
+  const groups=[...new Set(rest.map(s=>s.group))];
+  const rb=(k,n)=>`<button type="button" class="chip ${TF.range===k?'on':''}" data-tf-range="${k}">${n}</button>`;
+  const upd=P.updated&&!isNaN(Date.parse(P.updated))?` · 새 자료 반영 ${fmt(new Date(P.updated))}`:'';
+  return `<div class="rp-card">${head} <span>DRAMeXchange 공개 가격 · USD${upd}</span></div>`+
+    `<div class="tf-bar">${rb('1M','1개월')}${rb('3M','3개월')}${rb('ALL','전체')}</div>`+
+    (maxPts<2?`<div class="tf-note">📌 공개 가격표에는 지난 이력이 없어서 수집한 날부터 쌓고 있어요(첫 점 ${esc(tfMD(first))}). 새 날짜가 들어올 때마다 선이 이어져요.</div>`
+      :`<div class="rp-m">이력 수집 시작 ${esc(tfMD(first))} · 최대 ${maxPts}점 (스팟은 갱신일마다, 계약가는 반월·분기 세션마다 1점)</div>`)+
+    `<div class="tf-sel"><b>${esc(lab)}</b><span class="v">${esc(tfN(last.avg))}</span>${tfC(tfChg(cur))}<small>${esc(TF_GRP[cur.group]||cur.title||'')} · ${esc(tfMD(last.t))}${last.s?' '+esc(last.s):''}`+
+      `${typeof last.low==='number'&&typeof last.high==='number'?` · 고저 ${esc(tfN(last.low))}~${esc(tfN(last.high))}`:''} · 점 ${cur.pts.length}개${rng.length!==cur.pts.length?` (선택 기간 ${rng.length}개)`:''}</small></div>`+
+    tfChart(cur)+
+    `<table class="tf-t">${TF_HEAD}<tbody>${core.map(c=>tfRow(c.s,c.l)).join('')}</tbody></table>`+
+    (rest.length?`<details class="tf-det" id="tfAll" ${TF.all?'open':''}><summary>전체 시리즈 ${rest.length}개 더 보기</summary><table class="tf-t">${TF_HEAD}<tbody>`+
+      groups.map(g=>`<tr class="gh"><td colspan="4">${esc(TF_GRP[g]||g)}</td></tr>`+rest.filter(s=>s.group===g).map(s=>tfRow(s)).join('')).join('')+'</tbody></table></details>':'')+'</div>';}
+function renderTf(){
+  const v=document.getElementById('tfView');
+  if(!TF.news&&!TF.prices){v.innerHTML=`<div class="rp-card">${TF.fail?'⚠️ 트렌드포스 자료를 불러오지 못했어요 — 잠시 뒤 다시 시도해요':'불러오는 중…'}</div>`;return;}
+  v.innerHTML=`<div class="tf-g">${tfNewsHtml()}${tfPriceHtml()}</div>`+
+    `<div class="tf-foot">출처: <a href="https://www.trendforce.com/presscenter/news" target="_blank" rel="noopener">TrendForce 보도자료</a> · <a href="https://www.trendforce.com/price/dram" target="_blank" rel="noopener">TrendForce(DRAMeXchange) 공개 가격표</a>`+
+    `${TF.news&&TF.news.updated&&!isNaN(Date.parse(TF.news.updated))?` · 보고서 목록 갱신 ${fmt(new Date(TF.news.updated))} KST`:''} (30분마다 확인) · 공식 데이터가 아니며 지연될 수 있어요. `+
+    `한국어 제목·요약은 기계번역이니 원문 링크로 확인하세요. 계약가는 공개 표가 늦게 올라올 수 있어요.</div>`;}
+function tfTabN(){const it=TF.news&&Array.isArray(TF.news.items)?TF.news.items:null;if(!it)return '30분마다 갱신';const n=it.filter(tfIsNew).length;return (n?`NEW ${n}건 · `:'')+`${it.length}건`;}
+document.getElementById('tfView').addEventListener('click',e=>{
+  const g=a=>e.target.closest('['+a+']');let b;
+  if(b=g('data-tf-range'))TF.range=b.dataset.tfRange;
+  else if(b=g('data-tf-tag')){TF.tag=b.dataset.tfTag;TF.shown=8;}
+  else if(b=g('data-tf-sel'))TF.sel=b.dataset.tfSel;
+  else if(g('data-tf-more'))TF.shown+=20;
+  else return;
+  renderTf();});
+document.getElementById('tfView').addEventListener('toggle',e=>{if(e.target.id==='tfAll')TF.all=e.target.open;},true);
+async function loadTf(){
+  const get=async f=>{   // 저장소 원본(raw.githubusercontent) 우선, 안 되면 배포본에 복사해 둔 briefings/ 파일
+    for(const u of [TF_RAW+f+'?t='+Math.floor(Date.now()/60000),'briefings/'+f]){
+      try{const r=await fetch(u,{cache:'no-store'});if(r.ok)return await r.json();}catch(e){}
+    }
+    return null;};
+  const [n,p]=await Promise.all([get('trendforce.json'),get('trendforce_prices.json')]);
+  if(n)TF.news=n;if(p)TF.prices=p;TF.fail=!TF.news&&!TF.prices;TF.at=Date.now();
+  if(st.section==='트렌드포스'&&data)renderTf();
+  const el=document.getElementById('tfTabN');if(el)el.textContent=tfTabN();}
+loadTf();setInterval(()=>{if(st.section==='트렌드포스'||Date.now()-TF.at>10*60e3)loadTf();},90e3);   // 탭을 보고 있으면 90초마다, 아니면 10분마다 확인
+
 // ── ⚡ 속보: FinancialJuice·월스트리트견문·시나재경 — 15분 수집본(briefings/flash.json, 한국어 번역 포함) + 실시간(30초) ──
 const FSRC={fj:['FinancialJuice','FJ','#1d4ed8'],wscn:['월스트리트견문','월가견문','#b91c1c'],sina:['시나재경','시나','#c2410c']};
 let FL=[],flLast=0,fjSeen=0,fjMark=0,flSrc='ALL',flBuild=null,flBuildAt=0;

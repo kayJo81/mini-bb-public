@@ -1,0 +1,73 @@
+# TrendForce 보도자료 + 메모리(DRAM·NAND) 가격 시계열 — 30분마다 확인해 feeds/trendforce*.json 을 main 에 커밋
+#  · 터미널 '🔧 트렌드포스' 화면이 저장소의 feeds/trendforce*.json 을 raw.githubusercontent.com 에서 바로 읽음(재배포 없이 반영)
+#  · 내용이 바뀐 때만 커밋 (스크립트가 변동 없으면 파일을 다시 쓰지 않음)
+#  · 참고: 이 저장소는 GitHub 자체 schedule 이 불안정해 Cloudflare Worker(scheduler/)가 workflow_dispatch 로 부르는 방식을 쓴다.
+#    아래 cron 은 보조 신호이고, 안 돌면 scheduler/index.js 에서 이 워크플로를 30분마다 dispatch 하게 추가해야 한다.
+# 필요한 저장소 Secrets 없음 (GITHUB_TOKEN 만 사용)
+name: trendforce
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trendforce
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install requests beautifulsoup4
+
+      # 번역 캐시(briefing 과 같은 ko- 키 묶음 공유). 불러오기만 하고, 새로 번역한 게 있을 때만 아래에서 저장
+      - name: Restore translation cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/ko.json
+          key: ko-trendforce-${{ github.run_id }}
+          restore-keys: ko-
+
+      - name: Fetch TrendForce
+        id: fetch
+        run: |
+          mkdir -p .cache
+          before=$(md5sum .cache/ko.json 2>/dev/null | cut -d' ' -f1 || true)
+          rc=0
+          python3 -I scripts/trendforce.py --out feeds --cache .cache/ko.json || rc=$?
+          after=$(md5sum .cache/ko.json 2>/dev/null | cut -d' ' -f1 || true)
+          if [ "$before" != "$after" ]; then echo "cache_changed=true" >> "$GITHUB_OUTPUT"; fi
+          exit $rc
+
+      - name: Save translation cache
+        if: ${{ always() && steps.fetch.outputs.cache_changed == 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/ko.json
+          key: ko-trendforce-${{ github.run_id }}
+
+      # 스크립트가 차단(종료 코드 3)·일부 오류로 끝나도 이미 갱신된 파일은 저장 (파일은 성공한 쪽만 바뀜)
+      - name: Commit feeds
+        if: ${{ always() }}
+        run: |
+          git add feeds/trendforce.json feeds/trendforce_prices.json
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git -c user.name="mini-bbterminal" -c user.email="actions@users.noreply.github.com" \
+            commit -qm "TrendForce 갱신 ($(TZ=Asia/Seoul date +%H:%M) KST)"
+          # 다른 실행이 먼저 main 에 올렸으면 받아서 합친 뒤 다시 (최대 5번)
+          for i in 1 2 3 4 5; do
+            git push -q origin HEAD:main && exit 0
+            git -c user.name="mini-bbterminal" -c user.email="actions@users.noreply.github.com" pull -q --rebase origin main
+          done
+          echo "::error::main 에 올리지 못했어요"; exit 1

@@ -71,6 +71,11 @@ def main():
     mt = os.path.join(ROOT, "feeds", "midterm.json")
     if os.path.exists(mt):
         shutil.copy(mt, os.path.join(out_b, "midterm.json"))
+    # TrendForce 보도자료·메모리 가격 시계열 (feeds/trendforce*.json → briefings/; 화면은 저장소 원본을 먼저 읽고 안 되면 이 복사본)
+    for fn in ("trendforce.json", "trendforce_prices.json"):
+        tf = os.path.join(ROOT, "feeds", fn)
+        if os.path.exists(tf):
+            shutil.copy(tf, os.path.join(out_b, fn))
     # 랩(mini-bblab) 화면이 장중 옵션 수급 등을 가져갈 수 있게 briefings/ 는 다른 사이트에서도 읽기 허용
     with open(os.path.join(args.out, "_headers"), "w", encoding="utf-8") as f:
         f.write("/briefings/*\n  Access-Control-Allow-Origin: *\n"
