@@ -3,9 +3,9 @@
   "article": "snap-3q26-earnings",
   "name": "스냅 3분기 실적",
   "ticker": "SNAP · 2026.11.04 발표",
-  "eyebrow": "실적 원페이퍼 · 2026.11.04 (미 동부 장마감 후 발표 · 5:00pm 콜 / 한국 11/5 07:00)",
-  "plain": "매출 17.22억 달러(+14%)는 예상(17.3억)에 소폭 못 미쳤고 DAU 4.95억도 예상(4.99억) 미달. 조정 EBITDA 3.83억 달러는 예상(3.37억)을 13% 웃돌았고 순이익 흑자 전환. 4분기 가이던스는 매출 19.50~19.85억·EBITDA 4.90~5.25억 달러. 2027년부터 DAU 공개를 중단하고 MAU 중심으로 전환.",
-  "lede": "매출 <b>17.22억 달러</b>(+14%)와 DAU <b>4.95억</b>은 <b>예상에 소폭 못 미쳤고</b>, 조정 EBITDA <b>3.83억 달러</b>는 예상을 <b>13% 웃돌았어요</b>. 시간외에서 주가는 <b>저점 -12%</b>까지 밀렸어요.",
+  "eyebrow": "실적 원페이퍼 · 2026.11.04 (미 동부 장마감 후 · 5:00pm 콜 / 한국 11/5 07:00) · 콜·11/5 종가 반영",
+  "plain": "매출 17.22억 달러(+14%)·DAU 4.95억은 예상 소폭 미달, 조정 EBITDA 3.83억 달러는 예상 13% 상회·순이익 흑자. 콜에서 MAU 전환은 ‘단기 DAU에 불리한 결정도 가능’으로 설명, SPECS는 데모 1만 건·판매 수치 없음, 퍼플렉시티 언급 없음. 11/5 정규장 -14.0%($5.09).",
+  "lede": "EBITDA <b>3.83억 달러</b>(예상 +13%)는 좋았지만 매출·DAU가 <b>소폭 미달</b>, 콜에서 <b>브랜드 광고 약세(2027 회복)</b>와 <b>SPECS 수치 없음</b>이 확인돼 11/5 정규장 <b>-14.0%</b>.",
   "chips": [
     {
       "t": "EBITDA 예상 +13.5%",
@@ -16,7 +16,7 @@
       "k": "dn"
     },
     {
-      "t": "시간외 -9.1%",
+      "t": "11/5 정규장 -14.0% · $5.09",
       "k": "dn"
     }
   ],
@@ -146,46 +146,46 @@
   },
   "good": [
     "<b>조정 EBITDA 3.83억</b>(마진 22%), 예상 +13.5%",
-    "<b>순이익 흑자</b>(+5,650만) · 총비용 +0.6% · <b>FCF +76%</b>",
+    "<b>순이익 흑자</b>(+5,650만) · <b>FCF +76%</b>",
     "<b>구독 3,000만 명</b> · 기타 매출 +84%"
   ],
   "bad": [
-    "<b>매출·DAU 소폭 미달</b> · 광고 매출 +4%",
-    "<b>북미 DAU -6%</b> · 소비재 광고 부진 · DAU 폐지",
-    "<b>SPECS</b> 수치 없음 · 주식보상 2.55억 > FCF"
+    "<b>매출·DAU 소폭 미달</b> · 광고 +4%",
+    "<b>북미 DAU -6%</b> · DAU 폐지",
+    "<b>SPECS</b> 판매·비용 수치 없음 · 주식보상 > FCF"
   ],
-  "quote_t": "경영진 발언",
-  "quote_src": "8-K 준비 발언(공식) · 해리스는 CNBC 보도(2차) · Q&A 전사 미확보",
+  "quote_t": "콜 핵심 발언",
+  "quote_src": "StockAnalysis 콜 전사(Quartr 제공, 단일 출처) · 영어 원문 발췌 + 번역",
   "quotes": [
     {
-      "who": "Evan Spiegel CEO · 보도자료",
-      "en": "we continue to strengthen our business while investing in our long-term vision for augmented reality with the launch of SPECS.",
-      "ko": "사업을 강화하며 SPECS 출시로 AR 장기 비전에 투자한다",
-      "tag": "공식"
+      "who": "Evan Spiegel CEO · 광고(Q&A)",
+      "en": "4% ad growth is below our ambitions, and I'm cautiously optimistic about the progress we're seeing here in Q4",
+      "ko": "광고 +4%는 목표에 못 미치지만 4분기 진척에 조심스럽게 낙관한다",
+      "tag": "전사"
     },
     {
-      "who": "Doug Hott CFO · 지표",
-      "en": "Beginning with our Q1 2027 results, global monthly active users (MAU) will become our primary audience metric.",
-      "ko": "2027년 1분기부터 글로벌 MAU가 주 사용자 지표다",
-      "tag": "공식"
+      "who": "Doug Hott CFO · MAU 전환(Q&A)",
+      "en": "some decisions that improve the experience on Snap ... may actually affect daily active use in the near term",
+      "ko": "경험 개선·안전·장기 유지 결정이 단기엔 일간 사용에 영향을 줄 수 있다",
+      "tag": "전사"
     },
     {
-      "who": "Doug Hott CFO · 주주환원",
-      "en": "we intend to pursue a multi-year approach to dilution management",
-      "ko": "다년간 희석 관리를 추진한다(현 매입은 4Q 완료)",
-      "tag": "공식"
+      "who": "Ronan Harris 상업 총괄 · 브랜드(Q&A)",
+      "en": "lower CPG spending driven by macro pressures in the U.S. and also the Middle East",
+      "ko": "브랜드 광고는 미국·중동 거시 압박에 따른 소비재 지출 감소로 줄었다",
+      "tag": "전사"
     },
     {
-      "who": "Ronan Harris 상업 총괄 · 콜",
-      "en": "macro pressures in the U.S. and also the Middle East",
-      "ko": "미국·중동의 거시 압박(소비재 광고 감소 이유)",
-      "tag": "2차"
+      "who": "Spiegel CEO · SPECS(Q&A)",
+      "en": "We have had more than 10,000 demos to date at the pop-up",
+      "ko": "팝업에서 지금까지 1만 건이 넘는 체험이 있었다(판매 수치는 없음)",
+      "tag": "전사"
     }
   ],
   "watch": [
-    "<b>11/5 정규장 반응(한국 23:30 개장)</b> — 시간외 -9% 안팎이 유지되는지",
-    "<b>콜 Q&A 전사</b> — SPECS 투자 속도·4분기 광고 전망·MAU 전환 이유"
+    "<b>4분기 실적(2027 초)</b> — 마지막 DAU 공개·광고 성장 가속의 크기",
+    "<b>SPECS 출하·첫 판매 수치·2027 1분기 MAU</b> — 다년 희석 관리 구체안"
   ],
-  "take": "이익과 현금흐름은 <u>예상을 크게 웃돌았지만</u>, 매출·DAU 소폭 미달에 <u>북미 사용자 감소</u>와 <u>DAU 지표 폐지</u>가 겹쳐 ‘이익은 좋은데 성장은 못 미더운’ 반응이 나온 분기예요.",
-  "foot": "출처: 스냅 8-K(EX-99.1 보도자료·EX-99.2 준비 발언, 2026-11-04) · 예상치 CNBC 인용 LSEG·StreetAccount · 시세 야후 5분봉(18:00 ET) · 콜 발언 일부 2차(CNBC) · 증감·마진은 계산"
+  "take": "이익과 구독은 <u>기대 이상</u>이었지만 광고 +4%·북미 DAU 정체·<u>DAU 폐지</u>에 콜에서도 광고 가속 시점·SPECS 수치를 못 받아 주가는 -14.0%였어요.",
+  "foot": "출처: 스냅 8-K(EX-99.1·99.2) · 콜 StockAnalysis(Quartr) 전사(단일) · 예상 CNBC 인용 LSEG·StreetAccount · 주가 StockAnalysis 일봉(야후 429 대체) · 증감·마진은 계산"
 }

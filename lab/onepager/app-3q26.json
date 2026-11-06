@@ -3,20 +3,20 @@
   "article": "app-3q26-earnings",
   "name": "앱러빈 3분기 실적",
   "ticker": "APP · 2026.11.04 발표",
-  "eyebrow": "실적 원페이퍼 · 2026.11.04 (미 동부 장마감 후 발표 · 5:00pm 콜 / 한국 11/5 07:00) · 콜 발언 미반영",
-  "plain": "매출 21.85억 달러(+55%)·조정 EBITDA 마진 84.3%로 가이던스 상단 초과, 4분기 매출 가이던스 23.65~23.95억은 컨센서스(약 22.5억) 상회. 시간외 +24%. 이커머스·게임 매출 비공개, 콜 미확인.",
-  "lede": "매출 <b>21.85억 달러</b>(+55%)·조정 EBITDA 마진 <b>84.3%</b>로 <b>가이던스 상단을 넘었고</b>, 4분기 가이던스도 예상 위예요. 이커머스·게임 매출은 <b>비공개</b>, 콜은 <b>미확인</b>이에요.",
+  "eyebrow": "실적 원페이퍼 · 2026.11.04 (미 동부 장마감 후 · 5:00pm 콜 / 한국 11/5 07:00) · 콜·11/5 종가 반영",
+  "plain": "매출 21.85억 달러(+55%)·조정 EBITDA 마진 84.3%로 가이던스 상단 초과, 4분기 가이던스 23.65~23.95억은 컨센서스 상회. 콜에서 게임 약 +50%·소비자 지출 YoY 세 자릿수를 확인했고 이커머스 금액은 비공개. 11/5 정규장 +31.0%($356.10).",
+  "lede": "매출 <b>21.85억 달러</b>(+55%)로 <b>가이던스 상단을 넘었고</b>, 콜에서 <b>게임 약 +50%·소비자 지출 세 자릿수</b>가 확인됐어요(금액 비공개). 11/5 정규장 <b>+31.0%</b>.",
   "chips": [
     {
       "t": "희석 EPS 컨센서스 대비 +6.7%",
       "k": "up"
     },
     {
-      "t": "시간외 약 +24%(5분봉)",
+      "t": "11/5 정규장 +31.0% · $356.10",
       "k": "up"
     },
     {
-      "t": "이커머스 수치 비공개·콜 미확인",
+      "t": "이커머스 금액 비공개·1Q 계절성",
       "k": "dn"
     }
   ],
@@ -146,47 +146,47 @@
     ]
   },
   "good": [
-    "<b>매출·EBITDA 모두 가이던스 상단 초과</b> (+$1.0억·+$1.02억)",
-    "<b>4분기 가이던스</b>가 예상보다 6~7% 높음",
-    "<b>잉여현금흐름 $14.2억</b>(+35%) · 자사주 $14억"
+    "<b>매출·EBITDA 가이던스 상단 초과</b>(+$1.0억·+$1.02억)",
+    "<b>콜: 게임 약 +50% 재가속</b>·소비자 지출 세 자릿수",
+    "<b>FCF $14.2억</b>(+35%) · 자사주 $14억"
   ],
   "bad": [
-    "<b>성장률 둔화</b> — 4분기 가이던스 중간 +43.5%(3분기 +55%)",
-    "<b>이커머스·게임 매출 비공개</b> — 설치 수는 +2%뿐",
-    "<b>소송</b> — 9/16 집단소송·10/7 대표소송 · 네바다 재설립"
+    "<b>성장률 둔화</b> — 4Q 가이던스 중간 +43.5%",
+    "<b>이커머스 금액 비공개</b> · 1분기 계절성 인정",
+    "<b>소송</b> 9/16·10/7 · 네바다 재설립(콜 언급 없음)"
   ],
-  "quote_t": "핵심 발언 (콜 전)",
-  "quote_src": "보도자료·10-Q(공식) + 8월 콜 요약(2차) · 3분기 콜 발언 미확인",
+  "quote_t": "콜 핵심 발언",
+  "quote_src": "모틀리풀 콜 전사 전문(제3자, 단일 출처) · 영어 원문 발췌 + 번역",
   "quotes": [
     {
-      "who": "보도자료 · 실적 요약",
-      "en": "AppLovin posted record third quarter earnings…with industry-leading 66% net income margin and 84% Adjusted EBITDA margin.",
-      "ko": "사상 최대 3분기 이익 — 업계 최고 수준의 순이익률 66%, 조정 EBITDA 마진 84%",
-      "tag": "공식"
+      "who": "Adam Foroughi CEO · 게임",
+      "en": "Our gaming business grew nearly 50% year-over-year, re-accelerating right alongside the rollout.",
+      "ko": "게임 사업이 전년 대비 거의 50% 성장하며 모델 롤아웃과 함께 재가속했다",
+      "tag": "전사"
     },
     {
-      "who": "보도자료 · 자사주",
-      "en": "Given continued confidence in the Company’s future, our board of directors approved an increase to our share repurchase authorization of $3.2 billion…",
-      "ko": "회사의 미래에 대한 확신에 따라 자사주 매입 승인 한도를 32억 달러 늘렸다",
-      "tag": "공식"
+      "who": "Matt Stumpf CFO · 소비자",
+      "en": "spend up double digits quarter-over-quarter and growing triple digits from the same quarter last year",
+      "ko": "소비자 광고주 지출은 전 분기 대비 두 자릿수, 전년 대비 세 자릿수 증가",
+      "tag": "전사"
     },
     {
-      "who": "10-Q · 매출 증가 요인",
-      "en": "net revenue per installation increased 55% and the volume of installations increased 2%.",
-      "ko": "설치당 순매출 +55%, 설치 수 +2% — 단가·효율이 끌었다",
-      "tag": "공식"
+      "who": "Stumpf CFO · 4분기 가이던스",
+      "en": "normal seasonality, further scaling in our consumer vertical, significant model improvements that are already live",
+      "ko": "정상 계절성·소비자 확대·이미 가동 중인 모델 개선을 반영",
+      "tag": "전사"
     },
     {
-      "who": "CFO · 8월 콜 요약(SEC)",
-      "en": "It was a voluntary request, which we never deemed material.",
-      "ko": "(SEC 문의는) 자발적 요청이었고 중요하다고 본 적이 없다",
-      "tag": "2차·8월"
+      "who": "Foroughi CEO · 계절성(Q&A)",
+      "en": "we should see bigger Q4s followed by tougher Q1s",
+      "ko": "4분기는 커지고 1분기는 어려워질 것",
+      "tag": "전사"
     }
   ],
   "watch": [
-    "<b>콜 전사·요약</b> — 이커머스 광고주 지출·셀프서브 규모(미확인)",
-    "<b>11/5 정규장(한국 23:30)</b> — 시간외 약 +24%가 유지되는지"
+    "<b>4분기 실적·2027 1분기 가이던스(2월)</b> — 순차 +8~10% 이후 흐름",
+    "<b>모델 롤아웃 완료·소송·재설립</b> — 콜 질문 0건"
   ],
-  "take": "4분기 가이던스는 <u>예상을 웃돌았지만</u> <u>성장률 둔화</u>와 <u>비공개인 이커머스·게임 비중</u>이 남아, 콜 발언이 시간외 상승의 지속 여부를 가를 거예요.",
-  "foot": "출처: 앱러빈 8-K(EX-99.1)·10-Q·이전 분기 보도자료 · 컨센서스 StockStory(S&P)·Investing.com · 8월 콜 Investing.com 요약(2차) · 주가 야후 5분봉(시간외) · 예상 대비·연간은 계산"
+  "take": "게임 재가속·소비자 성장이 <u>콜에서 처음 확인</u>되고 가이던스는 <u>상단 여지</u>가 읽혀 주가는 +31%였지만, 이커머스 금액·1분기 계절성·소송은 남았어요.",
+  "foot": "출처: 앱러빈 8-K·10-Q · 콜 모틀리풀 전사(제3자, 단일) · 컨센서스 StockStory·Investing.com · 주가 StockAnalysis 일봉(야후 429 대체) · 예상 대비는 계산"
 }

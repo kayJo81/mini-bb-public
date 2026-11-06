@@ -3,24 +3,20 @@
   "article": "fig-3q26-earnings",
   "name": "피그마 3분기 실적",
   "ticker": "FIG · 2026.11.4 발표",
-  "eyebrow": "실적 원페이퍼 · 2026.11.4 (미 동부 장마감 후 발표 · 5:00pm 콜 / 한국 11/5 07:00)",
-  "plain": "매출 3.914억 달러(+43%)로 예상·가이던스 상단을 넘고 연간 가이던스도 상향. 다만 성장률 48→43%, 4분기 +33%, 총마진 82%, NDR 131%로 둔화·원가 부담이 보여 시간외 약 -6%.",
-  "lede": "매출 <b>3.914억 달러</b>(+43%)·비GAAP EPS <b>0.10달러</b>로 <b>예상을 웃돌고 연간 가이던스도 올렸지만</b>, 성장률(<b>48→43%</b>)·<b>NDR 131%</b>·총마진 <b>82%</b>가 모두 내려와 시간외는 <b>약 -6%</b>예요.",
+  "eyebrow": "실적 원페이퍼 · 2026.11.4 (미 동부 장마감 후 · 5:00pm 콜 / 한국 11/5 07:00) · 콜·11/5 종가 반영",
+  "plain": "매출 3.914억 달러(+43%)로 예상·가이던스 상단을 넘고 연간 가이던스도 상향. 콜에서 CFO가 가격·패키징 개편의 단기 NDR 영향을 인정했고 4분기 총마진·2027 전망은 숫자 답이 없었어요. 11/5 정규장 -16.7%($18.44).",
+  "lede": "매출 <b>3.914억 달러</b>(+43%)로 <b>예상·연간 가이던스를 웃돌았지만</b>, 콜에서 CFO가 <b>단기 NDR 영향</b>을 인정하고 <b>4분기 총마진·2027 숫자는 없었어요</b>. 11/5 정규장 <b>-16.7%</b>.",
   "chips": [
     {
       "t": "매출 예상 대비 +4.1%",
       "k": "up"
     },
     {
-      "t": "연간 영업이익 가이던스 +$31M",
-      "k": "up"
-    },
-    {
-      "t": "시간외 약 -6%",
+      "t": "11/5 정규장 -16.7% · $18.44",
       "k": "dn"
     },
     {
-      "t": "총마진 82%·NDR 131% 하락",
+      "t": "CFO: 단기 NDR 영향 가능",
       "k": "dn"
     }
   ],
@@ -166,46 +162,46 @@
   },
   "good": [
     "<b>매출 +43%</b>, 가이던스 상단 +$16.4M · 예상 +4.1%",
-    "<b>연간 매출 +$33M·영업이익 +$31M</b> 상향(예상 매출 $1.471B 상회)",
+    "<b>연간 매출 +$33M·영업이익 +$31M</b> 상향",
     "<b>영업이익률 12%</b>(예상 6.1%)"
   ],
   "bad": [
-    "<b>NDR 139→136→131%</b>·$1만↑ 고객 증가율 +34→+28%",
-    "<b>총마진 82%</b> · 4분기 영업이익 마진 약 6%(계산)",
+    "<b>NDR 131%</b> · CFO: 단기 NDR 영향 가능",
+    "<b>총마진 82%</b> · 4Q 마진·2027 숫자 없음",
     "<b>AI 매출 금액 비공개</b> · FCF 마진 11%"
   ],
-  "quote_t": "경영진 발언 (준비 발언)",
-  "quote_src": "피그마 IR 공개 준비 발언 PDF(공식, 콜 Q&A 미확보) · 영어 원문 발췌 + 번역",
+  "quote_t": "콜 핵심 발언",
+  "quote_src": "모틀리풀 콜 전사 전문(제3자, 단일 출처) · 영어 원문 발췌 + 번역",
   "quotes": [
     {
-      "who": "Dylan Field CEO · 전략",
-      "en": "Design is the new code, and Figma is the center of gravity for design.",
-      "ko": "디자인이 새로운 코드이고, 피그마는 디자인의 무게중심이다",
-      "tag": "공식"
+      "who": "Praveer Melwani CFO · NDR(Q&A)",
+      "en": "there is a potential impact there to near-term NDR",
+      "ko": "(가격·패키징 개편이) 단기 NDR에 영향을 줄 수 있다",
+      "tag": "전사"
     },
     {
-      "who": "Praveer Melwani CFO · 마진",
-      "en": "we made the decision in Q3 to cover the cost of inference for the Figma agent ahead of its GA launch",
-      "ko": "에이전트 정식 출시 전에 추론 비용을 회사가 부담하기로 했다",
-      "tag": "공식"
+      "who": "Dylan Field CEO · NDR 정의(Q&A)",
+      "en": "paying as you go. That will not flow through to the NDR.",
+      "ko": "쓴 만큼 내는 종량 결제는 NDR에 반영되지 않는다",
+      "tag": "전사"
     },
     {
-      "who": "Praveer Melwani CFO · 가이던스",
-      "en": "We have intentionally made decisions that may act as near-term financial headwinds",
-      "ko": "단기 재무 역풍이 될 수 있는 결정을 의도적으로 했다",
-      "tag": "공식"
+      "who": "Melwani CFO · 총마진",
+      "en": "we made the decision in Q3 to cover the cost of inference for the Figma agent",
+      "ko": "3분기에 에이전트 추론 비용을 회사가 감당하기로 했다",
+      "tag": "전사"
     },
     {
-      "who": "Praveer Melwani CFO · AI",
-      "en": "we believe AI monetization will become an even more meaningful contributor to growth over time",
-      "ko": "시간이 갈수록 AI 수익화가 성장에 더 의미 있는 기여를 하리라 본다",
-      "tag": "공식"
+      "who": "Melwani CFO · 레버리지(Q&A)",
+      "en": "we're going to stick by our guns on this one",
+      "ko": "(마진 개선 시점 질문에) 이 방침을 고수하겠다",
+      "tag": "전사"
     }
   ],
   "watch": [
-    "<b>콜 Q&A·전사본</b> — 총마진 전망과 4분기 보수성 설명 여부",
-    "<b>11/5 정규장 반응(한국 23:30 개장)</b> — 시간외 약 -6%가 이어지는지"
+    "<b>다음 분기 실적</b> — 총마진·AI 크레딧 매출 신호, NDR이 130%선을 지키는지",
+    "<b>2027년 1분기</b> — 2025년 가격 개편 기저 소멸·2027 가이던스(회사는 “not commenting”)"
   ],
-  "take": "숫자는 <u>예상을 넘었지만</u> <u>성장률·NDR·총마진이 함께 내려가고 4분기 이익이 꺾여</u> ‘AI 비용이 먼저 보이는 분기’로 읽혔어요.",
-  "foot": "출처: 피그마 8-K(EX-99.1)·10-Q·IR 준비 발언 PDF · 예상 LSEG·StreetAccount(CNBC 인용) · 주가 야후 5분봉(시간외, 미 동부 17:58) · 콜 Q&A 미확보 · 증감·4분기 이익은 계산"
+  "take": "숫자는 <u>예상을 넘었지만</u> 콜이 <u>단기 NDR·총마진을 내주고 AI 사용량을 키운다</u>는 선택을 확인시켜 줬고 주가는 -16.7%였어요.",
+  "foot": "출처: 피그마 8-K·10-Q · 콜 모틀리풀 전사(제3자, 단일) · 예상 LSEG·StreetAccount(CNBC) · 주가 StockAnalysis 일봉(야후 429 대체) · 4분기 이익은 계산"
 }
