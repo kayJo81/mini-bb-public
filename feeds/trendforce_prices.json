@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-09T16:50:40+09:00",
+ "updated": "2026-11-10T03:40:10+09:00",
  "source": "TrendForce(DRAMeXchange) 공개 가격표",
  "note": "공식 데이터가 아니며 지연될 수 있어요. 점의 날짜는 페이지의 Last Update 날짜, s 는 계약가 세션(예 2H Sep).",
  "series": {
@@ -16,7 +16,7 @@
   "dram_spot:DDR4 16Gb (2Gx8) 3200": {"name":"DDR4 16Gb (2Gx8) 3200","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":81.679,"high":117.0,"low":45.5,"chg":-0.3},
     {"t":"2026-11-06","s":"","avg":80.815,"high":115.0,"low":45.0,"chg":-1.06},
-    {"t":"2026-11-09","s":"","avg":80.483,"high":114.0,"low":45.0,"chg":-0.41}
+    {"t":"2026-11-09","s":"","avg":80.236,"high":114.0,"low":45.0,"chg":-0.72}
   ]},
   "dram_spot:DDR4 16Gb (2Gx8) eTT": {"name":"DDR4 16Gb (2Gx8) eTT","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":13.475,"high":14.5,"low":12.0,"chg":-0.74},
@@ -26,7 +26,7 @@
   "dram_spot:DDR4 8Gb (1Gx8) 3200": {"name":"DDR4 8Gb (1Gx8) 3200","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":46.036,"high":83.0,"low":25.8,"chg":-0.46},
     {"t":"2026-11-06","s":"","avg":45.607,"high":82.0,"low":25.0,"chg":-0.93},
-    {"t":"2026-11-09","s":"","avg":45.429,"high":82.0,"low":25.0,"chg":-0.39}
+    {"t":"2026-11-09","s":"","avg":45.214,"high":82.0,"low":25.0,"chg":-0.86}
   ]},
   "dram_spot:DDR4 8Gb (1Gx8) eTT": {"name":"DDR4 8Gb (1Gx8) eTT","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":5.82,"high":6.05,"low":5.5,"chg":-1.02},
