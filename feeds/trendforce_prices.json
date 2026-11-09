@@ -1,35 +1,42 @@
 {
- "updated": "2026-11-06T17:27:58+09:00",
+ "updated": "2026-11-09T16:50:40+09:00",
  "source": "TrendForce(DRAMeXchange) 공개 가격표",
  "note": "공식 데이터가 아니며 지연될 수 있어요. 점의 날짜는 페이지의 Last Update 날짜, s 는 계약가 세션(예 2H Sep).",
  "series": {
   "dram_spot:DDR5 16Gb (2Gx8) 4800/5600": {"name":"DDR5 16Gb (2Gx8) 4800/5600","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":60.667,"high":73.0,"low":46.2,"chg":-1.09},
-    {"t":"2026-11-06","s":"","avg":60.167,"high":73.0,"low":46.2,"chg":-0.82}
+    {"t":"2026-11-06","s":"","avg":60.167,"high":73.0,"low":46.2,"chg":-0.82},
+    {"t":"2026-11-09","s":"","avg":60.167,"high":72.5,"low":46.0,"chg":0.0}
   ]},
   "dram_spot:DDR5 16Gb (2Gx8) eTT": {"name":"DDR5 16Gb (2Gx8) eTT","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":30.25,"high":31.5,"low":29.5,"chg":0.0},
-    {"t":"2026-11-06","s":"","avg":30.25,"high":31.5,"low":29.5,"chg":0.0}
+    {"t":"2026-11-06","s":"","avg":30.25,"high":31.5,"low":29.5,"chg":0.0},
+    {"t":"2026-11-09","s":"","avg":30.25,"high":31.5,"low":29.5,"chg":0.0}
   ]},
   "dram_spot:DDR4 16Gb (2Gx8) 3200": {"name":"DDR4 16Gb (2Gx8) 3200","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":81.679,"high":117.0,"low":45.5,"chg":-0.3},
-    {"t":"2026-11-06","s":"","avg":80.815,"high":115.0,"low":45.0,"chg":-1.06}
+    {"t":"2026-11-06","s":"","avg":80.815,"high":115.0,"low":45.0,"chg":-1.06},
+    {"t":"2026-11-09","s":"","avg":80.483,"high":114.0,"low":45.0,"chg":-0.41}
   ]},
   "dram_spot:DDR4 16Gb (2Gx8) eTT": {"name":"DDR4 16Gb (2Gx8) eTT","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":13.475,"high":14.5,"low":12.0,"chg":-0.74},
-    {"t":"2026-11-06","s":"","avg":13.3,"high":14.0,"low":11.8,"chg":-1.3}
+    {"t":"2026-11-06","s":"","avg":13.3,"high":14.0,"low":11.8,"chg":-1.3},
+    {"t":"2026-11-09","s":"","avg":13.25,"high":13.8,"low":11.6,"chg":-0.38}
   ]},
   "dram_spot:DDR4 8Gb (1Gx8) 3200": {"name":"DDR4 8Gb (1Gx8) 3200","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":46.036,"high":83.0,"low":25.8,"chg":-0.46},
-    {"t":"2026-11-06","s":"","avg":45.607,"high":82.0,"low":25.0,"chg":-0.93}
+    {"t":"2026-11-06","s":"","avg":45.607,"high":82.0,"low":25.0,"chg":-0.93},
+    {"t":"2026-11-09","s":"","avg":45.429,"high":82.0,"low":25.0,"chg":-0.39}
   ]},
   "dram_spot:DDR4 8Gb (1Gx8) eTT": {"name":"DDR4 8Gb (1Gx8) eTT","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":5.82,"high":6.05,"low":5.5,"chg":-1.02},
-    {"t":"2026-11-06","s":"","avg":5.74,"high":6.0,"low":5.5,"chg":-1.38}
+    {"t":"2026-11-06","s":"","avg":5.74,"high":6.0,"low":5.5,"chg":-1.38},
+    {"t":"2026-11-09","s":"","avg":5.72,"high":5.95,"low":5.5,"chg":-0.35}
   ]},
   "dram_spot:DDR3 4Gb 512Mx8 1600/1866": {"name":"DDR3 4Gb 512Mx8 1600/1866","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":13.972,"high":21.0,"low":9.9,"chg":-0.75},
-    {"t":"2026-11-06","s":"","avg":13.901,"high":21.0,"low":9.9,"chg":-0.51}
+    {"t":"2026-11-06","s":"","avg":13.901,"high":21.0,"low":9.9,"chg":-0.51},
+    {"t":"2026-11-09","s":"","avg":13.83,"high":21.0,"low":9.9,"chg":-0.51}
   ]},
   "dram_contract:DDR5 8GB SO-DIMM": {"name":"DDR5 8GB SO-DIMM","group":"dram_contract","title":"DRAM Contract Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-09-30","s":"2H Sep","avg":133.0,"high":141.0,"low":118.0,"chg":0.0}
@@ -53,31 +60,40 @@
     {"t":"2026-09-30","s":"2H Sep","avg":15.2,"high":16.5,"low":14.0,"chg":0.0}
   ]},
   "module_spot:DDR5 UDIMM 16GB 4800/5600": {"name":"DDR5 UDIMM 16GB 4800/5600","group":"module_spot","title":"Module Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":241.667,"high":275.0,"low":220.0,"chg":0.7}
+    {"t":"2026-10-26","s":"","avg":241.667,"high":275.0,"low":220.0,"chg":0.7},
+    {"t":"2026-11-02","s":"","avg":243.333,"high":278.0,"low":225.0,"chg":0.69}
   ]},
   "module_spot:DDR5 RDIMM 32GB 4800/5600": {"name":"DDR5 RDIMM 32GB 4800/5600","group":"module_spot","title":"Module Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":2165.0,"high":2370.0,"low":2100.0,"chg":0.0}
+    {"t":"2026-10-26","s":"","avg":2165.0,"high":2370.0,"low":2100.0,"chg":0.0},
+    {"t":"2026-11-02","s":"","avg":2025.0,"high":2120.0,"low":1930.0,"chg":-6.47}
   ]},
   "module_spot:DDR4 UDIMM 16GB 3200": {"name":"DDR4 UDIMM 16GB 3200","group":"module_spot","title":"Module Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":164.2,"high":185.0,"low":156.0,"chg":-0.85}
+    {"t":"2026-10-26","s":"","avg":164.2,"high":185.0,"low":156.0,"chg":-0.85},
+    {"t":"2026-11-02","s":"","avg":164.2,"high":185.0,"low":156.0,"chg":0.0}
   ]},
   "gddr_spot:GDDR5 8Gb": {"name":"GDDR5 8Gb","group":"gddr_spot","title":"GDDR Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":12.291,"high":17.5,"low":10.0,"chg":0.0}
+    {"t":"2026-10-26","s":"","avg":12.291,"high":17.5,"low":10.0,"chg":0.0},
+    {"t":"2026-11-02","s":"","avg":12.336,"high":17.5,"low":10.2,"chg":0.37}
   ]},
   "gddr_spot:GDDR6 8Gb": {"name":"GDDR6 8Gb","group":"gddr_spot","title":"GDDR Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":12.473,"high":18.0,"low":10.2,"chg":-0.23}
+    {"t":"2026-10-26","s":"","avg":12.473,"high":18.0,"low":10.2,"chg":-0.23},
+    {"t":"2026-11-02","s":"","avg":12.515,"high":18.0,"low":10.3,"chg":0.34}
   ]},
   "flash_spot:SLC 2Gb 256MBx8": {"name":"SLC 2Gb 256MBx8","group":"flash_spot","title":"NAND Flash Spot Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":4.408,"high":4.55,"low":4.25,"chg":0.57}
+    {"t":"2026-10-26","s":"","avg":4.408,"high":4.55,"low":4.25,"chg":0.57},
+    {"t":"2026-11-02","s":"","avg":4.455,"high":4.6,"low":4.3,"chg":1.07}
   ]},
   "flash_spot:SLC 1Gb 128MBx8": {"name":"SLC 1Gb 128MBx8","group":"flash_spot","title":"NAND Flash Spot Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":3.303,"high":3.5,"low":2.95,"chg":-0.51}
+    {"t":"2026-10-26","s":"","avg":3.303,"high":3.5,"low":2.95,"chg":-0.51},
+    {"t":"2026-11-02","s":"","avg":3.288,"high":3.5,"low":2.95,"chg":-0.45}
   ]},
   "flash_spot:MLC 64Gb 8GBx8": {"name":"MLC 64Gb 8GBx8","group":"flash_spot","title":"NAND Flash Spot Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":43.413,"high":56.0,"low":40.0,"chg":1.61}
+    {"t":"2026-10-26","s":"","avg":43.413,"high":56.0,"low":40.0,"chg":1.61},
+    {"t":"2026-11-02","s":"","avg":43.989,"high":56.0,"low":41.0,"chg":1.33}
   ]},
   "flash_spot:MLC 32Gb 4GBx8": {"name":"MLC 32Gb 4GBx8","group":"flash_spot","title":"NAND Flash Spot Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":20.267,"high":22.2,"low":19.5,"chg":1.68}
+    {"t":"2026-10-26","s":"","avg":20.267,"high":22.2,"low":19.5,"chg":1.68},
+    {"t":"2026-11-02","s":"","avg":20.533,"high":22.5,"low":19.8,"chg":1.31}
   ]},
   "flash_contract:NAND 128Gb 16Gx8 MLC": {"name":"NAND 128Gb 16Gx8 MLC","group":"flash_contract","title":"NAND Flash Contract Price in Memory Card/UFD","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
     {"t":"2026-09-30","s":"2H Sep","avg":30.608,"high":30.8,"low":30.3,"chg":0.44}
@@ -89,25 +105,32 @@
     {"t":"2026-09-30","s":"2H Sep","avg":18.208,"high":18.4,"low":18.0,"chg":0.44}
   ]},
   "wafer_spot:512Gb TLC": {"name":"512Gb TLC","group":"wafer_spot","title":"Wafer Spot Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":16.883,"high":19.0,"low":15.5,"chg":-9.19}
+    {"t":"2026-10-26","s":"","avg":16.883,"high":19.0,"low":15.5,"chg":-9.19},
+    {"t":"2026-11-02","s":"","avg":16.152,"high":21.0,"low":13.6,"chg":-4.33}
   ]},
   "wafer_spot:256Gb TLC": {"name":"256Gb TLC","group":"wafer_spot","title":"Wafer Spot Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":18.365,"high":20.0,"low":16.8,"chg":0.0}
+    {"t":"2026-10-26","s":"","avg":18.365,"high":20.0,"low":16.8,"chg":0.0},
+    {"t":"2026-11-02","s":"","avg":18.365,"high":20.0,"low":16.8,"chg":0.0}
   ]},
   "wafer_spot:128Gb TLC": {"name":"128Gb TLC","group":"wafer_spot","title":"Wafer Spot Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":9.967,"high":15.0,"low":8.0,"chg":0.0}
+    {"t":"2026-10-26","s":"","avg":9.967,"high":15.0,"low":8.0,"chg":0.0},
+    {"t":"2026-11-02","s":"","avg":9.967,"high":15.0,"low":8.0,"chg":0.0}
   ]},
   "memCard_spot:MicroSD 16GB": {"name":"MicroSD 16GB","group":"memCard_spot","title":"Memory Card Spot Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":2.675,"high":3.0,"low":2.45,"chg":-4.64}
+    {"t":"2026-10-26","s":"","avg":2.675,"high":3.0,"low":2.45,"chg":-4.64},
+    {"t":"2026-11-02","s":"","avg":2.6,"high":2.9,"low":2.45,"chg":-2.8}
   ]},
   "memCard_spot:MicroSD 32GB": {"name":"MicroSD 32GB","group":"memCard_spot","title":"Memory Card Spot Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":3.675,"high":4.6,"low":3.2,"chg":-6.96}
+    {"t":"2026-10-26","s":"","avg":3.675,"high":4.6,"low":3.2,"chg":-6.96},
+    {"t":"2026-11-02","s":"","avg":3.6,"high":4.5,"low":3.2,"chg":-2.04}
   ]},
   "memCard_spot:MicroSD 64GB": {"name":"MicroSD 64GB","group":"memCard_spot","title":"Memory Card Spot Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":5.65,"high":6.5,"low":5.0,"chg":-8.13}
+    {"t":"2026-10-26","s":"","avg":5.65,"high":6.5,"low":5.0,"chg":-8.13},
+    {"t":"2026-11-02","s":"","avg":5.525,"high":6.5,"low":5.0,"chg":-2.21}
   ]},
   "memCard_spot:MicroSD 128GB": {"name":"MicroSD 128GB","group":"memCard_spot","title":"Memory Card Spot Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-26","s":"","avg":11.15,"high":12.2,"low":10.0,"chg":-5.11}
+    {"t":"2026-10-26","s":"","avg":11.15,"high":12.2,"low":10.0,"chg":-5.11},
+    {"t":"2026-11-02","s":"","avg":10.9,"high":12.0,"low":10.0,"chg":-2.24}
   ]},
   "pcc_oem_ssd_contract:1TB-mSATA/M.2 TLC PCIe-Value Grade": {"name":"1TB-mSATA/M.2 TLC PCIe-Value Grade","group":"pcc_oem_ssd_contract","title":"PC-Client OEM SSD Contract Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
     {"t":"2026-08-05","s":"3Q'26","avg":321.0,"high":385.0,"low":265.0}
