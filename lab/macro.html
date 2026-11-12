@@ -9,7 +9,7 @@
 :root{--bg:#f4f5f7;--card:#fff;--bd:#e5e7eb;--sub:#6b7280;--ink:#111827;--grid:#eef0f3;--acc:#2563eb;--r:14px;
   --sh:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);--mono:'JetBrains Mono',monospace;
   /* 계열 색 (고정 순서): 1 파랑 · 2 주황 · 3 청록 · 4 노랑 · 5 자홍 */
-  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--cmp:#9ca3af}
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#8b5cf6;--s7:#a16207;--cmp:#9ca3af}
 *{box-sizing:border-box}html,body{overflow-x:hidden}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,'Apple SD Gothic Neo','Noto Sans KR',sans-serif}
 a{color:inherit}.wrap{max-width:1080px;margin:0 auto;padding:16px}
@@ -51,11 +51,21 @@ td.c{position:relative;cursor:default}td.c.rv::after{content:'';position:absolut
 .mini .t span{font-family:var(--mono)}.mini .s{font-size:11px;color:var(--sub)}
 .cat{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:999px;background:#f3f4f6;color:#374151;margin-right:4px}
 .up{color:#c0392b}.dn{color:#1f62b5}
+/* 💾 메모리 가격 탭 */
+.mt td.nm,.mt th.nm{position:static;white-space:normal;box-shadow:none;background:none;line-height:1.3;min-width:0}
+.mt td.nm small{display:block;font-size:10.5px;color:var(--sub);font-weight:400}
+.mt th:not(.nm),.mt td:not(.nm){width:1%}
+.mt .fl{color:var(--sub)}
+.mem-one{border:.5px dashed var(--bd);border-radius:10px;padding:18px 12px;text-align:center;color:var(--sub);font-size:12.5px}
+.mem-news{display:block;padding:7px 0;border-top:.5px solid var(--bd);font-size:13px;text-decoration:none;line-height:1.4}
+.mem-news:first-of-type{border-top:0}.mem-news small{display:block;color:var(--sub);font-size:11px}
+.mem-news b{font-weight:600}.mem-news:hover b{text-decoration:underline}
+@media(max-width:600px){.mt{font-size:11.5px}.mt th,.mt td{padding:4px 3px}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header><div><h1>미니 블벅 <b>랩</b> · 물가 지표</h1><div class="hsub" id="hsub">CPI · PCE · PPI 항목별 월간 + PPI AI 비용 항목 + GPU 임대료 시세</div></div><a class="link" href="./">← 랩 메인</a></header>
+<header><div><h1>미니 블벅 <b>랩</b> · 물가 지표</h1><div class="hsub" id="hsub">CPI · PCE · PPI 항목별 월간 + PPI AI 비용 항목 + GPU 임대료 시세 + 메모리 가격</div></div><a class="link" href="./">← 랩 메인</a></header>
 <div class="tabs" id="tabs"></div>
 <div id="app"><div class="card note">불러오는 중…</div></div>
 <p class="hsub">투자 권유 아님 · 원자료: 미 노동통계국(BLS)·경제분석국(BEA), FRED(세인트루이스 연은) 경유 · 매일 07:00 KST 갱신, 받은 값은 계속 쌓아 둠(나중에 개정되면 ● 표시)</p>
@@ -124,8 +134,8 @@ const G=k=>D.groups.find(g=>g.key===k);
 const byId=id=>D.groups.flatMap(g=>g.items).find(i=>i.id===id);
 const groupLast=g=>g.items.filter(i=>i.lv===0).map(lastYm).filter(Boolean).sort().pop()||g.items.map(lastYm).sort().pop();
 
-function tabs(){const T=[['cpi','CPI'],['pce','PCE'],['ppi','PPI'],['ai','🤖 AI 비용 (PPI)'],['gpu','🖥️ GPU 임대료']];
-  $('tabs').innerHTML=T.filter(([k])=>k==='gpu'?GR:G(k)).map(([k,n])=>`<button class="tab${TAB===k?' on':''}" data-t="${k}">${n}</button>`).join('');}
+function tabs(){const T=[['cpi','CPI'],['pce','PCE'],['ppi','PPI'],['ai','🤖 AI 비용 (PPI)'],['gpu','🖥️ GPU 임대료'],['mem','💾 메모리 가격']];
+  $('tabs').innerHTML=T.filter(([k])=>k==='gpu'?GR:k==='mem'?MR:G(k)).map(([k,n])=>`<button class="tab${TAB===k?' on':''}" data-t="${k}">${n}</button>`).join('');}
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(!b)return;TAB=b.dataset.t;store.set('macroTab',TAB);render();});
 
 function kpis(g,last){
@@ -267,14 +277,96 @@ function renderGPU(){
 }
 let lines2=[];
 
-function render(){if(!D)return;tabs();if(TAB==='gpu'&&GR){renderGPU();return;}const g=G(TAB)||D.groups[0];TAB=g.key;g.key==='ai'?renderAI(g):renderGroup(g);
+// ── 💾 메모리 가격 (TrendForce(DRAMeXchange) 공개 가격표 — 저장소 feeds/ 를 raw 로 직접 읽음, 실패하면 탭 숨김) ──
+let MR=null,MN=null;
+const MEM_RAW='https://raw.githubusercontent.com/kayJo81/mini-bb-public/main/feeds/';
+const MGRP=[['dram_spot','DRAM 현물'],['dram_contract','DRAM 계약'],['module_spot','모듈 현물'],['gddr_spot','GDDR 현물'],['flash_spot','NAND 현물'],['flash_contract','NAND 계약'],
+  ['wafer_spot','NAND 웨이퍼'],['memCard_spot','메모리카드'],['pcc_oem_ssd_contract','SSD 계약(PC OEM)'],['ssd_street','SSD 소매']];
+let MG=store.get('macroMemGrp')||'dram_spot',MSP=store.get('macroMemSpan')||'ALL';const MH=new Set();
+const mday=t=>Date.parse(t+'T00:00:00Z');
+const mmd=t=>String(t||'').slice(5).replace('-','/');
+const mhttps=u=>/^https:\/\//i.test(String(u??'').trim())?esc(String(u).trim()):'#';
+const mprice=v=>v==null?'–':v>=1000?'$'+v.toLocaleString('en-US',{maximumFractionDigits:0}):'$'+v.toFixed(2);
+// 빨강 = 오름, 파랑 = 내림 (이 페이지 관례)
+const mchg=c=>typeof c!=='number'||!isFinite(c)?'<span class="fl">–</span>':`<span class="${c>0?'up':c<0?'dn':'fl'}">${c>0?'▲ +':c<0?'▼ −':'— '}${Math.abs(c).toFixed(2)}%</span>`;
+// 날짜 형식·평균이 올바른 점만 쓴다 (파일이 깨져도 화면은 안 깨지게)
+function memSeries(){const S=(MR&&MR.series)||{};
+  return Object.keys(S).map(k=>({...S[k],k,pts:(Array.isArray(S[k].pts)?S[k].pts:[]).filter(p=>p&&typeof p.avg==='number'&&isFinite(p.avg)&&/^\d{4}-\d{2}-\d{2}$/.test(p.t)).sort((a,b)=>a.t<b.t?-1:1)})).filter(s=>s.pts.length);}
+function memWin(s){const p=s.pts;if(MSP==='ALL')return p;const last=mday(p[p.length-1].t),days=MSP==='1M'?31:93;return p.filter(x=>mday(x.t)>=last-days*864e5);}
+const memPrev=s=>{const l=s.pts[s.pts.length-1];return typeof l.chg==='number'?l.chg:(s.pts.length>1?(l.avg/s.pts[s.pts.length-2].avg-1)*100:null);};
+const memSpanChg=s=>{const w=memWin(s);return w.length>1?(w[w.length-1].avg/w[0].avg-1)*100:null;};
+const mcol=i=>COL[i]||(i===5?'var(--s6)':'var(--s7)');
+// 날짜 선 차트: 가로 = 날짜, 세로 = 선택 기간 첫 점 대비 변화율(%) → 값 크기가 다른 품목도 한 차트에서 비교
+function memChart(el,series){
+  const W=Math.max(320,el.clientWidth||640),H=260,pad={t:12,r:52,b:26,l:46};const {svg,tip}=frame(el,W,H);
+  const S=series.map(x=>({...x,base:x.pts[0].avg,pts:x.pts.map(p=>({t:p.t,avg:p.avg,v:(p.avg/x.pts[0].avg-1)*100}))}));
+  const days=[...new Set(S.flatMap(s=>s.pts.map(p=>p.t)))].sort(),all=S.flatMap(s=>s.pts.map(p=>p.v));
+  const t0=mday(days[0]),span=Math.max(1,(mday(days[days.length-1])-t0)/864e5);
+  let lo=Math.min(0,...all),hi=Math.max(0,...all);const st=niceStep(hi-lo||1);lo=Math.floor(lo/st+1e-9)*st;hi=Math.ceil(hi/st-1e-9)*st;if(hi===lo)hi=lo+st;
+  const sx=d=>pad.l+(W-pad.l-pad.r)*((mday(d)-t0)/864e5)/span,sy=v=>H-pad.b-(H-pad.t-pad.b)*(v-lo)/(hi-lo);
+  for(let v=lo;v<=hi+1e-9;v+=st){add(svg,'line',{x1:pad.l,x2:W-pad.r,y1:sy(v),y2:sy(v),stroke:Math.abs(v)<1e-9?'#9ca3af':'#eef0f3','stroke-width':1});add(svg,'text',{x:pad.l-5,y:sy(v)+3,'text-anchor':'end',class:'ax'},(Math.round(v*100)/100)+'%');}
+  [days[0],days[Math.floor(days.length/2)],days[days.length-1]].forEach((d,i)=>add(svg,'text',{x:sx(d),y:H-pad.b+15,'text-anchor':i?i===2?'end':'middle':'start',class:'ax'},mmd(d)));
+  const labs=[];
+  S.forEach(s=>{add(svg,'path',{d:s.pts.map((p,i)=>(i?'L':'M')+sx(p.t).toFixed(1)+','+sy(p.v).toFixed(1)).join(''),fill:'none',stroke:s.color,'stroke-width':2,'stroke-dasharray':s.dash||'','stroke-linejoin':'round','stroke-linecap':'round'});
+    const L=s.pts[s.pts.length-1];add(svg,'circle',{cx:sx(L.t),cy:sy(L.v),r:3.5,fill:s.color,stroke:'#fff','stroke-width':2});labs.push({y:sy(L.v),t:pct(L.v,1)});});
+  labs.sort((a,b)=>a.y-b.y);let prev=-1e9;labs.forEach(l=>{l.y=Math.max(l.y,prev+12);prev=l.y;add(svg,'text',{x:W-pad.r+6,y:l.y+3,style:'font-size:10px;font-weight:700;fill:#111827;font-family:var(--mono)'},l.t);});
+  const cross=add(svg,'line',{y1:pad.t,y2:H-pad.b,stroke:'#9ca3af','stroke-width':1,'stroke-dasharray':'3 3',opacity:0});
+  const hit=add(svg,'rect',{x:pad.l,y:pad.t,width:W-pad.l-pad.r,height:H-pad.t-pad.b,fill:'transparent'});
+  const move=e=>{const r=svg.getBoundingClientRect(),cx=((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width*W;
+    const d=days.reduce((b,x)=>Math.abs(sx(x)-cx)<Math.abs(sx(b)-cx)?x:b,days[0]),x=sx(d);cross.setAttribute('x1',x);cross.setAttribute('x2',x);cross.setAttribute('opacity',1);
+    showTip(el,tip,x/W*el.clientWidth,20,`<b>${esc(d)}</b><br>`+S.map(s=>{const p=s.pts.find(p=>p.t===d);return `<span style="color:#cbd5e1">${esc(s.name)}</span> <b>${p?esc(mprice(p.avg))+' ('+pct(p.v,2)+')':'–'}</b>`;}).join('<br>'));};
+  hit.addEventListener('mousemove',move);hit.addEventListener('touchmove',move,{passive:true});hit.addEventListener('touchstart',move,{passive:true});
+  hit.addEventListener('mouseleave',()=>{tip.style.opacity=0;cross.setAttribute('opacity',0);});
+}
+function renderMem(){
+  const all=memSeries(),have=[...new Set(all.map(s=>s.group))];
+  const known=MGRP.filter(([k])=>have.includes(k)),extra=have.filter(k=>!MGRP.some(g=>g[0]===k)).map(k=>[k,k]),GL=known.concat(extra);
+  if(!GL.some(g=>g[0]===MG)){MG=GL[0][0];}
+  const gname=(GL.find(g=>g[0]===MG)||[])[1]||MG,rows=all.filter(s=>s.group===MG);
+  const plot=rows.map((s,i)=>({...s,color:mcol(i),dash:i>=5?'5 3':'',pts:memWin(s)})).filter(s=>s.pts.length>1),shown=plot.filter(s=>!MH.has(s.k));
+  const upd=MR.updated&&!isNaN(Date.parse(MR.updated))?new Date(MR.updated).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})+' (KST)':'확인 안 됨';
+  const src=(rows.find(s=>/^https:\/\//i.test(s.url||''))||{}).url||'https://www.trendforce.com/price/dram';
+  let h=`<div class="card"><h2>💾 메모리 가격 — DRAM·NAND 현물/계약가</h2>
+    <p class="note" style="margin:0">AI 서버가 HBM·서버용 DRAM을 많이 쓰면 같은 생산설비와 웨이퍼가 거기에 더 배정돼, PC·스마트폰용 범용 DRAM과 NAND 공급이 빠듯해질 수 있다는 시각이 있어요. 그래서 메모리 가격을 AI 인플레이션(데이터센터 비용)과 함께 지켜봐요.<br>
+    다만 가격은 PC·스마트폰 수요, 재고, 업체 감산 같은 여러 요인이 같이 움직이니 AI 때문이라고 단정하긴 어려워요. HBM 가격 자체는 이 표에 없어요.</p></div>`;
+  h+=`<div class="card"><div class="seg" id="memg" style="flex-wrap:wrap">${GL.map(([k,n])=>`<button data-mz="${esc(k)}" class="${MG===k?'on':''}">${esc(n)}</button>`).join('')}</div>
+    <div class="seg" id="memp" style="margin-left:6px">${[['1M','1개월'],['3M','3개월'],['ALL','전체']].map(([k,n])=>`<button data-mp="${k}" class="${MSP===k?'on':''}">${n}</button>`).join('')}</div>
+    <h2 style="margin-top:2px">${esc(gname)}</h2>`;
+  if(!plot.length)h+=`<div class="mem-one">이력이 쌓이는 중이에요 — 이 구역은 아직 점이 1개씩이라 선을 그릴 수 없어요. 새 자료가 들어올 때마다 이어져요.<br>(${rows.map(s=>esc(s.name)+' '+esc(mmd(s.pts[s.pts.length-1].t))).slice(0,3).join(' · ')}${rows.length>3?' 외 '+(rows.length-3)+'개':''})</div>`;
+  else h+=`<div class="legend">${plot.map(s=>`<span data-mh="${esc(s.k)}" style="cursor:pointer;${MH.has(s.k)?'opacity:.35;text-decoration:line-through':''}"><i style="background:${s.dash?'none;border-top:2px dashed '+s.color+';height:0':s.color}"></i>${esc(s.name)}</span>`).join('')}</div>
+    <div class="chart" id="memChart">${shown.length?'':'<div class="note" style="padding:18px 0">범례에서 켠 선이 없어요</div>'}</div>
+    <p class="note" style="margin-top:4px">${MSP==='ALL'?'수집한 전체 기간':MSP==='1M'?'최근 1개월':'최근 3개월'}의 첫 점 대비 변화율(%) · 범례를 누르면 선을 끄고 켤 수 있어요${rows.length>plot.length?` · 점이 1개뿐인 ${rows.length-plot.length}개 품목은 이력이 쌓이는 중이라 차트에서 빠졌어요`:''}</p>`;
+  h+='</div>';
+  h+=`<div class="card"><h2>품목별 시세</h2><p class="note">빨강 = 올랐음, 파랑 = 내렸음 · 직전 대비 = 직전 자료점 대비(현물은 전일, 계약가는 직전 세션) · 기간 대비 = 위 차트 기간의 첫 점 대비 · 단위 USD</p>
+    <div class="tbl"><table class="mt"><tr><th class="nm">품목</th><th>최근 평균가</th><th>직전 대비</th><th>기간 대비</th></tr>`;
+  rows.forEach(s=>{const l=s.pts[s.pts.length-1],w=memWin(s),one=s.pts.length<2;
+    h+=`<tr><td class="nm"><b>${esc(s.name)}</b><small>${esc(mmd(l.t))}${l.s?' · '+esc(l.s):''} · ${s.pts.length}점${one?' · 이력 쌓이는 중':''}</small></td><td><b>${esc(mprice(l.avg))}</b></td><td>${mchg(memPrev(s))}</td>
+      <td title="${w.length>1?esc(mmd(w[0].t))+' 대비':''}">${mchg(memSpanChg(s))}</td></tr>`;});
+  h+='</table></div></div>';
+  const news=((MN&&Array.isArray(MN.items))?MN.items:[]).filter(x=>x&&x.price_related===true&&x.url&&/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0).slice(0,5);
+  if(news.length)h+=`<div class="card"><h2>최근 가격 관련 TrendForce 보도</h2><p class="note">제목은 기계번역이라 원문 링크로 확인하세요.</p>${news.map(x=>`<a class="mem-news" href="${mhttps(x.url)}" target="_blank" rel="noopener"><small>${esc(mmd(x.date))}</small><b>${esc(x.title_ko||x.title_en||'(제목 없음)')}</b></a>`).join('')}</div>`;
+  h+=`<p class="hsub">출처: TrendForce(DRAMeXchange) 공개 가격표, 공식 데이터가 아니며 지연될 수 있어요. 계약가는 한 달가량 늦게 반영돼요. 품목마다 데이터 날짜(Last Update)가 달라 각 항목에 날짜를 적었어요. 갱신 시각 ${esc(upd)} · <a href="${mhttps(src)}" target="_blank" rel="noopener">가격표 원문</a> · <a href="https://www.trendforce.com/presscenter/news" target="_blank" rel="noopener">보도자료</a></p>`;
+  $('app').innerHTML=h;
+  if(plot.length&&shown.length)memChart($('memChart'),shown);
+}
+
+function render(){if(!D)return;tabs();if(TAB==='gpu'&&GR){renderGPU();return;}if(TAB==='mem'&&MR){renderMem();return;}const g=G(TAB)||D.groups[0];if(G(TAB)||(TAB!=='gpu'&&TAB!=='mem'))TAB=g.key;g.key==='ai'?renderAI(g):renderGroup(g);
   document.querySelectorAll('.tbl.hm').forEach(t=>t.scrollLeft=t.scrollWidth);}   // 좁은 화면: 최근 달이 먼저 보이게
 $('app').addEventListener('click',e=>{const m=e.target.closest('[data-m]'),s=e.target.closest('[data-s]'),av=e.target.closest('[data-av]'),ah=e.target.closest('[data-ah]');
   if(av){AIV=av.dataset.av;AIH.clear();store.set('macroAiView',AIV);render();return;}
+  const mz=e.target.closest('[data-mz]'),mp=e.target.closest('[data-mp]'),mh=e.target.closest('[data-mh]');
+  if(mz){MG=mz.dataset.mz;MH.clear();store.set('macroMemGrp',MG);render();return;}
+  if(mp){MSP=mp.dataset.mp;store.set('macroMemSpan',MSP);render();return;}
+  if(mh){const n=mh.dataset.mh;MH.has(n)?MH.delete(n):MH.add(n);render();return;}
   const gv=e.target.closest('[data-gv]');if(gv){GPV=gv.dataset.gv;store.set('macroGpuView',GPV);render();return;}
   if(ah){const n=ah.dataset.ah;AIH.has(n)?AIH.delete(n):AIH.add(n);render();return;}
   if(m){MODE=m.dataset.m;store.set('macroMode',MODE);render();}if(s){SPAN=+s.dataset.s;store.set('macroSpan',SPAN);render();}});
-fetch('gpu_rent.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(d.gpus&&d.gpus.length){GR=d;render();}}).catch(()=>{});
+const lateTab=k=>{if(TAB===k&&!(k==='gpu'?GR:MR)){TAB='cpi';render();}};   // 저장해 둔 탭의 자료가 끝내 없으면 첫 탭으로
+fetch('gpu_rent.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(d.gpus&&d.gpus.length){GR=d;render();}else lateTab('gpu');}).catch(()=>lateTab('gpu'));
+// 메모리 가격: 저장소 raw 파일을 직접 읽음(CORS 허용). 가격 자료가 없거나 읽기 실패하면 탭 숨김. 보도자료는 없어도 탭은 보임
+const memGet=f=>fetch(MEM_RAW+f+'?t='+Math.floor(Date.now()/60000),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
+Promise.all([memGet('trendforce_prices.json'),memGet('trendforce.json')]).then(([p,n])=>{
+  if(p&&p.series&&typeof p.series==='object'&&(MR=p,memSeries().length)){MN=n;render();}else{MR=null;lateTab('mem');}}).catch(()=>{MR=null;lateTab('mem');});
 fetch('macro.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{D=d;$('hsub').textContent+=` · ${new Date(d.at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})} 갱신`;render();})
   .catch(e=>{$('app').innerHTML=`<div class="card note">데이터를 불러오지 못했어요 (${esc(e.message)})</div>`;});
 let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(render,150);});
