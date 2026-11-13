@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-13T12:21:42+09:00",
+ "updated": "2026-11-13T20:27:31+09:00",
  "source": "TrendForce(DRAMeXchange) 공개 가격표",
  "note": "공식 데이터가 아니며 지연될 수 있어요. 점의 날짜는 페이지의 Last Update 날짜, s 는 계약가 세션(예 2H Sep).",
  "series": {
@@ -10,7 +10,7 @@
     {"t":"2026-11-10","s":"","avg":60.167,"high":72.5,"low":46.0,"chg":0.0},
     {"t":"2026-11-11","s":"","avg":60.233,"high":72.5,"low":46.0,"chg":0.11},
     {"t":"2026-11-12","s":"","avg":60.233,"high":72.5,"low":45.5,"chg":0.0},
-    {"t":"2026-11-13","s":"","avg":60.233,"high":72.5,"low":45.5,"chg":0.0}
+    {"t":"2026-11-13","s":"","avg":60.267,"high":72.5,"low":45.5,"chg":0.06}
   ]},
   "dram_spot:DDR5 16Gb (2Gx8) eTT": {"name":"DDR5 16Gb (2Gx8) eTT","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":30.25,"high":31.5,"low":29.5,"chg":0.0},
@@ -37,7 +37,7 @@
     {"t":"2026-11-10","s":"","avg":13.225,"high":13.7,"low":11.6,"chg":-0.19},
     {"t":"2026-11-11","s":"","avg":13.125,"high":13.7,"low":11.6,"chg":-0.76},
     {"t":"2026-11-12","s":"","avg":13.075,"high":13.7,"low":11.6,"chg":-0.38},
-    {"t":"2026-11-13","s":"","avg":13.0,"high":13.7,"low":11.6,"chg":-0.57}
+    {"t":"2026-11-13","s":"","avg":12.95,"high":13.7,"low":11.6,"chg":-0.96}
   ]},
   "dram_spot:DDR4 8Gb (1Gx8) 3200": {"name":"DDR4 8Gb (1Gx8) 3200","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":46.036,"high":83.0,"low":25.8,"chg":-0.46},
@@ -55,7 +55,7 @@
     {"t":"2026-11-10","s":"","avg":5.68,"high":5.9,"low":5.5,"chg":-0.7},
     {"t":"2026-11-11","s":"","avg":5.65,"high":5.9,"low":5.45,"chg":-0.53},
     {"t":"2026-11-12","s":"","avg":5.63,"high":5.9,"low":5.4,"chg":-0.35},
-    {"t":"2026-11-13","s":"","avg":5.62,"high":5.9,"low":5.35,"chg":-0.18}
+    {"t":"2026-11-13","s":"","avg":5.61,"high":5.9,"low":5.35,"chg":-0.36}
   ]},
   "dram_spot:DDR3 4Gb 512Mx8 1600/1866": {"name":"DDR3 4Gb 512Mx8 1600/1866","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":13.972,"high":21.0,"low":9.9,"chg":-0.75},
@@ -170,19 +170,24 @@
     {"t":"2026-08-05","s":"3Q'26","avg":128.38,"high":160.0,"low":110.0}
   ]},
   "ssd_street:ADATA SATA 6.0 Gb/s Ultimate SU650 960 GB": {"name":"ADATA SATA 6.0 Gb/s Ultimate SU650 960 GB","group":"ssd_street","title":"SSD Street Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-30","s":"","avg":174.46,"high":174.46,"low":174.46,"chg":0.44}
+    {"t":"2026-10-30","s":"","avg":174.46,"high":174.46,"low":174.46,"chg":0.44},
+    {"t":"2026-11-13","s":"","avg":174.09,"high":174.46,"low":173.71,"chg":-0.22}
   ]},
   "ssd_street:Kimtigo PCIe 4.0 TP5000 1 TB": {"name":"Kimtigo PCIe 4.0 TP5000 1 TB","group":"ssd_street","title":"SSD Street Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-30","s":"","avg":133.0,"high":150.3,"low":115.7,"chg":0.0}
+    {"t":"2026-10-30","s":"","avg":133.0,"high":150.3,"low":115.7,"chg":0.0},
+    {"t":"2026-11-13","s":"","avg":140.0,"high":158.2,"low":121.8,"chg":5.26}
   ]},
   "ssd_street:Samsung PCIe 4.0 X4 990 Pro 1 TB": {"name":"Samsung PCIe 4.0 X4 990 Pro 1 TB","group":"ssd_street","title":"SSD Street Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-30","s":"","avg":259.92,"high":259.99,"low":259.84,"chg":3.97}
+    {"t":"2026-10-30","s":"","avg":259.92,"high":259.99,"low":259.84,"chg":3.97},
+    {"t":"2026-11-13","s":"","avg":259.99,"high":259.99,"low":259.99,"chg":0.03}
   ]},
   "ssd_street:PNY PCIe 5.0 X4 CS2150 2 TB": {"name":"PNY PCIe 5.0 X4 CS2150 2 TB","group":"ssd_street","title":"SSD Street Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-30","s":"","avg":370.0,"high":370.0,"low":370.0,"chg":0.0}
+    {"t":"2026-10-30","s":"","avg":370.0,"high":370.0,"low":370.0,"chg":0.0},
+    {"t":"2026-11-13","s":"","avg":370.0,"high":370.0,"low":370.0,"chg":0.0}
   ]},
   "ssd_street:Silicon Power PCIe 4.0 X4 US75 1 TB": {"name":"Silicon Power PCIe 4.0 X4 US75 1 TB","group":"ssd_street","title":"SSD Street Price","unit":"USD","url":"https://www.trendforce.com/price/flash/flash_spot","pts":[
-    {"t":"2026-10-30","s":"","avg":187.79,"high":187.79,"low":187.79,"chg":0.44}
+    {"t":"2026-10-30","s":"","avg":187.79,"high":187.79,"low":187.79,"chg":0.44},
+    {"t":"2026-11-13","s":"","avg":187.79,"high":187.79,"low":187.79,"chg":0.0}
   ]}
  }
 }
