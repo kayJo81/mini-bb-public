@@ -12,10 +12,10 @@
   "found": "2026-10-18"
  },
  "OpenAI DevDay": {
-  "start": "2026-10-29",
-  "end": "2026-10-30",
+  "start": "2026-11-19",
+  "end": "2026-11-19",
   "year": 2026,
-  "found": "2026-10-18"
+  "found": "2026-11-15"
  },
  "Money20/20": {
   "start": "2026-10-18",
@@ -36,10 +36,10 @@
   "found": "2026-10-25"
  },
  "Web Summit": {
-  "start": "2026-11-09",
-  "end": "2026-11-12",
+  "start": "2026-11-17",
+  "end": "2026-11-21",
   "year": 2026,
-  "found": "2026-10-25"
+  "found": "2026-11-15"
  },
  "Microsoft Ignite": {
   "start": "2026-11-17",
@@ -52,5 +52,23 @@
   "end": "2026-11-17",
   "year": 2026,
   "found": "2026-11-08"
+ },
+ "AWS re:Invent": {
+  "start": "2026-11-29",
+  "end": "2026-12-03",
+  "year": 2026,
+  "found": "2026-11-15"
+ },
+ "UBS Global Technology and AI Conference": {
+  "start": "2026-11-17",
+  "end": "2026-11-19",
+  "year": 2026,
+  "found": "2026-11-15"
+ },
+ "Barclays Global Technology Conference": {
+  "start": "2026-12-02",
+  "end": "2026-12-02",
+  "year": 2026,
+  "found": "2026-11-15"
  }
 }
