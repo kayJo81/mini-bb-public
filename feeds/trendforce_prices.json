@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-18T20:28:14+09:00",
+ "updated": "2026-11-19T18:24:14+09:00",
  "source": "TrendForce(DRAMeXchange) 공개 가격표",
  "note": "공식 데이터가 아니며 지연될 수 있어요. 점의 날짜는 페이지의 Last Update 날짜, s 는 계약가 세션(예 2H Sep).",
  "series": {
@@ -13,7 +13,8 @@
     {"t":"2026-11-13","s":"","avg":60.267,"high":72.5,"low":45.5,"chg":0.06},
     {"t":"2026-11-16","s":"","avg":60.333,"high":72.0,"low":45.3,"chg":0.11},
     {"t":"2026-11-17","s":"","avg":60.333,"high":72.0,"low":45.3,"chg":0.0},
-    {"t":"2026-11-18","s":"","avg":60.5,"high":72.0,"low":45.3,"chg":0.28}
+    {"t":"2026-11-18","s":"","avg":60.5,"high":72.0,"low":45.3,"chg":0.28},
+    {"t":"2026-11-19","s":"","avg":60.667,"high":72.0,"low":45.2,"chg":0.28}
   ]},
   "dram_spot:DDR5 16Gb (2Gx8) eTT": {"name":"DDR5 16Gb (2Gx8) eTT","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":30.25,"high":31.5,"low":29.5,"chg":0.0},
@@ -25,7 +26,8 @@
     {"t":"2026-11-13","s":"","avg":30.5,"high":31.5,"low":29.7,"chg":0.16},
     {"t":"2026-11-16","s":"","avg":30.6,"high":31.5,"low":30.0,"chg":0.33},
     {"t":"2026-11-17","s":"","avg":30.7,"high":31.5,"low":30.0,"chg":0.33},
-    {"t":"2026-11-18","s":"","avg":30.85,"high":31.5,"low":30.0,"chg":0.49}
+    {"t":"2026-11-18","s":"","avg":30.85,"high":31.5,"low":30.0,"chg":0.49},
+    {"t":"2026-11-19","s":"","avg":30.92,"high":31.6,"low":30.2,"chg":0.23}
   ]},
   "dram_spot:DDR4 16Gb (2Gx8) 3200": {"name":"DDR4 16Gb (2Gx8) 3200","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":81.679,"high":117.0,"low":45.5,"chg":-0.3},
@@ -37,7 +39,8 @@
     {"t":"2026-11-13","s":"","avg":79.5,"high":114.0,"low":45.0,"chg":-0.31},
     {"t":"2026-11-16","s":"","avg":79.375,"high":112.0,"low":44.9,"chg":-0.16},
     {"t":"2026-11-17","s":"","avg":79.125,"high":112.0,"low":44.9,"chg":-0.32},
-    {"t":"2026-11-18","s":"","avg":78.95,"high":112.0,"low":44.8,"chg":-0.22}
+    {"t":"2026-11-18","s":"","avg":78.95,"high":112.0,"low":44.8,"chg":-0.22},
+    {"t":"2026-11-19","s":"","avg":78.75,"high":110.0,"low":44.5,"chg":-0.25}
   ]},
   "dram_spot:DDR4 16Gb (2Gx8) eTT": {"name":"DDR4 16Gb (2Gx8) eTT","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":13.475,"high":14.5,"low":12.0,"chg":-0.74},
@@ -49,7 +52,8 @@
     {"t":"2026-11-13","s":"","avg":12.95,"high":13.7,"low":11.6,"chg":-0.96},
     {"t":"2026-11-16","s":"","avg":12.875,"high":13.5,"low":11.5,"chg":-0.58},
     {"t":"2026-11-17","s":"","avg":12.825,"high":13.5,"low":11.5,"chg":-0.39},
-    {"t":"2026-11-18","s":"","avg":12.725,"high":13.5,"low":11.5,"chg":-0.78}
+    {"t":"2026-11-18","s":"","avg":12.725,"high":13.5,"low":11.5,"chg":-0.78},
+    {"t":"2026-11-19","s":"","avg":12.675,"high":13.3,"low":11.3,"chg":-0.39}
   ]},
   "dram_spot:DDR4 8Gb (1Gx8) 3200": {"name":"DDR4 8Gb (1Gx8) 3200","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":46.036,"high":83.0,"low":25.8,"chg":-0.46},
@@ -61,7 +65,8 @@
     {"t":"2026-11-13","s":"","avg":44.536,"high":82.0,"low":24.8,"chg":-0.4},
     {"t":"2026-11-16","s":"","avg":44.357,"high":81.0,"low":24.7,"chg":-0.4},
     {"t":"2026-11-17","s":"","avg":44.25,"high":81.0,"low":24.7,"chg":-0.24},
-    {"t":"2026-11-18","s":"","avg":44.029,"high":81.0,"low":24.6,"chg":-0.5}
+    {"t":"2026-11-18","s":"","avg":44.029,"high":81.0,"low":24.6,"chg":-0.5},
+    {"t":"2026-11-19","s":"","avg":43.921,"high":80.0,"low":24.5,"chg":-0.25}
   ]},
   "dram_spot:DDR4 8Gb (1Gx8) eTT": {"name":"DDR4 8Gb (1Gx8) eTT","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":5.82,"high":6.05,"low":5.5,"chg":-1.02},
@@ -73,7 +78,8 @@
     {"t":"2026-11-13","s":"","avg":5.61,"high":5.9,"low":5.35,"chg":-0.36},
     {"t":"2026-11-16","s":"","avg":5.58,"high":5.85,"low":5.3,"chg":-0.54},
     {"t":"2026-11-17","s":"","avg":5.56,"high":5.8,"low":5.3,"chg":-0.36},
-    {"t":"2026-11-18","s":"","avg":5.52,"high":5.8,"low":5.25,"chg":-0.72}
+    {"t":"2026-11-18","s":"","avg":5.52,"high":5.8,"low":5.25,"chg":-0.72},
+    {"t":"2026-11-19","s":"","avg":5.492,"high":5.75,"low":5.2,"chg":-0.51}
   ]},
   "dram_spot:DDR3 4Gb 512Mx8 1600/1866": {"name":"DDR3 4Gb 512Mx8 1600/1866","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":13.972,"high":21.0,"low":9.9,"chg":-0.75},
@@ -85,7 +91,8 @@
     {"t":"2026-11-13","s":"","avg":13.759,"high":21.0,"low":9.7,"chg":-0.13},
     {"t":"2026-11-16","s":"","avg":13.779,"high":21.2,"low":9.65,"chg":0.15},
     {"t":"2026-11-17","s":"","avg":13.765,"high":21.2,"low":9.65,"chg":-0.1},
-    {"t":"2026-11-18","s":"","avg":13.806,"high":21.2,"low":9.6,"chg":0.3}
+    {"t":"2026-11-18","s":"","avg":13.806,"high":21.2,"low":9.6,"chg":0.3},
+    {"t":"2026-11-19","s":"","avg":13.806,"high":21.0,"low":9.5,"chg":0.0}
   ]},
   "dram_contract:DDR5 8GB SO-DIMM": {"name":"DDR5 8GB SO-DIMM","group":"dram_contract","title":"DRAM Contract Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-09-30","s":"2H Sep","avg":133.0,"high":141.0,"low":118.0,"chg":0.0}
