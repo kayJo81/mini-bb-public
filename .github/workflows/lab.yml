@@ -108,6 +108,8 @@ jobs:
           # 위험 점수 항목별 가중치 최적화 (2017년~, 걷기 검증) → 포트폴리오가 읽음
           python lab/regime_opt.py --macro public_lab/macro.json --out public_lab/regime_weights.json || true
           python lab/portfolio.py --out public_lab
+          # 롱 온리 버전: 같은 규칙에서 숏만 뺀 별도 운용 (상태 portfolio_long.json, 첫 실행일부터 새로 시작)
+          python lab/portfolio.py --out public_lab --long-only || true
 
       # 📝 아침 프리필: 위 데이터 + 터미널 밤사이 뉴스 + 이번 주 일정 → 회의 전 문서(웹 + Word), 지난 문서는 lab-data 에 누적
       - name: Prefill

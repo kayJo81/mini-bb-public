@@ -2,6 +2,7 @@
 포트폴리오 가상 운용 — 랩에 쌓이는 시장 환경·매크로 지표·심층 뉴스·뉴스 신호를 함께 반영  (상태: labdata/portfolio.json)
 
   python lab/portfolio.py --out public_lab
+  python lab/portfolio.py --out public_lab --long-only   # 롱 온리 버전(별도 상태·별도 출력 portfolio_long.json)
 
 하루 흐름 (랩이 미국 장 마감 뒤 07:00 KST 에 실행)
   1) 어제 정한 목표 비중을 오늘 시가로 체결 (신호·판단은 장 마감 뒤에 하므로 그날 종가로는 못 삼)
@@ -382,7 +383,10 @@ def ostate_rows(sel, picks, pos, w, opts, tilts):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="public_lab")
+    ap.add_argument("--long-only", action="store_true", help="롱 온리 버전: 숏(테마·신호)을 모두 빼고 그 몫은 현금으로 둠 (상태 labdata/portfolio_long.json)")
     a = ap.parse_args()
+    LONG = a.long_only
+    NAME = "portfolio_long.json" if LONG else "portfolio.json"
     prices = load(os.path.join(DATA, "prices.json"), {})
     cal = sorted(prices.get("QQQ", {}))
     if not cal:
@@ -396,10 +400,10 @@ def main():
     deep = load(os.path.join(ROOT, "lab", "deepnews", "index.json"), [])
     px = lambda s, d, k: (prices.get(s, {}).get(d) or [None, None])[k]  # noqa: E731
 
-    path = os.path.join(DATA, "portfolio.json")
+    path = os.path.join(DATA, NAME)
     st = load(path)
     if not st or st.get("rules", {}).get("version") != RULES["version"]:
-        st = {"rules": RULES, "start": today, "cash": RULES["capital"], "pos": {}, "pending": None, "curve": [],
+        st = {"rules": dict(RULES, long_only=LONG), "start": today, "cash": RULES["capital"], "pos": {}, "pending": None, "curve": [],
               "trades": [], "log": [], "last_rebal": None, "bench": {}, "interest": 0.0, "done_days": []}
     R = st["rules"]
     pos = {tuple(k.split("|")): v for k, v in st["pos"].items()}   # (슬리브, 종목) → 주식 수 (숏은 음수)
@@ -470,6 +474,8 @@ def main():
     universe = set(prices)
     raw_opts = (env or {}).get("latest", {}).get("options") or {}
     tilts, tscore = themes(today, deep, gpu, macro, universe, raw_opts)
+    if LONG:
+        tscore = {k: v for k, v in tscore.items() if v > 0}     # 숏 테마 제외 (그 몫은 현금)
     # 며칠 전(약 5거래일) 옵션 스냅샷 — 쏠림 변화 계산용
     ddir = os.path.join(DATA, "env", "daily")
     snaps = sorted(f for f in (os.listdir(ddir) if os.path.isdir(ddir) else []) if f.endswith(".json") and f[:10] < (raw_opts.get("SPX") or {}).get("asof", today))
@@ -484,6 +490,8 @@ def main():
             seen_sig.add(c["sym"])
             picks.append(c)
     picks = [c for c in picks if c["sym"] not in st.get("sig_entry", {})]   # 이미 한 번 들어갔던 종목은 다시 안 탐
+    if LONG:
+        picks = [c for c in picks if c["direction"] == "롱"]               # 숏 신호는 건너뛰고 다음 롱 후보가 자리를 받음
     # 이미 들고 있는 신호 종목은 진입일 포함 5거래일째 종가까지 유지 (그다음 시가에 정리)
     keep = []
     for (sl, s), sh in pos.items():
@@ -571,8 +579,9 @@ def main():
         "selection": {"core": sel["core"], "max_names": R["max_names"],
                       "chosen": [r | {"o": opts.get(r["sym"])} for r in sel["chosen"]], "dropped": [r | {"o": opts.get(r["sym"])} for r in sel["dropped"]]},
     }
-    json.dump(out, open(os.path.join(a.out, "portfolio.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-    print(f"[portfolio] {today} 점수 {score:+.2f} → 주식 {E*100:.0f}% · 테마 {len(tscore)}종목 · 신호 {len(picks[:R['signal_max']])} · "
+    out["long_only"] = LONG
+    json.dump(out, open(os.path.join(a.out, NAME), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+    print(f"[portfolio{'-long' if LONG else ''}] {today} 점수 {score:+.2f} → 주식 {E*100:.0f}% · 테마 {len(tscore)}종목 · 신호 {len(picks[:R['signal_max']])} · "
           f"평가액 ${equity:,.0f} ({out['ret']:+.2f}%) · 다음: {st['pending']['reason']}")
 
 

@@ -117,7 +117,7 @@ function paperCard(P){
 
 // ── 🧭 포트폴리오 가상 운용 (시장 환경·매크로·심층 뉴스·뉴스 신호 반영) ──
 const SLV={core:'코어(지수)',theme:'테마',signal:'뉴스 신호'};
-function pfCard(F){
+function pfCard(F,title){
   const money=v=>'$'+Math.round(v).toLocaleString(),R=F.rules,G=F.regime;
   const curve=(F.curve||[]).map(c=>[c[0],c[1],c[2]]);
   const sl={core:0,theme:0,signal:0};let shortW=0;(F.holdings||[]).forEach(h=>{sl[h.sleeve]+=h.weight;if(h.weight<0)shortW+=h.weight;});
@@ -139,7 +139,7 @@ function pfCard(F){
     <td class="mono" style="text-align:right">${h.weight.toFixed(1)}%</td><td class="mono" style="text-align:right">${money(Math.abs(h.value))}</td><td class="mono ${cls(h.pnl)}" style="text-align:right">${h.pnl>0?'+':''}${money(h.pnl).replace('$-','-$')}</td></tr>`).join('');
   const nxt=(F.next.w||[]).map(x=>`<span><span class="tag">${SLV[x.sleeve]}</span> <b>${esc(x.sym)}</b> ${x.w>0?'':'<span class="dn">숏</span> '}${Math.abs(x.w).toFixed(1)}%</span>`).join('');
   const tilts=(F.tilts||[]).map(t=>`<li><span class="tag ${t.dir>0?'ok':t.dir<0?'mid':''}" ${t.dir?'':'style="background:#f3f4f6;color:#6b7280"'}>${t.dir>0?'비중↑':t.dir<0?'비중↓·숏':'보류'}</span> <b>${t.syms.map(esc).join(', ')}</b> — ${t.id?`<a href="deep?id=${encodeURIComponent(t.id)}">${esc(t.title)}</a>`:esc(t.title)} <span class="hsub">(${esc(t.src)}${t.until?` · ~${esc(t.until)}`:''})</span><br><span class="hsub">${esc(t.why||'')}</span></li>`).join('');
-  return `<div class="card"><h2>🧭 포트폴리오 가상 운용 <span class="tag ok">${esc(F.status)}</span></h2>
+  return `<div class="card"><h2>${title||'🧭 포트폴리오 가상 운용'} <span class="tag ok">${esc(F.status)}</span></h2>
   <p class="note">${esc(F.start)} 시작 · ${money(R.capital)} · 랩이 기록하는 <b>시장 환경 → 위험 예산</b>, <b>매크로 지표 → 물가 압력</b>, <b>심층 뉴스 → 테마 비중</b>, <b>개별 종목 옵션 → 순위·크기·데이터 테마의 관찰 기간</b>, <b>뉴스 신호 → 단기 매매</b>를 합쳐 최대 10종목으로 매일 목표 비중을 정하고 다음 거래일 시가에 체결 · 비용 ${(R.cost*100).toFixed(1)}% · 현금엔 3개월 국채 이자</p>
   ${F.started?`<div class="kv" style="font-size:13px"><span>평가액 <b>${money(F.equity)}</b> (<b class="${cls(F.ret)}">${pct(F.ret)}</b>)</span>
     <span>QQQ <b class="${cls(F.bench.QQQ)}">${pct(F.bench.QQQ)}</b> · SPY <b class="${cls(F.bench.SPY)}">${pct(F.bench.SPY)}</b></span><span>현금 ${money(F.cash)} (이자 ${money(F.interest)})</span></div>
@@ -182,7 +182,7 @@ function weightBlock(rows,cash){
     <div><b>현금</b></div><div>${bar({w:cash,parts:[['cash',cash]]}).replace('background:undefined','background:#d1d5db')}</div></div>
     <div class="hsub" style="margin-top:6px"><span style="color:#2a78d6">■</span> 코어(지수) <span style="color:#eb6834">■</span> 테마 <span style="color:#1baf7a">■</span> 뉴스 신호 <span style="color:#e34948">■</span> 숏 · 옵션 점수: 풋/콜 거래·25델타 스큐·딜러 감마·콜월/풋월로 본 방향(+강세/−약세)</div>`;
 }
-let PF=null;
+let PF=null,PFL=null;
 let P=null;
 const SIM=/\/sim(\.html)?$/.test(location.pathname);
 function render(d){
@@ -194,7 +194,7 @@ function render(d){
   let h='';
   if(allThin||days<120)h+=`<div class="card warn"><b>📦 데이터를 쌓는 중이에요.</b> 과거 데이터가 충분히 모이기 전에는 아래 판정이 대부분 '표본 부족'으로 나와요. 신호가 검증되면 후보에 <b>롱/숏</b> 표시가 붙어요.</div>`;
 
-  if(SIM){document.getElementById('app').innerHTML=(PF?pfCard(PF):'')+(P?paperCard(P):'<div class="card empty">가상 매매 데이터를 불러오지 못했어요.</div>');return;}
+  if(SIM){document.getElementById('app').innerHTML=(PF?pfCard(PF):'')+(PFL?pfCard(PFL,'🧭 포트폴리오 가상 운용 — 롱 온리 (숏 제외, 그 몫은 현금)'):'')+(P?paperCard(P):'<div class="card empty">가상 매매 데이터를 불러오지 못했어요.</div>');return;}
   h+=`<a class="card" href="prefill" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
     <span><b>📝 아침 프리필</b><br><span class="hsub" id="pfSub">회의 전 자동 문서 — 시장·자금 흐름·위험 지도·포지션·시나리오·오늘 할 일 (웹 + Word)</span></span><span class="link">보기 →</span></a>`;
   h+=`<a class="card" href="risk" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
@@ -262,8 +262,9 @@ function render(d){
     const t=[one('CPIAUCSL','CPI'),one('PCEPILFE','근원 PCE'),one('PPIFIS','PPI')].filter(Boolean).join(' · ');if(t)el.textContent=t+' · 전년비 · AI 비용 PPI 비교';}).catch(()=>{});
 }
 Promise.all([fetch('data.json?'+Date.now()).then(r=>r.json()),fetch('paper.json?'+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
-  fetch('portfolio.json?'+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)])
-  .then(([d,p,f])=>{P=p;PF=f;render(d);}).catch(()=>{document.getElementById('app').innerHTML='<div class="card empty">데이터를 불러오지 못했어요.</div>';});
+  fetch('portfolio.json?'+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null),
+  fetch('portfolio_long.json?'+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null)])
+  .then(([d,p,f,fl])=>{P=p;PF=f;PFL=fl;render(d);}).catch(()=>{document.getElementById('app').innerHTML='<div class="card empty">데이터를 불러오지 못했어요.</div>';});
 </script>
 </body>
 </html>
