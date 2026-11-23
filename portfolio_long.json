@@ -1,0 +1,57 @@
+{
+"rules": {
+"version": 2,
+"capital": 100000.0,
+"cost": 0.001,
+"core": 0.5,
+"theme": 0.35,
+"signal": 0.15,
+"signal_max": 2,
+"signal_hold": 5,
+"rebalance_days": 5,
+"min_trade": 0.003,
+"max_names": 10,
+"long_only": true
+},
+"start": "2026-11-20",
+"cash": 100000.0,
+"pos": {},
+"pending": {
+"decided": "2026-11-20",
+"w": {
+"signal|RDW": 0.03,
+"signal|NVDA": 0.03,
+"theme|GOOGL": 0.01273,
+"theme|AMZN": 0.01273,
+"theme|AVGO": 0.01273,
+"theme|TSM": 0.01273,
+"theme|AMAT": 0.00636,
+"theme|LRCX": 0.00636,
+"theme|KLAC": 0.00636,
+"core|SPY": 0.2
+},
+"full": true,
+"reason": "첫 구성 · 정기 조정(5거래일)",
+"score": -5.0,
+"exposure": 0.4,
+"why": {
+"signal|RDW": "뉴스 신호 롱 (2026-11-19)",
+"signal|NVDA": "뉴스 신호 롱 (2026-11-18)",
+"theme|GOOGL": "앤트로픽 S-1/A 3차 개정·8-A12B — 나스닥 상장 승인, 공모 ",
+"theme|AMZN": "앤트로픽 S-1/A 3차 개정·8-A12B — 나스닥 상장 승인, 공모 ",
+"theme|AVGO": "앤트로픽 S-1/A 3차 개정·8-A12B — 나스닥 상장 승인, 공모 ",
+"theme|TSM": "TSMC 3분기 실적 (10/15) — 매출 467억 달러·6분기 연속 ",
+"theme|AMAT": "TSMC 3분기 실적 (10/15) — 매출 467억 달러·6분기 연속 ",
+"theme|LRCX": "TSMC 3분기 실적 (10/15) — 매출 467억 달러·6분기 연속 ",
+"theme|KLAC": "TSMC 3분기 실적 (10/15) — 매출 467억 달러·6분기 연속 ",
+"core|SPY": "코어(지수)"
+}
+},
+"curve": [],
+"trades": [],
+"log": [],
+"last_rebal": null,
+"bench": {},
+"interest": 0.0,
+"done_days": []
+}
