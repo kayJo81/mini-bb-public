@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-24T12:07:50+09:00",
+ "updated": "2026-11-24T16:07:50+09:00",
  "source": "TrendForce(DRAMeXchange) 공개 가격표",
  "note": "공식 데이터가 아니며 지연될 수 있어요. 점의 날짜는 페이지의 Last Update 날짜, s 는 계약가 세션(예 2H Sep).",
  "series": {
@@ -49,7 +49,7 @@
     {"t":"2026-11-19","s":"","avg":78.75,"high":110.0,"low":44.5,"chg":-0.25},
     {"t":"2026-11-20","s":"","avg":78.625,"high":110.0,"low":44.0,"chg":-0.16},
     {"t":"2026-11-23","s":"","avg":78.5,"high":109.0,"low":43.5,"chg":-0.16},
-    {"t":"2026-11-24","s":"","avg":78.375,"high":109.0,"low":43.0,"chg":-0.16}
+    {"t":"2026-11-24","s":"","avg":78.25,"high":109.0,"low":43.0,"chg":-0.32}
   ]},
   "dram_spot:DDR4 16Gb (2Gx8) eTT": {"name":"DDR4 16Gb (2Gx8) eTT","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":13.475,"high":14.5,"low":12.0,"chg":-0.74},
@@ -97,7 +97,7 @@
     {"t":"2026-11-19","s":"","avg":5.492,"high":5.75,"low":5.2,"chg":-0.51},
     {"t":"2026-11-20","s":"","avg":5.47,"high":5.7,"low":5.15,"chg":-0.4},
     {"t":"2026-11-23","s":"","avg":5.43,"high":5.7,"low":5.15,"chg":-0.73},
-    {"t":"2026-11-24","s":"","avg":5.41,"high":5.7,"low":5.15,"chg":-0.37}
+    {"t":"2026-11-24","s":"","avg":5.39,"high":5.7,"low":5.1,"chg":-0.74}
   ]},
   "dram_spot:DDR3 4Gb 512Mx8 1600/1866": {"name":"DDR3 4Gb 512Mx8 1600/1866","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":13.972,"high":21.0,"low":9.9,"chg":-0.75},
