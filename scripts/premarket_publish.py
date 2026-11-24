@@ -82,7 +82,7 @@ def main():
     shutil_pdf = os.path.join(work, "issue-check.pdf")
     with open(a.pdf, "rb") as s, open(shutil_pdf, "wb") as t:
         t.write(s.read())
-    remote = run("git", "remote", "get-url", "origin", cwd=ROOT).strip()
+    remote = os.environ.get("PREMARKET_REMOTE") or run("git", "remote", "get-url", "origin", cwd=ROOT).strip()   # Actions 에서는 토큰 포함 주소를 넘김
     g = tempfile.mkdtemp(prefix="pmgit_")
     run("git", "init", "-q", "-b", BRANCH, cwd=g)
     for f in os.listdir(work):

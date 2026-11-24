@@ -1,0 +1,30 @@
+# 미국 개장전 이슈체크 — 받은 메일(PDF 첨부)을 터미널 Breaking! 박스에 올림 (내림은 터미널이 다음 날 01:00 KST 에 스스로)
+#  · 실행 신호: Cloudflare Worker(scheduler/)가 매일 21:52·22:37·23:07 KST 에 workflow_dispatch (메일이 21:30 KST 이후 도착)
+#  · 같은 날짜가 이미 올라가 있으면 아무것도 바꾸지 않음
+#  · 필요한 Secrets: GMAIL_USER, GMAIL_APP_PASSWORD (일일 PDF 메일과 같은 것, Gmail 설정에서 IMAP 사용 설정 필요)
+name: premarket
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: premarket
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Poppler (PDF → 이미지)
+        run: command -v pdftoppm >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils)
+      - name: 메일에서 PDF 받아 올리기
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          PREMARKET_REMOTE: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        run: python3 -I scripts/premarket_fetch.py

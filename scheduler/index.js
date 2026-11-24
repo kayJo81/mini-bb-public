@@ -44,5 +44,8 @@ export default {
     ctx.waitUntil(dispatch(env, report));
     // TrendForce 보도자료·메모리 가격(trendforce.yml): 30분마다 — 15분 틱 중 :07·:37 에만 (REPORT_CRON 한 줄 실행은 제외)
     if (event.cron !== REPORT_CRON && now.getUTCMinutes() % 30 === 7) ctx.waitUntil(dispatch(env, false, "trendforce.yml", {}));
+    // 미국 개장전 이슈체크(premarket.yml): 메일(21:30 KST 이후 도착)을 21:52·22:37·23:07 KST 에 확인해 올림 — 같은 날짜가 올라가 있으면 아무것도 안 바꿈
+    const mm = now.getUTCMinutes();
+    if (event.cron !== REPORT_CRON && ((h === 12 && mm === 52) || (h === 13 && mm === 37) || (h === 14 && mm === 7))) ctx.waitUntil(dispatch(env, false, "premarket.yml", {}));
   },
 };
