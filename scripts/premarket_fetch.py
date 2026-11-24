@@ -26,6 +26,7 @@ SUBJ = re.compile(r"\[개장\s*전\s*섹터별\s*이슈체크\]\s*(\d{4})년\s*(
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--date")
+    ap.add_argument("--force", action="store_true", help="이미 올라간 날짜도 다시 올림(시험용)")
     a = ap.parse_args()
     today = a.date or dt.datetime.now(KST).date().isoformat()
     user, pw = os.environ.get("GMAIL_USER", ""), os.environ.get("GMAIL_APP_PASSWORD", "").replace(" ", "")
@@ -73,7 +74,7 @@ def main():
     open(os.path.join(d, "in.pdf"), "wb").write(pdf)
     open(os.path.join(d, "mail.txt"), "w", encoding="utf-8").write(body)
     subprocess.run([sys.executable, "-I", os.path.join(HERE, "premarket_publish.py"), "--pdf", os.path.join(d, "in.pdf"),
-                    "--date", today, "--body", os.path.join(d, "mail.txt")], check=True)
+                    "--date", today, "--body", os.path.join(d, "mail.txt")] + (["--force"] if a.force else []), check=True)
 
 
 if __name__ == "__main__":

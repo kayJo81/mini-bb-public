@@ -6,6 +6,11 @@ name: premarket
 
 on:
   workflow_dispatch:
+    inputs:
+      force:
+        description: "이미 올라간 날짜도 다시 올리기(시험용)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -27,4 +32,4 @@ jobs:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           PREMARKET_REMOTE: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-        run: python3 -I scripts/premarket_fetch.py
+        run: python3 -I scripts/premarket_fetch.py ${{ inputs.force && '--force' || '' }}
