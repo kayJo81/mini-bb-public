@@ -444,6 +444,12 @@ body{font-size:15px}
 .brk a.it{display:flex;gap:8px;align-items:baseline;padding:7px 0;border-top:.5px solid #fee2e2;text-decoration:none;color:#111827;font-size:13px;line-height:1.45}.brk a.it:first-of-type{border-top:0}
 .brk .tm{font:600 11px var(--mono);color:#6b7280;white-space:nowrap}.brk .lv{color:#dc2626;font-weight:700;font-size:11px;white-space:nowrap}
 .brk .tt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.brk a.it.pm{background:#fff1f2;border-radius:8px;padding:8px 8px;margin:2px 0;font-weight:700}
+.pmov{position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.72);overflow-y:auto;-webkit-overflow-scrolling:touch}.pmov[hidden]{display:none}
+.pmov .pmw{max-width:640px;margin:0 auto;padding:12px 12px 40px}.pmov .pmh{position:sticky;top:0;display:flex;align-items:center;gap:8px;background:#0f172a;color:#fff;border-radius:10px;padding:8px 12px;margin-bottom:10px;z-index:1}
+.pmov .pmh b{font-size:14px}.pmov .pmh span{font-size:11px;color:#cbd5e1}.pmov .pmh button{margin-left:auto;background:#dc2626;color:#fff;border:0;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer}
+.pmov img{display:block;width:100%;height:auto;border-radius:10px;margin-bottom:10px;background:#fff}
+.pmov details{background:#fff;border-radius:10px;padding:8px 12px;font-size:12px;margin-bottom:10px}.pmov details a{display:block;padding:3px 0;color:#2563eb;word-break:break-all}
 </style>
 </head>
 <body>
@@ -1260,13 +1266,36 @@ loadReports();setInterval(loadReports,5*60e3);
     if(!m){const d=String(a.date||'').split('-');return Date.UTC(+d[0],+d[1]-1,+d[2],3);}
     return Date.UTC(y,+m[1]-1,+m[2],(m[3]!=null?+m[3]:12)-9,m[4]!=null?+m[4]:0);};
   const hm=t=>{const d=new Date(t+9*3600e3);return String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0');};
+  // 미국 개장전 이슈체크: 받은 메일의 PDF 인포그래픽(premarket-feed 가지, 하루치만) — 게시 시각~내림 시각(다음 날 01:00 KST) 사이에만 보임
+  const PMB='https://raw.githubusercontent.com/kayJo81/mini-bb-public/premarket-feed/';
+  let PM=null,ov=null;
+  async function loadPM(){
+    try{
+      const r=await fetch(PMB+'premarket.json?t='+Math.floor(Date.now()/60000),{cache:'no-store'});if(!r.ok)return null;const f=await r.json();
+      const now=Date.now(),a=Date.parse(f.posted_at),b=Date.parse(f.expire_at);
+      return a<=now+60e3&&now<b&&(f.pages||[]).length?f:null;
+    }catch(e){return null;}
+  }
+  function openPM(){
+    if(!PM)return;
+    if(!ov){ov=document.createElement('div');ov.className='pmov';ov.hidden=true;document.body.appendChild(ov);
+      ov.addEventListener('click',e=>{if(e.target===ov||e.target.closest('[data-x]')){ov.hidden=true;document.body.style.overflow='';}});}
+    const src=(PM.sources||[]).map(s=>`<a href="${esc(s.u)}" target="_blank" rel="noopener noreferrer">${esc(s.t)}</a>`).join('');
+    ov.innerHTML=`<div class="pmw"><div class="pmh"><b>🚨 ${esc(PM.title)} · ${esc(PM.label||PM.date)}</b><span>${esc(hm(Date.parse(PM.expire_at)))}까지 게시</span><button type="button" data-x>닫기</button></div>`+
+      PM.pages.map((p,i)=>`<img src="${PMB}${encodeURIComponent(p)}" alt="${esc(PM.title)} ${i+1}쪽" loading="lazy">`).join('')+
+      (src?`<details><summary><b>출처 링크 ${PM.sources.length}개</b></summary>${src}</details>`:'')+
+      `<details open><summary>PDF 원본</summary><a href="${PMB}issue-check.pdf" target="_blank" rel="noopener">PDF 열기</a></details></div>`;
+    ov.hidden=false;document.body.style.overflow='hidden';ov.scrollTop=0;
+  }
   async function load(){
     try{
-      const r=await fetch(RAW+'?t='+Math.floor(Date.now()/60000),{cache:'no-store'});const L=await r.json();const now=Date.now();
+      const [r,pm]=await Promise.all([fetch(RAW+'?t='+Math.floor(Date.now()/60000),{cache:'no-store'}),loadPM()]);const L=await r.json();const now=Date.now();PM=pm;
       const arr=(L||[]).map(a=>({a,t:ts(a)})).filter(x=>now-x.t<24*3600e3&&x.t-now<6*3600e3).sort((p,q)=>q.t-p.t).slice(0,6);
-      if(!arr.length){box.hidden=true;return;}
-      box.innerHTML='<div class="brk-h"><b>🚨 Breaking!</b><span>오늘의 심층 뉴스</span><a href="https://mini-bblab.pages.dev/deep" target="_blank" rel="noopener">전체 보기 →</a></div>'+
+      if(!arr.length&&!PM){box.hidden=true;return;}
+      box.innerHTML='<div class="brk-h"><b>🚨 Breaking!</b><span>'+(PM?'개장전 이슈체크 · 오늘의 심층 뉴스':'오늘의 심층 뉴스')+'</span><a href="https://mini-bblab.pages.dev/deep" target="_blank" rel="noopener">전체 보기 →</a></div>'+
+        (PM?`<a class="it pm" href="#" data-pm><span class="tm">${hm(Date.parse(PM.posted_at))}</span><span class="lv">🔴 오늘 밤</span><span class="tt">${esc(PM.title)} · ${esc(PM.label||PM.date)} — 섹터별 인포그래픽 ${PM.pages.length}쪽 (${hm(Date.parse(PM.expire_at))}까지)</span></a>`:'')+
         arr.map(({a,t})=>`<a class="it" href="https://mini-bblab.pages.dev/deep?id=${encodeURIComponent(a.id)}" target="_blank" rel="noopener"><span class="tm">${hm(t)}</span>${a.live?'<span class="lv">🔴 실시간</span>':''}<span class="tt">${esc(a.title)}</span></a>`).join('');
+      const pa=box.querySelector('[data-pm]');if(pa)pa.addEventListener('click',e=>{e.preventDefault();openPM();});
       box.hidden=false;
     }catch(e){box.hidden=true;}
   }
