@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>미니 블벅 랩 · 글로벌 머니플로우</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--bd:#e5e7eb;--sub:#6b7280;--ink:#111827;--acc:#2563eb;--up:#15803d;--dn:#b91c1c;--r:14px;
+  --sh:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);--mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box}html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,'Apple SD Gothic Neo','Noto Sans KR',sans-serif}
+a{color:inherit}.wrap{max-width:1080px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+h1{font-size:20px;margin:0}h1 b{color:var(--acc)}.hsub{font-size:12px;color:var(--sub)}
+.link{font-size:12px;font-weight:600;text-decoration:none;background:#fff;color:#111827;border:.5px solid var(--bd);padding:7px 12px;border-radius:9px;white-space:nowrap}
+.card{background:var(--card);border:.5px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:14px 16px;margin-bottom:12px;min-width:0}
+h2{font-size:16px;margin:0 0 2px}.note{font-size:12px;color:var(--sub);margin:0 0 8px}
+.big{font-size:15px;line-height:1.6}.big li{margin-bottom:4px}
+.tag{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px;margin-left:4px;vertical-align:1px}
+.tag.real{background:#dcfce7;color:#166534}.tag.est{background:#fef3c7;color:#92400e}.tag.miss{background:#f3f4f6;color:#374151}
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:separate;border-spacing:0;font-size:12px;width:100%}
+th,td{padding:6px 7px;text-align:right;white-space:nowrap;font-family:var(--mono);border-bottom:1px solid #f0f1f3}
+th{font-family:inherit;color:var(--sub);font-weight:600;font-size:11px}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:#fff;font-family:inherit;font-weight:600;z-index:1}
+td.h{border-radius:4px;border:2px solid #fff;font-weight:700}
+.grp td{font-size:11px;color:var(--sub);background:#fafafa;font-weight:700}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.bars{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.bars svg{display:block;width:100%;height:auto;overflow:visible}.ax{font-size:10px;fill:var(--sub);font-family:var(--mono)}.vl{font-size:10px;font-weight:700;font-family:var(--mono)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.tile{border:.5px solid var(--bd);border-radius:10px;padding:8px 10px}.tile .t{font-size:12.5px;font-weight:700}.tile .v{font-family:var(--mono);font-size:17px;font-weight:700}.tile .s{font-size:11px;color:var(--sub);line-height:1.35}
+.empty{color:var(--sub);padding:10px 0}
+.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:6px}.sr{border:.5px solid var(--bd);border-radius:10px;padding:7px 10px}.sl{display:flex;justify-content:space-between;gap:8px;font-size:13px}.sl span{font-weight:700;font-size:12px}.sd{font-size:12.5px;line-height:1.5}
+ul.lim{margin:6px 0 0;padding-left:18px;font-size:13px;color:#374151}ul.lim li{margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div><h1>🌊 글로벌 <b>머니플로우</b></h1><div class="hsub" id="sub">불러오는 중…</div></div>
+  <a class="link" href="./">← 랩 메인</a></header>
+<div id="app"><div class="card empty">불러오는 중…</div></div>
+</div>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const f1=(v,d=1)=>v==null?'–':(v>0?'+':'')+v.toFixed(d);
+const cls=v=>v==null?'':v>0?'up':v<0?'dn':'';
+const md=s=>{const [,m,d]=s.split('-');return +m+'/'+ +d;};
+function heat(v){if(v==null)return 'background:#f3f4f6;color:#9ca3af';const a=Math.min(Math.abs(v)/6,1)*.75+.08;
+  return v>=0?`background:rgba(21,128,61,${a});color:${a>.5?'#fff':'#14532d'}`:`background:rgba(185,28,28,${a});color:${a>.5?'#fff':'#7f1d1d'}`;}
+function signal(r){const w=r.weeks[r.weeks.length-1];if(!w||w.usd==null||w.rel==null)return ['–',''];
+  if(r.key==='US'||r.key==='NDX')return ['기준 시장',''];
+  const fxok=!r.has_fx||w.fx==null;
+  if(w.usd>0&&(fxok||w.fx>=0)&&w.rel>1)return ['유입 정황 ▲','up'];
+  if(w.usd<0&&(fxok||w.fx<=0)&&w.rel<-1)return ['유출 정황 ▼','dn'];
+  return ['혼조',''];}
+function barsSvg(a,title){
+  const W=340,H=205,L=8,base=100,n=a.weeks.length;const vals=a.weeks.map(x=>x.net).filter(v=>v!=null);
+  if(!vals.length)return `<div><b>${esc(title)}</b><div class="empty">아직 모은 값이 없어요(오늘부터 쌓아요).</div></div>`;
+  const mx=Math.max(...vals.map(Math.abs),1),step=(W-L*2)/n,bw=Math.min(28,step*.62);
+  let d=`<line x1="${L}" x2="${W-L}" y1="${base}" y2="${base}" stroke="#d1d5db"/>`;
+  a.weeks.forEach((x,i)=>{const cx=L+step*i+step/2;
+    d+=`<text class="ax" x="${cx}" y="${H-4}" text-anchor="middle">${md(x.w)}</text>`;
+    if(x.net==null){d+=`<text class="ax" x="${cx}" y="${base-4}" text-anchor="middle">–</text>`;return;}
+    const h=Math.abs(x.net)/mx*62,y=x.net>=0?base-h:base;
+    d+=`<rect x="${cx-bw/2}" y="${y}" width="${bw}" height="${Math.max(h,1)}" rx="3" fill="${x.net>=0?'#16a34a':'#dc2626'}"${x.days<5?' opacity=".55"':''}/>`;
+    d+=`<text class="vl" x="${cx}" y="${x.net>=0?y-3:y+h+11}" text-anchor="middle" fill="${x.net>=0?'#166534':'#991b1b'}">${Math.abs(x.net)>=1000?(x.net/1000).toFixed(1)+'천':Math.round(x.net)}</text>`;});
+  return `<div><b>${esc(title)}</b> <span class="hsub">주간 순매수, 단위 ${esc(a.unit)} · 흐린 막대는 5거래일 미만</span><svg viewBox="0 0 ${W} ${H}">${d}</svg></div>`;}
+fetch('flows.json?'+Date.now()).then(r=>r.json()).then(d=>{
+  document.getElementById('sub').textContent=`${d.asof.slice(0,16).replace('T',' ')} KST 갱신 · 주(월~금) 단위, 최근 ${d.weeks.length}주 · 마지막 주는 진행 중`;
+  const M=d.markets.filter(r=>r.ok),wl=d.weeks;
+  let h=`<div class="card"><h2>이번 주 한눈에 <span class="tag est">정황</span><span class="tag real">실측</span></h2><p class="note">실측 = 거래소·포털이 공개한 외국인 순매수 · 정황 = 지수·환율로 추정한 자금 방향</p><ul class="big">${(d.summary||[]).map(s=>`<li>${esc(s)}</li>`).join('')||'<li>요약할 데이터가 아직 없어요.</li>'}</ul></div>`;
+  // 히트맵
+  const groups=[...new Set(M.map(r=>r.group))];
+  h+=`<div class="card"><h2>주간 자금 이동 히트맵 <span class="tag est">정황</span></h2><p class="note">달러 환산 주간 수익률(%) — 지수 등락에 통화 강약을 더한 값. 초록이 진할수록 돈이 들어온 정황, 빨강이 진할수록 빠진 정황이에요.</p><div class="tbl"><table><tr><th>시장</th>${wl.map((w,i)=>`<th>${md(w)}${i===wl.length-1?'*':''}</th>`).join('')}<th>4주 누적</th></tr>`;
+  groups.forEach(g=>{h+=`<tr class="grp"><td colspan="${wl.length+2}">${esc(g)}</td></tr>`;
+    M.filter(r=>r.group===g).forEach(r=>{h+=`<tr><td>${esc(r.name)}</td>${r.weeks.map(x=>`<td class="h" style="${heat(x&&x.usd)}">${x&&x.usd!=null?f1(x.usd):'–'}</td>`).join('')}<td class="h" style="${heat(r.usd4w!=null?r.usd4w/2:null)}">${r.usd4w!=null?f1(r.usd4w):'–'}</td></tr>`;});});
+  h+=`</table></div><p class="note" style="margin-top:6px">* 이번 주는 진행 중이라 마지막 거래일까지의 값이에요.</p></div>`;
+  // 정황 표
+  h+=`<div class="card"><h2>이번 주 정황 신호 <span class="tag est">정황</span></h2><p class="note">규칙: 달러 환산 수익률 +·통화 강세(또는 보합)·미국 대비 1%p 넘게 강하면 '유입 정황', 반대면 '유출 정황', 나머지는 '혼조'.</p><div class="sg">`;
+  M.forEach(r=>{const w=r.weeks[r.weeks.length-1]||{},[t,c]=signal(r);h+=`<div class="sr"><div class="sl"><b>${esc(r.name)}</b><span class="${c}">${t}</span></div><div class="sd"><b class="${cls(w.usd)}">달러 환산 ${f1(w.usd)}%</b> <span class="hsub">지수 ${f1(w.ret)}% · 환율 ${w.fx==null?'–':f1(w.fx)+'%'} · 미국 대비 ${w.rel==null?'–':f1(w.rel)+'%p'}</span></div></div>`;});
+  h+=`</div><p class="note" style="margin-top:6px">환율 +는 그 나라 통화가 달러 대비 강해졌다는 뜻이에요.</p></div>`;
+  // 실측
+  h+=`<div class="card"><h2>외국인 순매수 주간 합계 <span class="tag real">실측</span></h2><p class="note">한국은 오늘부터 매일 쌓고, 대만은 최근 8주를 거래소 자료로 채워요.</p><div class="bars">${barsSvg(d.actual.KR,d.actual.KR.name)}${barsSvg(d.actual.TW,d.actual.TW.name)}</div></div>`;
+  // 교차자산
+  h+=`<div class="card"><h2>안전자산·위험자산 주간 변화</h2><p class="note">자금이 어디서 피난하고 어디로 몰리는지 가늠하는 보조 지표예요.</p><div class="tiles">${d.cross.map(c=>{if(!c.ok)return `<div class="tile"><div class="t">${esc(c.name)}</div><div class="s">수집 실패</div></div>`;
+    const v=c.weeks[c.weeks.length-1];return `<div class="tile"><div class="t">${esc(c.name)}</div><div class="v ${cls(v)}">${v==null?'–':f1(v)+(c.mode==='pp'?'p':'%')}</div><div class="s">이번 주 · 현재 ${c.last}<br>${esc(c.why)}</div></div>`;}).join('')}</div></div>`;
+  // 한계
+  h+=`<div class="card"><h2>읽을 때 주의</h2><ul class="lim">
+    <li><b>'한국·대만에서 판 돈이 인도로 갔다'는 직접 통계는 없어요.</b> 지수·환율·외국인 순매수 흐름이 같은 방향으로 맞아떨어지는지 보는 정황 해석이에요.</li>
+    <li>아직 못 모으는 것: ${esc((d.missing||[]).join(' · '))}. 인도는 지수·루피 정황만 있어요.</li>
+    <li>달러 환산 수익률 = (1+지수 등락)×(1+통화 변화)−1. 같은 주(월~금)의 마지막 거래일 종가끼리 비교해요.</li>
+    <li>시세는 야후 파이낸스 공개 차트, 외국인 순매수는 네이버 증권(한국)·대만증권거래소(TWSE)예요. 공식 통계가 아니라 지연·오류가 있을 수 있어요. 투자 권유가 아니에요.</li></ul></div>`;
+  document.getElementById('app').innerHTML=h;
+}).catch(()=>{document.getElementById('app').innerHTML='<div class="card empty">데이터를 불러오지 못했어요. 랩이 한 번 돈 뒤에 보여요.</div>';});
+</script>
+</body>
+</html>

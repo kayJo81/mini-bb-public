@@ -73,6 +73,7 @@ jobs:
           cp lab/toppicks.html public_lab/toppicks.html && mkdir -p public_lab/tp && cp lab/toppicks/*.json public_lab/tp/ 2>/dev/null || true
           cp lab/macro.html public_lab/macro.html
           cp lab/risk.html public_lab/risk.html && cp lab/prefill.html public_lab/prefill.html
+          cp lab/flows.html public_lab/flows.html
           cp lab/deep.html public_lab/deep.html && cp -r lab/deepnews public_lab/deepnews
           printf '/*\n  X-Frame-Options: SAMEORIGIN\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n' > public_lab/_headers
 
@@ -100,6 +101,12 @@ jobs:
         continue-on-error: true
         timeout-minutes: 5
         run: python lab/gpu_rent.py --out public_lab/gpu_rent.json
+
+      # 🌊 글로벌 머니플로우: 시장별 주간 자금 이동(외국인 순매수 실측 + 지수·환율 정황) — 첫 실행은 대만 8주 소급 때문에 몇 분 걸림 (상태는 lab-data)
+      - name: Money flows
+        continue-on-error: true
+        timeout-minutes: 12
+        run: python lab/flows.py --out public_lab
 
       # 🧭 포트폴리오 가상 운용: 시장 환경·매크로·심층 뉴스(lab/deepnews/index.json 의 tilts)·뉴스 신호 반영 (상태는 lab-data)
       - name: Portfolio

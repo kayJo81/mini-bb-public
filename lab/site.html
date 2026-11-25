@@ -197,6 +197,8 @@ function render(d){
   if(SIM){document.getElementById('app').innerHTML=(PF?pfCard(PF):'')+(PFL?pfCard(PFL,'🧭 포트폴리오 가상 운용 — 롱 온리 (숏 제외, 그 몫은 현금)'):'')+(P?paperCard(P):'<div class="card empty">가상 매매 데이터를 불러오지 못했어요.</div>');return;}
   h+=`<a class="card" href="prefill" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
     <span><b>📝 아침 프리필</b><br><span class="hsub" id="pfSub">회의 전 자동 문서 — 시장·자금 흐름·위험 지도·포지션·시나리오·오늘 할 일 (웹 + Word)</span></span><span class="link">보기 →</span></a>`;
+  h+=`<a class="card" href="flows" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
+    <span><b>🌊 글로벌 머니플로우</b><br><span class="hsub" id="flowSub">주(월~금) 단위로 자금이 어느 시장으로 움직이는지 — 외국인 순매수(실측) + 지수·환율 정황</span></span><span class="link">보기 →</span></a>`;
   h+=`<a class="card" href="risk" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
     <span><b>📊 위험 대시보드</b><br><span class="hsub">자산 Z점수 · 금리 곡선 · 신용·스트레스 · 순유동성 · 선물 포지션(CFTC) · 비트코인 옵션</span></span><span class="link">보기 →</span></a>`;
   h+=`<a class="card" href="sim" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-decoration:none">
@@ -248,6 +250,7 @@ function render(d){
   document.querySelectorAll('#app details.fold').forEach(el=>{
     try{const v=localStorage.getItem('fold_'+el.dataset.fold);if(v!=null)el.open=v==='1';}catch(e){}
     el.addEventListener('toggle',()=>{try{localStorage.setItem('fold_'+el.dataset.fold,el.open?'1':'0');}catch(e){}});});
+  fetch('flows.json',{cache:'no-store'}).then(r=>r.json()).then(f=>{const el=document.getElementById('flowSub');if(el&&f.summary&&f.summary[0])el.textContent=f.summary[0];}).catch(()=>{});
   fetch('env.json',{cache:'no-store'}).then(r=>r.json()).then(e=>{const x=(e.summary||[]).slice(-1)[0];const el=document.getElementById('envSub');
     if(x&&el)el.textContent=`${x.date} · VIX ${x.vix?.toFixed(1)} · VIX/VIX3M ${x.vix_term?.toFixed(2)} · 풋/콜(주식) ${x.pc_equity} · 기록 ${(e.summary||[]).length}일`;}).catch(()=>{});
   fetch('prefill.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{const el=document.getElementById('pfSub');
