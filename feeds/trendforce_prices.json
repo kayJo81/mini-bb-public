@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-25T16:07:55+09:00",
+ "updated": "2026-11-25T19:37:52+09:00",
  "source": "TrendForce(DRAMeXchange) 공개 가격표",
  "note": "공식 데이터가 아니며 지연될 수 있어요. 점의 날짜는 페이지의 Last Update 날짜, s 는 계약가 세션(예 2H Sep).",
  "series": {
@@ -35,7 +35,7 @@
     {"t":"2026-11-20","s":"","avg":31.0,"high":31.8,"low":30.2,"chg":0.26},
     {"t":"2026-11-23","s":"","avg":31.0,"high":32.0,"low":30.3,"chg":0.0},
     {"t":"2026-11-24","s":"","avg":31.0,"high":32.0,"low":30.3,"chg":0.0},
-    {"t":"2026-11-25","s":"","avg":31.0,"high":32.0,"low":30.3,"chg":0.0}
+    {"t":"2026-11-25","s":"","avg":31.0,"high":32.0,"low":30.5,"chg":0.0}
   ]},
   "dram_spot:DDR4 16Gb (2Gx8) 3200": {"name":"DDR4 16Gb (2Gx8) 3200","group":"dram_spot","title":"DRAM Spot Price","unit":"USD","url":"https://www.trendforce.com/price/dram/dram_spot","pts":[
     {"t":"2026-11-05","s":"","avg":81.679,"high":117.0,"low":45.5,"chg":-0.3},
