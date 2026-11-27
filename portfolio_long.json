@@ -14,7 +14,7 @@
 "long_only": true
 },
 "start": "2026-11-20",
-"cash": 66312.09605996923,
+"cash": 66323.02439865722,
 "pos": {
 "core|SPY": 27.611723937984067,
 "signal|NVDA": 20.365920577515272,
@@ -28,23 +28,23 @@
 "theme|TSM": 3.302290591195621
 },
 "pending": {
-"decided": "2026-11-25",
+"decided": "2026-11-27",
 "w": {
-"signal|NVDA": 0.03,
-"signal|RDW": 0.03,
-"theme|GOOGL": 0.01273,
-"theme|AMZN": 0.01273,
-"theme|AVGO": 0.01273,
-"theme|TSM": 0.01273,
-"theme|AMAT": 0.00636,
-"theme|LRCX": 0.00636,
-"theme|KLAC": 0.00636,
-"core|SPY": 0.2
+"signal|NVDA": 0.045,
+"signal|RDW": 0.045,
+"theme|GOOGL": 0.03818,
+"theme|AMZN": 0.03818,
+"theme|AVGO": 0.03818,
+"theme|TSM": 0.03818,
+"theme|AMAT": 0.01909,
+"theme|LRCX": 0.01909,
+"theme|KLAC": 0.01909,
+"core|SPY": 0.3
 },
-"full": false,
-"reason": "신호 몫만 조정",
-"score": -5.0,
-"exposure": 0.4,
+"full": true,
+"reason": "위험 예산 40% → 60%",
+"score": -2.0,
+"exposure": 0.6,
 "why": {
 "signal|NVDA": "뉴스 신호 롱 (2026-11-23)",
 "signal|RDW": "뉴스 신호 롱 (2026-11-23)",
@@ -76,6 +76,12 @@
 98637.91,
 96541.98,
 98847.67
+],
+[
+"2026-11-27",
+99484.27,
+99140.07,
+100450.3
 ]
 ],
 "trades": [
@@ -221,6 +227,13 @@
 "reason": "신호 몫만 조정",
 "score": -5.0,
 "exposure": 0.4
+},
+{
+"date": "2026-11-27",
+"full": false,
+"reason": "신호 몫만 조정",
+"score": -5.0,
+"exposure": 0.4
 }
 ],
 "last_rebal": "2026-11-23",
@@ -234,11 +247,12 @@
 "px": 724.33
 }
 },
-"interest": 33.03007441316271,
+"interest": 43.95841310114097,
 "done_days": [
 "2026-11-23",
 "2026-11-24",
-"2026-11-25"
+"2026-11-25",
+"2026-11-27"
 ],
 "sig_entry": {
 "NVDA": "2026-11-23",
